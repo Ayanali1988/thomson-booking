@@ -542,9 +542,14 @@ function calcSettlement(s, v = vatRate()) {
 }
 const estimate = (b, f) => lineCalc(f.rateType === 'month' ? r2((+f.rate || 0) / 30 * (+b.days || 0)) : (+b.days || 0) * (+f.rate || 0), f.vatMode);
 const rateText = f => `AED ${money(f.rate)} per ${f.rateType === 'month' ? 'month' : 'day'}`;
+const paidSoFar = f => r2((+(f && f.advance) || 0) + ((f && f.payments) || []).reduce((s, p) => s + (+p.amount || 0), 0));
 const bookingTotal = (b, f) => !f ? 0 : (f.settlement && f.settlement.totals ? f.settlement.totals.total : estimate(b, f).gross);
 
 const ACT = {};
+/* after saving, go back to the list the person came from */
+const LIST_ROUTES = ['home', 'bookings', 'onrent', 'calendar', 'cars', 'sublease', 'client', 'car', 'categories', 'users', 'sales', 'more'];
+function go(h) { if (location.hash === h) { S.formOpen = false; render(); } else location.hash = h; }
+function backToList(fallback) { go(S.listHash || fallback || '#/home'); }
 /* ========================================================= state */
 const S = {
   me: null, settings: {}, cars: [], sales: [], users: [],
@@ -583,7 +588,14 @@ function friendlyError(e) {
 function boot() {
   if (!configured) { document.body.classList.add('no-nav'); $('#app').innerHTML = viewNotConfigured(); return; }
   auth.onAuthStateChanged(u => { if (!S.settingUp) handleAuth(u); });
-  window.addEventListener('hashchange', () => { closeSheet(); S.formOpen = false; render(); window.scrollTo(0, 0); });
+  S.curHash = location.hash || '#/home';
+  window.addEventListener('hashchange', () => {
+    const prev = S.curHash, next = location.hash || '#/home'; S.curHash = next;
+    const rt = h => (h.replace(/^#\/?/, '').split('/')[0] || 'home');
+    if (LIST_ROUTES.includes(rt(prev)) && !LIST_ROUTES.includes(rt(next))) S.listHash = prev;
+    if (LIST_ROUTES.includes(rt(next))) S.listHash = next;
+    closeSheet(); S.formOpen = false; render(); window.scrollTo(0, 0);
+  });
   document.addEventListener('click', onClick);
   document.addEventListener('pointerdown', unlockAudio, { once: true });
   setInterval(tick, 30000);
@@ -639,11 +651,10 @@ function ensureDetail(id) {
   if (S.detailId === id) return;
   S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = id;
   S.detailUnsub.push(db.doc('bookings/' + id).onSnapshot(d => { if (d.exists) S.cache.set(id, { id, ...d.data() }); else S.cache.set(id, { id, missing: true }); refresh(); }, onErr));
-  if (isStaff()) S.detailUnsub.push(db.doc('finance/' + id).onSnapshot(d => { S.fin.set(id, d.exists ? d.data() : { rate: 0, vatMode: 'plus', advance: 0 }); refresh(); }, onErr));
+  S.detailUnsub.push(db.doc('finance/' + id).onSnapshot(d => { S.fin.set(id, d.exists ? d.data() : { rate: 0, vatMode: 'plus', advance: 0 }); refresh(); }, onErr));
 }
 async function getFinMany(ids) {
   const out = new Map();
-  if (!isStaff()) return out;
   const idField = firebase.firestore.FieldPath.documentId();
   for (let i = 0; i < ids.length; i += 30) {
     const chunk = ids.slice(i, i + 30);
@@ -988,16 +999,33 @@ ACT.done = ({ id, type }) => {
     <div class="grid2"><label class="f">KM reading<input id="h-km" inputmode="numeric" placeholder="45210"></label>
     <label class="f">Fuel<select id="h-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>
     <label class="f">Damage and notes<textarea id="h-notes" placeholder="${del ? 'Scratch on rear bumper' : 'No new damage'}"></textarea></label>
+    <div id="h-due" class="calc small" style="margin-top:12px">Loading price…</div>
+    <div class="grid2"><label class="f">Payment collected (AED)<input id="h-pay" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label>
+    <label class="f">Paid by<select id="h-paym"><option value="cash">Cash</option><option value="card">Card</option><option value="bank">Bank transfer</option></select></label></div>
     <p class="err" id="h-err"></p>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn good" id="h-save">${del ? 'Confirm delivery' : 'Confirm pickup'}</button></div>`);
+  (async () => {
+    let f = S.fin.get(id); if (!f) { try { const d = await db.doc('finance/' + id).get(); f = d.exists ? d.data() : null; if (f) S.fin.set(id, f); } catch (e) { f = null; } }
+    const box = o.querySelector('#h-due'); if (!box) return;
+    if (!f) { box.textContent = 'Price not available.'; return; }
+    const e = estimate(b, f), paid = paidSoFar(f);
+    box.innerHTML = `<div class="r"><span>Rate</span><span>${rateText(f)}, ${MODE_LABEL[f.vatMode] || ''}</span></div><div class="r"><span>Rent ${b.days} days${f.rateType === 'month' ? ' (estimate)' : ''}</span><strong>AED ${money(e.gross)}</strong></div>
+      <div class="r"><span>Paid so far</span><span>AED ${money(paid)}</span></div><div class="r t"><span>Rent balance</span><strong>AED ${money(e.gross - paid)}</strong></div>${del ? '' : '<div class="small muted" style="margin-top:4px">Salik, fines and other charges are added at settlement.</div>'}`;
+  })();
   o.querySelector('#h-save').onclick = async ev => {
     ev.target.disabled = true;
+    const payAmt = parseFloat($('#h-pay').value) || 0, payM = $('#h-paym').value;
     const ho = { km: $('#h-km').value.trim(), fuel: $('#h-fuel').value, notes: $('#h-notes').value.trim(), by: S.me.name, byId: S.me.id };
     const at = nowLocal();
     const upd = del ? { status: 'onrent', deliveredAt: at, deliveryHandover: ho } : { status: 'returned', pickedUpAt: at, pickupHandover: ho };
     upd.updatedAt = FV.serverTimestamp(); upd.updatedBy = S.me.name;
     upd.log = FV.arrayUnion({ at, by: S.me.name, text: del ? `Delivered (KM ${ho.km || '-'}, fuel ${ho.fuel})` : `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` });
-    try { await db.doc('bookings/' + id).update(upd); closeSheet(); toast(del ? 'Marked delivered. Pickup task added.' : 'Marked picked up.'); }
+    if (payAmt) upd.log = FV.arrayUnion({ at, by: S.me.name, text: del ? `Delivered (KM ${ho.km || '-'}, fuel ${ho.fuel})` : `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` }, { at, by: S.me.name, text: `Payment collected AED ${money(payAmt)} by ${payM}` });
+    try {
+      const batch = db.batch(); batch.update(db.doc('bookings/' + id), upd);
+      if (payAmt) batch.update(db.doc('finance/' + id), { payments: FV.arrayUnion({ at, by: S.me.name, amount: payAmt, method: payM, stage: del ? 'delivery' : 'pickup' }) });
+      await batch.commit();
+      closeSheet(); toast((del ? 'Marked delivered. Pickup task added.' : 'Marked picked up.') + (payAmt ? ` AED ${money(payAmt)} recorded.` : '')); if (S.route === 'booking') backToList(); }
     catch (e) { ev.target.disabled = false; $('#h-err').textContent = friendlyError(e); }
   };
 };
@@ -1042,7 +1070,7 @@ ACT.resched = ({ id, type }) => {
     }
     if (why) text += ` (${why})`;
     upd.log = FV.arrayUnion({ at: nowLocal(), by: S.me.name, text });
-    try { await db.doc('bookings/' + id).update(upd); closeSheet(); toast('New time saved.'); }
+    try { await db.doc('bookings/' + id).update(upd); closeSheet(); toast('New time saved.'); if (S.route === 'booking') backToList(); }
     catch (e) { const er = $('#r-err'); if (er) er.textContent = friendlyError(e); else onErr(e); }
   };
 };
@@ -1057,7 +1085,7 @@ ACT.assign = ({ id }) => {
   o.querySelector('#a-save').onclick = async () => {
     const d = $('#a-d').value, p = $('#a-p').value, nm = x => (S.users.find(u => u.id === x) || {}).name || '';
     await db.doc('bookings/' + id).update({ deliveryDriverId: d, deliveryDriverName: nm(d), pickupDriverId: p, pickupDriverName: nm(p), updatedAt: FV.serverTimestamp(), updatedBy: S.me.name, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Drivers: delivery ${nm(d) || 'none'}, pickup ${nm(p) || 'none'}` }) });
-    closeSheet(); toast('Drivers saved.');
+    closeSheet(); toast('Drivers saved.'); if (S.route === 'booking') backToList();
   };
 };
 ACT.ics = ({ id, type }) => {
@@ -1082,7 +1110,7 @@ ACT.cancelbk = async ({ id }) => {
   const why = await ask({ title: `Cancel ${b.ref}?`, text: 'The booking stays in history as cancelled.', ok: 'Cancel booking', danger: true, input: { label: 'Reason', required: 'Enter a reason.' } });
   if (!why) return;
   await db.doc('bookings/' + id).update({ status: 'cancelled', cancelReason: why, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Cancelled: ${why}` }) });
-  toast('Booking cancelled.');
+  toast('Booking cancelled.'); backToList('#/bookings');
 };
 ACT.deletebk = async ({ id }) => {
   const b = getB(id);
@@ -1093,12 +1121,12 @@ ACT.deletebk = async ({ id }) => {
   if (!v) return;
   if (pin ? v !== pin : v !== 'DELETE') { toast(pin ? 'Wrong PIN. Nothing was deleted.' : 'Not confirmed. Nothing was deleted.'); return; }
   const batch = db.batch(); batch.delete(db.doc('bookings/' + id)); batch.delete(db.doc('finance/' + id)); await batch.commit();
-  S.cache.delete(id); location.hash = '#/bookings'; toast('Booking deleted.');
+  S.cache.delete(id); toast('Booking deleted.'); backToList('#/bookings'); if (location.hash.startsWith('#/booking/')) go('#/bookings');
 };
 function waText(b, f) {
   const lines = [`*${S.settings.companyName || COMPANY}*`, `Booking ${b.ref}`, '', `Client: ${b.clientName}`, `Car: ${b.carName} (${b.plate})`,
     `*Delivery: ${fmtDT(b.deliveryAt)}*`, `Location: ${b.location || '-'}`, `*Return: ${fmtDT(b.pickupAt)}*`, `Days: ${b.days}`];
-  if (f && isStaff()) { const e = estimate(b, f); lines.push(`Rate: ${rateText(f)} (${MODE_LABEL[f.vatMode]})`, `Total: AED ${money(e.gross)} incl. VAT`); }
+  if (f) { const e = estimate(b, f); lines.push(`Rate: ${rateText(f)} (${MODE_LABEL[f.vatMode]})`, `Total: AED ${money(e.gross)} incl. VAT`); }
   return lines.join('\n');
 }
 const waNum = p => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '971' + d.slice(1); return d; };
@@ -1139,7 +1167,7 @@ ACT.extend = async ({ id }) => {
     try {
       await db.doc('bookings/' + id).update({ pickupAt: r.at, pickupDate: r.nd, days: r.days, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name,
         log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Extended by ${r.add} day${r.add === 1 ? '' : 's'}: return moved from ${fmtDT(cur)} to ${fmtDT(r.at)}${r.cf.length ? ` (clashes with ${r.cf.map(c => c.ref).join(', ')})` : ''}` }) });
-      closeSheet(); toast(`Extended to ${fmtDT(r.at)}.`);
+      closeSheet(); toast(`Extended to ${fmtDT(r.at)}.`); if (S.route === 'booking') backToList();
     } catch (e) { ev.target.disabled = false; $('#x-err').textContent = friendlyError(e); }
   };
 };
@@ -1208,7 +1236,7 @@ function viewDetail(id) {
   if (b.missing) return { title: 'Booking', back: '#/home', html: `<div class="empty"><h3>This booking no longer exists</h3><p><a href="#/home">Go to tasks</a></p></div>` };
   const staff = isStaff(), f = S.fin.get(id);
   let price = '';
-  if (staff) {
+  {
     if (!f) price = `<div class="card">${loading()}</div>`;
     else {
       const e = estimate(b, f);
@@ -1217,6 +1245,8 @@ function viewDetail(id) {
         <dt>Rent (${b.days} days)${f.rateType === 'month' ? ', estimate' : ''}</dt><dd>AED ${money(e.net)} + VAT ${money(e.vat)}</dd>
         <dt>Rent total</dt><dd class="big">AED ${money(e.gross)}</dd>
         ${+f.advance ? `<dt>Advance paid</dt><dd>AED ${money(f.advance)} (${esc(f.advanceMethod || 'cash')})</dd>` : ''}
+        ${(f.payments || []).map(p => `<dt>Collected</dt><dd>AED ${money(p.amount)} by ${esc(p.method)}<br><span class="muted small">${esc(p.by)}, ${esc(fmtDT(p.at))}, at ${esc(p.stage)}</span></dd>`).join('')}
+        ${paidSoFar(f) ? `<dt>Rent balance</dt><dd><strong>AED ${money(estimate(b, f).gross - paidSoFar(f))}</strong></dd>` : ''}
       </dl>${f.settlement && f.settlement.totals ? `<div class="calc">${settlementRowsHtml(f.settlement)}</div>` : ''}</section>`;
     }
   }
@@ -1229,7 +1259,7 @@ function viewDetail(id) {
   if (staff && ['booked', 'onrent'].includes(b.status)) acts.push(`<button class="btn" data-act="assign" data-id="${id}">Assign drivers</button>`);
   if (staff && b.status !== 'cancelled' && b.status !== 'closed') acts.push(`<a class="btn" href="#/edit/${id}">Edit booking</a>`);
   acts.push(`<button class="btn" data-act="slip" data-id="${id}">Booking slip PDF</button>`);
-  if (staff && f && f.settlement && f.settlement.totals) acts.push(`<button class="btn" data-act="bill" data-id="${id}">Final bill PDF</button>`);
+  if (f && f.settlement && f.settlement.totals) acts.push(`<button class="btn" data-act="bill" data-id="${id}">Final bill PDF</button>`);
   if (staff) acts.push(`<button class="btn" data-act="wa" data-id="${id}">Share on WhatsApp</button>`);
   if (staff && b.clientPhone) acts.push(`<button class="btn" data-act="waclient" data-id="${id}">Send to client</button>`);
   if (staff && b.status === 'booked') acts.push(`<button class="btn danger" data-act="cancelbk" data-id="${id}">Cancel booking</button>`);
@@ -1255,7 +1285,7 @@ function viewDetail(id) {
   ${b.deliveryHandover || b.pickupHandover ? `<section class="card"><h2>Handover</h2><dl class="kv">${ho(b.deliveryHandover, 'At delivery')}${ho(b.pickupHandover, 'At pickup')}</dl></section>` : ''}
   <div class="btnrow">${acts.join('')}</div>
   ${log.length ? `<section class="card"><h2>History</h2>${log.map(l => `<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><strong>${esc(fmtDT(l.at))}</strong>, ${esc(l.by)}<br>${esc(l.text)}</div>`).join('')}</section>` : ''}`;
-  return { title: `Booking ${b.ref}`, back: staff ? '#/bookings' : '#/home', html };
+  return { title: `Booking ${b.ref}`, back: S.listHash || (staff ? '#/bookings' : '#/home'), html };
 }
 function carExtra(carId) { const c = S.cars.find(x => x.id === carId); return c && (c.color || c.category) ? `<br><span class="muted small">${esc([c.color, c.category].filter(Boolean).join(', '))}</span>` : ''; }
 function settlementRowsHtml(st) {
@@ -1427,7 +1457,7 @@ function viewForm(id) {
       } catch (e) { ev.target.disabled = false; $('#b-err').textContent = friendlyError(e); }
     };
   };
-  return { title: id ? `Edit ${b.ref}` : 'New booking', back: id ? '#/booking/' + id : '#/home', html, mount, form: true };
+  return { title: id ? `Edit ${b.ref}` : 'New booking', back: id ? '#/booking/' + id : (S.listHash || '#/home'), html, mount, form: true };
 }
 
 /* ========================================================= return settlement */
@@ -1441,7 +1471,7 @@ function viewSettle(id) {
   const ccOpts = String(S.settings.ccOptions || '4,5').split(',').map(s => +s.trim()).filter(n => n > 0);
   const init = {
     rentDays: st.rentDays ?? b.days, rentAmount: st.rentAmount ?? '', lines: st.lines || [{ label: 'Salik', amount: '', mode: vm }, { label: 'Parking', amount: '', mode: vm }],
-    fines: st.fines ?? '', advance: st.advance ?? (f.advance || 0), method: st.method || 'cash', ccPct: st.ccPct ?? (S.settings.defaultCc || ccOpts[ccOpts.length - 1] || 5), notes: st.notes || ''
+    fines: st.fines ?? '', advance: st.advance ?? paidSoFar(f), method: st.method || 'cash', ccPct: st.ccPct ?? (S.settings.defaultCc || ccOpts[ccOpts.length - 1] || 5), notes: st.notes || ''
   };
   const elapsed = b.deliveredAt && b.pickedUpAt ? Math.max(1, Math.ceil((parseDT(b.pickedUpAt) - parseDT(b.deliveredAt)) / 864e5 - 0.0417)) : null;
   const modeSel = m => `<select aria-label="VAT">${['plus', 'incl'].map(k => `<option value="${k}" ${m === k ? 'selected' : ''}>${MODE_LABEL[k]}</option>`).join('')}</select>`;
@@ -1468,7 +1498,7 @@ function viewSettle(id) {
     <div class="line" style="margin-top:12px"><span style="font-weight:600">Traffic fines</span><input id="s-fines" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(init.fines)}" placeholder="0" aria-label="Fines amount"><span class="lock">No VAT</span><span></span></div>
   </section>
   <section class="card"><h2>Payment</h2>
-    <label class="f">Advance already paid (AED)<input id="s-adv" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(init.advance)}"></label>
+    <label class="f">Already paid: advance and payments collected (AED)<input id="s-adv" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(init.advance)}"></label>
     <div class="f" style="margin-top:12px;color:var(--muted);font-size:14px">Payment method</div>
     <div class="pill-choice" role="radiogroup" aria-label="Payment method">${[['cash', 'Cash'], ['card', 'Card'], ['bank', 'Bank transfer']].map(([k, l]) => `<label><input type="radio" name="s-pay" value="${k}" ${init.method === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
     <div id="s-ccbox"><div class="f" style="margin-top:12px;color:var(--muted);font-size:14px">CC charges</div>
@@ -1519,7 +1549,7 @@ function viewSettle(id) {
     $('#s-pending').onclick = e => save('pending', e.target);
     $('#s-close').onclick = e => save('closed', e.target);
   };
-  return { title: 'Settle return', back: '#/booking/' + id, html, mount, form: true };
+  return { title: 'Settle return', back: S.listHash || '#/booking/' + id, html, mount, form: true };
 }
 
 /* ========================================================= bookings list (bulk) */
@@ -1772,7 +1802,7 @@ ACT['car-edit'] = ({ id }) => {
   o.querySelector('#c-save').onclick = async () => {
     const d = readCarFields(false); d.active = $('#c-active').value === '1';
     const err = carCheck(d, id, false); if (err) { $('#c-err').textContent = err; return; }
-    try { id ? await db.doc('cars/' + id).update(d) : await db.collection('cars').add(d); closeSheet(); toast(id ? 'Car saved.' : 'Car added.'); }
+    try { id ? await db.doc('cars/' + id).update(d) : await db.collection('cars').add(d); closeSheet(); toast(id ? `${d.plate} saved.` : `${d.plate} added.`); go('#/cars'); }
     catch (e) { $('#c-err').textContent = friendlyError(e); }
   };
 };
@@ -1876,7 +1906,7 @@ ACT['car-bulk'] = () => {
         if (ops >= 350) await flush();
       }
       await flush();
-      closeSheet(); toast(`${ok.length} cars saved.`);
+      closeSheet(); toast(`${ok.length} cars saved.`); go('#/cars');
     } catch (e) { btn.disabled = false; btn.textContent = 'Try again'; toast(friendlyError(e)); }
   };
 };
@@ -1914,12 +1944,12 @@ ACT['sub-edit'] = ({ id }) => {
     if (ret) {
       closeSheet();
       if (await ask({ title: `${d.plate} was returned earlier`, text: `${esc(carTitle(ret))} from ${esc(ret.supplier || '-')} is saved as returned. Enable it again with the details you entered, keeping its booking history?`, ok: 'Enable again' })) {
-        await db.doc('cars/' + ret.id).update({ ...d, active: true }); toast('Sub-lease car enabled again.');
+        await db.doc('cars/' + ret.id).update({ ...d, active: true }); toast(`${d.plate} enabled again.`); go('#/sublease');
       }
       return;
     }
     const err = carCheck(d, id, true); if (err) { $('#c-err').textContent = err; return; }
-    try { id ? await db.doc('cars/' + id).update(d) : await db.collection('cars').add({ ...d, active: true }); closeSheet(); toast(id ? 'Car saved.' : 'Sub-lease car added.'); }
+    try { id ? await db.doc('cars/' + id).update(d) : await db.collection('cars').add({ ...d, active: true }); closeSheet(); toast(id ? `${d.plate} saved.` : `Sub-lease ${d.plate} added.`); go('#/sublease'); }
     catch (e) { $('#c-err').textContent = friendlyError(e); }
   };
 };
@@ -1931,7 +1961,8 @@ ACT['sub-toggle'] = async ({ id }) => {
     if (!(await ask({ title: `Return ${carTitle(c)} ${c.plate}?`, text: `It will be hidden from bookings and the available list. Its history stays, and you can enable it again by searching the plate.`, ok: 'Return to supplier' }))) return;
   }
   await db.doc('cars/' + id).update({ active: c.active === false });
-  toast(c.active === false ? 'Enabled again. It is available for bookings.' : 'Returned to supplier.');
+  toast(c.active === false ? `${c.plate} enabled again. It is available for bookings.` : `${c.plate} returned to supplier.`);
+  if (S.route === 'car') go('#/sublease');
 };
 function viewSales() {
   if (!isAdmin()) return deny();
@@ -1978,7 +2009,7 @@ ACT['user-new'] = () => {
     <label class="f">Full name<input id="u-name" placeholder="Ahmed Ali"></label>
     <label class="f">Username<input id="u-user" autocapitalize="none" autocomplete="off" placeholder="ahmed.driver"></label>
     <label class="f">Password<input id="u-pass" type="text" autocomplete="off" placeholder="At least 6 characters"></label>
-    <label class="f">Role<select id="u-role"><option value="driver">Driver: tasks and handover, no prices</option><option value="sales">Sales: bookings, prices, settlement</option><option value="admin">Admin: everything</option></select></label>
+    <label class="f">Role<select id="u-role"><option value="driver">Driver: tasks, handover, prices and payment collection</option><option value="sales">Sales: bookings, prices, settlement</option><option value="admin">Admin: everything</option></select></label>
     <label class="f" id="u-linkwrap"><select id="u-link"><option value="1">Also add as salesperson, with reminders</option><option value="0">Don't add as salesperson</option></select></label>
     <p class="err" id="u-err"></p>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="u-save">Create user</button></div>`);
@@ -2023,7 +2054,7 @@ function viewSettings() {
     const d = { companyName: $('#st-name').value.trim() || COMPANY, address: $('#st-addr').value.trim(), phone: $('#st-phone').value.trim(), trn: $('#st-trn').value.trim(),
       vatRate: parseFloat($('#st-vat').value) || 0, defaultVatMode: $('#st-mode').value, ccOptions: $('#st-cc').value.replace(/[^\d.,]/g, '') || '4,5', defaultCc: parseFloat($('#st-ccd').value) || 5,
       shareName: $('#st-shn').value.trim() || 'Thomson Rent A Car', waNumber: $('#st-wa').value.trim() };
-    try { await db.doc('meta/settings').set(d, { merge: true }); if (pin) await db.doc('meta/secure').set({ pin }, { merge: true }); S.formOpen = false; toast('Settings saved.'); render(); }
+    try { await db.doc('meta/settings').set(d, { merge: true }); if (pin) await db.doc('meta/secure').set({ pin }, { merge: true }); S.formOpen = false; toast('Settings saved.'); go('#/more'); }
     catch (e) { $('#st-err').textContent = friendlyError(e); }
   };
   return { title: 'Settings', back: '#/more', html, mount, form: true };
@@ -2038,7 +2069,7 @@ function viewAccount() {
   const mount = () => $('#ac-save').onclick = async () => {
     const cur = $('#ac-cur').value, nw = $('#ac-new').value;
     if (nw.length < 6) { $('#ac-err').textContent = 'New password must be at least 6 characters.'; return; }
-    try { const u = auth.currentUser; await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, cur)); await u.updatePassword(nw); $('#ac-cur').value = $('#ac-new').value = ''; $('#ac-err').textContent = ''; toast('Password changed.'); }
+    try { const u = auth.currentUser; await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, cur)); await u.updatePassword(nw); toast('Password changed.'); go('#/more'); }
     catch (e) { $('#ac-err').textContent = friendlyError(e); }
   };
   return { title: 'My account', back: '#/more', html, mount, form: true };
@@ -2109,7 +2140,7 @@ function doPrint(html, landscape) {
   imgs.forEach(i => { if (i.complete) { if (--n === 0) go(); } else { i.onload = i.onerror = () => { if (--n === 0) go(); }; } });
 }
 ACT.daysheet = async () => {
-  const D = S.viewDate, tasks = tasksFor(D), staff = isStaff();
+  const D = S.viewDate, tasks = tasksFor(D), staff = true;
   const fins = await getFinMany([...new Set(tasks.map(t => t.b.id))]);
   let total = 0;
   const rows = tasks.map((t, i) => {
@@ -2129,7 +2160,7 @@ ACT.daysheet = async () => {
     <div class="p-sign"><div>Prepared by</div><div>Driver</div><div>Approved by</div></div>${printFoot()}`, true);
 };
 ACT.slip = ({ id }) => {
-  const b = getB(id), f = isStaff() ? S.fin.get(id) : null, e = f ? estimate(b, f) : null;
+  const b = getB(id), f = S.fin.get(id), e = f ? estimate(b, f) : null;
   doPrint(`${printHeader('Booking confirmation', b.ref)}
     <div class="p-sec"><h2>Client</h2><dl class="p-kv"><dt>Name</dt><dd class="p-big">${esc(b.clientName)}</dd><dt>Phone</dt><dd>${esc(b.clientPhone || '-')}</dd>
       <dt>Delivery location</dt><dd>${esc(b.location || '-')}</dd><dt>Pickup location</dt><dd>${esc(b.pickupLocation || b.location || '-')}</dd></dl></div>
