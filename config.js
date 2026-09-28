@@ -12,4 +12,4 @@ window.FIREBASE_CONFIG = {
 };
 
 /* Logo: upload your logo file to the repository, then put its file name here, e.g. 'logo.png' */
-window.LOGO_URL = '';
+window.LOGO_URL = 'logo.png';
