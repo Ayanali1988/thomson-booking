@@ -14,11 +14,11 @@
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#122033;--navy:#16324F;--navy-2:#234A72;--paper:#F2F4F7;--card:#FFFFFF;--line:#DCE2E9;--line-2:#C5CFDA;--muted:#5A6A7B;
-  --deliv:#1D63B8;--deliv-bg:#E6EFFA;--pick:#9A5800;--pick-bg:#FCEFD8;--done:#2B7A4B;--done-bg:#E1F1E7;--late:#B92F26;--late-bg:#FBE7E5;
+  --ink:#112038;--navy:#13294B;--navy-2:#21456F;--night:#0C1C33;--amber:#E8A33D;--paper:#EDF1F5;--card:#FFFFFF;--line:#DCE2E9;--line-2:#C5CFDA;--muted:#5A6A7B;
+  --deliv:#1F6FD1;--deliv-bg:#E6EFFA;--pick:#9A5800;--pick-bg:#FCEFD8;--done:#2B7A4B;--done-bg:#E1F1E7;--late:#B92F26;--late-bg:#FBE7E5;
   --head:'Archivo',system-ui,-apple-system,Segoe UI,sans-serif;--body:'Public Sans',system-ui,-apple-system,Segoe UI,sans-serif;
   --r:12px;--r-sm:8px;
 }
@@ -189,6 +189,76 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 .tbl th{color:var(--muted);font-weight:600}
 .scroll-x{overflow-x:auto}
 
+
+/* ===== visual layer v2 ===== */
+h1,h2,h3,.bigdate,.stat strong,.t-time{font-stretch:112%}
+body{background:var(--paper)}
+.topbar{background:var(--navy);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+.topbar h1{font-stretch:112%}
+
+.hero{position:relative;overflow:hidden;background:var(--navy);padding:calc(16px + env(safe-area-inset-top)) 16px 64px}
+.skyline{position:absolute;left:0;right:0;bottom:0;width:100%;height:150px;pointer-events:none}
+.hero-in{position:relative;display:block;max-width:760px;margin:0 auto}
+.hero-top{display:flex;align-items:center;gap:14px}
+.hero .welcome{font-size:15px;line-height:1.35;font-weight:600}
+.hero .who{font-size:13px;opacity:.75;margin-top:2px}
+.hero-date{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;margin-top:22px}
+.hero .bigdate{color:#fff;font-size:clamp(26px,7.4vw,40px);line-height:1.08;text-align:center;letter-spacing:-.01em}
+.hero .seg{margin-bottom:10px}
+.hero .seg button{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);color:#fff}
+.hero .seg button.on{background:var(--amber);border-color:var(--amber);color:var(--night);font-weight:700}
+.iconbtn.dark{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);color:#fff}
+
+.stats{position:relative;z-index:2;max-width:760px;margin:-42px auto 0;padding:0 16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:640px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{display:flex;flex-direction:column;background:#fff;border-radius:14px;padding:12px 14px 11px;text-decoration:none;color:var(--ink);box-shadow:0 1px 2px rgba(12,28,51,.08),0 6px 18px rgba(12,28,51,.07);border-top:4px solid var(--c)}
+.stat strong{font-family:var(--head);font-weight:800;font-size:30px;line-height:1.05;color:var(--c)}
+.stat strong small{font-size:15px;color:var(--muted);font-weight:600}
+.stat span{font-size:13.5px;font-weight:600;margin-top:2px}
+.stat em{font-style:normal;font-size:12.5px;color:var(--muted)}
+.s-d{--c:var(--deliv)}.s-p{--c:#B86E06}.s-r{--c:#5B3FB0}.s-f{--c:var(--done)}
+
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 4px}
+.sec-head h2{font-size:18px}
+.sec-head .toolbar{margin:0}
+
+.t-card{box-shadow:inset 4px 0 0 var(--deliv),0 1px 2px rgba(12,28,51,.05);border-radius:12px}
+.task.pickup .t-card{box-shadow:inset 4px 0 0 #D8912A,0 1px 2px rgba(12,28,51,.05)}
+.task.done .t-card{box-shadow:inset 4px 0 0 var(--done)}
+.task.late .t-card{box-shadow:inset 4px 0 0 var(--late)}
+.t-car{display:flex;align-items:center;gap:10px}
+.t-car>span{flex:1;min-width:0}
+.car-ico{width:42px;height:20px;flex:none;fill:var(--deliv)}
+.car-ico .w{fill:var(--night);stroke:#fff;stroke-width:2}
+.car-ico .g{fill:#fff;opacity:.55}
+.task.pickup .car-ico{fill:#D8912A}
+.task.done .car-ico{fill:var(--done)}
+.task.late .car-ico{fill:var(--late)}
+.car-ico.big{width:110px;height:52px;fill:#B9C5D3;margin:0 auto 10px;display:block}
+
+.plate{background:#fff;border:1.5px solid #1A1A1A;border-radius:5px;box-shadow:inset 3px 0 0 #C8372D;padding:0 6px 0 9px}
+
+.cat-h{display:flex;align-items:center;gap:8px;font-size:16px;margin:18px 0 8px}
+.cat-h .dot{width:10px;height:10px;border-radius:50%}
+.car-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.car-tile{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 12px 12px;font:inherit;color:var(--ink);cursor:pointer;width:100%}
+div.car-tile{cursor:default}
+.car-tile .car-ico{width:64px;height:30px;fill:var(--cc);margin-bottom:4px}
+.car-tile .ct-name{font-weight:700;font-size:15px;line-height:1.25}
+.car-tile .ct-sub{font-size:13px;color:var(--muted)}
+.car-tile .sno{position:absolute;top:8px;right:10px;font-size:12px;color:var(--muted)}
+.car-tile.off{opacity:.6}
+button.car-tile:active{transform:scale(.98)}
+
+.card,.list-row{border-radius:14px}
+.btn.primary{box-shadow:0 2px 6px rgba(19,41,75,.25)}
+.nav a.add span.plus{background:var(--amber);color:var(--night);box-shadow:0 3px 10px rgba(232,163,61,.45)}
+.nav a.on{color:var(--navy)}
+
+.auth{position:relative;overflow:hidden;background:var(--navy)}
+.auth .skyline{height:220px}
+.auth-card{position:relative;z-index:1;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+
 /* print */
 #print{display:none}
 @media print{
@@ -229,23 +299,15 @@ svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-l
 <div id="app"></div>
 <div id="toast" aria-live="polite"></div>
 <div id="print"></div>
+<script src="config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 'use strict';
-/* =========================================================
-   SETTINGS YOU EDIT ONCE (see SETUP.md)
-   ========================================================= */
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDPIDkRcNbTiVEetfoEqjQF_9i3s1m7kys",
-  authDomain: "thomson-booking.firebaseapp.com",
-  projectId: "thomson-booking",
-  storageBucket: "thomson-booking.firebasestorage.app",
-  messagingSenderId: "76349976130",
-  appId: "1:76349976130:web:d50370c3b9ff26fbfd47db"
-};
-const LOGO_URL = '';            // e.g. 'logo.png' after uploading your logo to the repository
+/* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
+const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
+const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
 const COMPANY = 'Thomson Rent A Car LLC';
 const EMAIL_DOMAIN = 'thomson-booking.app'; // internal only: usernames become username@this-domain
 
@@ -580,34 +642,58 @@ function taskCard(t) {
     <div class="t-time num">${time12(tOf(t.at)).replace(' ', '<br>')}</div>
     <div class="t-card">
       <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
-      <div class="t-car">${carLabel(b)}</div>
+      <div class="t-car">${CAR}<span>${carLabel(b)}</span></div>
       <div class="t-meta">${esc(b.clientName)}${loc ? `<br>${esc(loc)}` : ''}</div>
       <div class="t-meta">${t.type === 'delivery' ? `${b.days} day${b.days == 1 ? '' : 's'}, ` : ''}${t.done ? `Done by ${esc(((t.type === 'delivery' ? b.deliveryHandover : b.pickupHandover) || {}).by || drvName || '-')}` : drvName ? `Driver: ${esc(drvName)}` : '<strong>No driver assigned</strong>'}</div>
       <div class="t-actions">${acts.join('')}</div>
     </div></li>`;
 }
+const SKYLINE = `<svg class="skyline" viewBox="0 0 800 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <g fill="#FFFFFF" fill-opacity=".055">
+    <rect x="0" y="96" width="46" height="74"/><rect x="52" y="70" width="30" height="100"/><rect x="88" y="108" width="40" height="62"/>
+    <path d="M140 170V80l14-10 14 10v90z"/><rect x="176" y="100" width="34" height="70"/><rect x="216" y="60" width="24" height="110"/>
+    <path d="M300 170V120h6V98h6V74h5V48h4V22h2V0h2v22h2v26h4v26h5v24h6v22h6v50z"/>
+    <rect x="360" y="88" width="36" height="82"/><path d="M404 170V66q22-26 44 0v104z"/><rect x="456" y="104" width="30" height="66"/>
+    <rect x="492" y="78" width="26" height="92"/><path d="M526 170V92l20-22 20 22v78z"/><rect x="574" y="112" width="44" height="58"/>
+    <rect x="624" y="84" width="28" height="86"/><path d="M660 170V58c18 6 30 22 34 40v72z"/><rect x="702" y="100" width="40" height="70"/><rect x="748" y="76" width="52" height="94"/>
+  </g>
+  <rect x="0" y="156" width="800" height="14" fill="#0C1C33"/>
+  <path d="M0 163h800" stroke="#E8A33D" stroke-width="2" stroke-dasharray="18 14"/>
+</svg>`;
+const CAR = `<svg class="car-ico" viewBox="0 0 64 30" aria-hidden="true"><path d="M4 22v-5.5c0-1.2.8-2.2 2-2.5l8-2.2 8.2-6.3c.9-.7 2-1 3.1-1h13.4c1.3 0 2.5.5 3.4 1.4l6.4 6.1 8.3 1.8c1.3.3 2.2 1.4 2.2 2.7V22z"/><circle cx="17" cy="22.5" r="5.2" class="w"/><circle cx="47" cy="22.5" r="5.2" class="w"/><path d="M24 11.3l4.3-4h8.9l5 4z" class="g"/></svg>`;
 function viewHome() {
   const D = S.viewDate, today = todayStr(), tomorrow = addDays(today, 1);
   const tasks = tasksFor(D);
-  const nd = tasks.filter(t => t.type === 'delivery').length, np = tasks.length - nd, ndone = tasks.filter(t => t.done).length;
+  const dl = tasks.filter(t => t.type === 'delivery'), pk = tasks.filter(t => t.type === 'pickup');
   const overdue = D === today ? overdueTasks() : [];
   const awaiting = isStaff() ? [...S.active.values()].filter(b => b.status === 'returned' || b.status === 'pending').sort((a, c) => a.pickupAt.localeCompare(c.pickupAt)) : [];
-  const head = `<section class="hero"><div class="hero-in">${brand()}<div><div class="welcome">Welcome to Thomson Car Rental Booking Service</div><div class="who">${esc(S.me.name)}, ${esc(role())}</div></div></div></section>`;
+  const onrent = [...S.active.values()].filter(b => b.status === 'onrent').length;
+  const busy = new Set([...S.active.values()].filter(b => (b.status === 'booked' || b.status === 'onrent') && b.deliveryDate <= D && b.pickupDate >= D).map(b => b.carId));
+  const activeCars = S.cars.filter(c => c.active !== false);
+  const free = activeCars.filter(c => !busy.has(c.id)).length;
+  const dayWord = D === today ? 'today' : D === tomorrow ? 'tomorrow' : 'this day';
+  const head = `<section class="hero">${SKYLINE}<div class="hero-in">
+    <div class="hero-top">${brand()}<div><div class="welcome">Welcome to Thomson Car Rental Booking Service</div><div class="who">Signed in as ${esc(S.me.name)}, ${esc(role())}</div></div></div>
+    <div class="hero-date">
+      <button class="iconbtn dark" data-act="day" data-d="-1" aria-label="Previous day">${ico('left')}</button>
+      <div>
+        <div class="seg" role="group" aria-label="Day"><button class="${D === today ? 'on' : ''}" data-act="day" data-set="${today}">Today</button><button class="${D === tomorrow ? 'on' : ''}" data-act="day" data-set="${tomorrow}">Tomorrow</button></div>
+        <h1 class="bigdate">${esc(fmtLong(D))}</h1>
+      </div>
+      <button class="iconbtn dark" data-act="day" data-d="1" aria-label="Next day">${ico('right')}</button>
+    </div></div></section>
+  <div class="stats">
+    <div class="stat s-d"><strong class="num">${dl.length}</strong><span>Deliveries ${dayWord}</span><em>${dl.filter(t => t.done).length} done</em></div>
+    <div class="stat s-p"><strong class="num">${pk.length}</strong><span>Pickups ${dayWord}</span><em>${pk.filter(t => t.done).length} done</em></div>
+    <a class="stat s-r" href="#/onrent"><strong class="num">${onrent}</strong><span>Cars on rent now</span><em>View list</em></a>
+    <a class="stat s-f" href="#/onrent"><strong class="num">${free}<small>/${activeCars.length}</small></strong><span>Cars free ${dayWord}</span><em>Check dates</em></a>
+  </div>`;
   const html = `
-  <div class="datebar" style="padding-left:0;padding-right:0">
-    <button class="iconbtn" data-act="day" data-d="-1" aria-label="Previous day">${ico('left')}</button>
-    <div>
-      <div class="seg" role="group" aria-label="Day"><button class="${D === today ? 'on' : ''}" data-act="day" data-set="${today}">Today</button><button class="${D === tomorrow ? 'on' : ''}" data-act="day" data-set="${tomorrow}">Tomorrow</button></div>
-      <h1 class="bigdate">${esc(fmtLong(D))}</h1>
-      <p class="sub">${nd} deliver${nd === 1 ? 'y' : 'ies'}, ${np} pickup${np === 1 ? '' : 's'}${tasks.length ? `, ${ndone} done` : ''}</p>
-    </div>
-    <button class="iconbtn" data-act="day" data-d="1" aria-label="Next day">${ico('right')}</button>
-  </div>
   ${overdue.length ? `<div class="strip late" role="alert"><h3>Overdue from earlier days (${overdue.length})</h3>${overdue.map(t => `<a class="row" href="#/booking/${t.b.id}"><span>${t.type === 'delivery' ? 'Delivery' : 'Pickup'}: ${esc(t.b.carName)} ${esc(t.b.plate)}, ${esc(t.b.clientName)}</span><strong class="num">${esc(fmtDay(t.at))}</strong></a>`).join('')}</div>` : ''}
   ${awaiting.length ? `<div class="strip info"><h3>Returned, waiting for settlement (${awaiting.length})</h3>${awaiting.map(b => `<a class="row" href="#/settle/${b.id}"><span>${esc(b.ref)}: ${esc(b.carName)} ${esc(b.plate)}, ${esc(b.clientName)}</span><strong>${b.status === 'pending' ? 'Pending charges' : 'Settle'}</strong></a>`).join('')}</div>` : ''}
-  <div class="toolbar"><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm" href="#/new">New booking</a>' : ''}</div>
+  <div class="sec-head"><h2>Schedule</h2><div class="toolbar"><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm primary" href="#/new">New booking</a>' : ''}</div></div>
   ${tasks.length ? `<ol class="timeline">${tasks.map(taskCard).join('')}</ol>`
-    : `<div class="empty"><h3>No tasks on this day</h3><p>Deliveries and pickups for ${esc(fmtDate(D))} will appear here.${isStaff() ? ' <a href="#/new">Create a booking</a>' : ''}</p></div>`}`;
+    : `<div class="empty">${CAR.replace('car-ico', 'car-ico big')}<h3>No deliveries or pickups ${dayWord}</h3><p>${isStaff() ? '<a class="btn primary" href="#/new">Create a booking</a>' : `Tasks for ${esc(fmtDate(D))} will appear here.`}</p></div>`}`;
   return { head, html };
 }
 
@@ -1091,14 +1177,63 @@ function viewMore() {
     <p class="small muted" style="text-align:center">Thomson Car Rental Booking Service</p>`;
   return { title: 'More', html };
 }
+const CAT_COLORS = ['#1F6FD1', '#C47A12', '#2B8A57', '#7B4BC4', '#C8372D', '#0F8A8A', '#5A6A7B'];
+const catColor = c => { const cats = [...new Set(S.cars.map(x => x.category || 'Other'))].sort(); return CAT_COLORS[Math.max(0, cats.indexOf(c || 'Other')) % CAT_COLORS.length]; };
 function viewCars() {
   const a = isAdmin();
-  const html = `${a ? '<div class="toolbar"><button class="btn primary" data-act="car-edit">Add car</button></div>' : ''}
-  ${S.cars.length ? `<div class="card scroll-x" style="padding:6px 10px"><table class="tbl"><thead><tr><th>S.No</th><th>Car</th><th>Plate</th><th>Details</th>${a ? '<th></th>' : ''}</tr></thead><tbody>
-  ${S.cars.map((c, i) => `<tr><td class="num">${i + 1}</td><td>${esc(c.name)}${c.active === false ? ' <span class="chip cancelled">Inactive</span>' : ''}</td><td><span class="plate">${esc(c.plate)}</span></td><td class="muted">${esc([c.color, c.category].filter(Boolean).join(', '))}</td>${a ? `<td><button class="btn sm" data-act="car-edit" data-id="${c.id}">Edit</button></td>` : ''}</tr>`).join('')}
-  </tbody></table></div>` : `<div class="empty"><h3>Add your first car</h3><p>Cars and plate numbers you add here appear in the booking form.</p></div>`}`;
+  const groups = {};
+  S.cars.forEach(c => { (groups[c.category || 'Other'] = groups[c.category || 'Other'] || []).push(c); });
+  const cats = Object.keys(groups).sort();
+  let n = 0;
+  const html = `${a ? '<div class="toolbar"><button class="btn primary" data-act="car-edit">Add car</button><button class="btn" data-act="car-bulk">Add many cars</button></div>' : ''}
+  ${S.cars.length ? `<p class="muted small" style="margin:10px 0 0">${S.cars.filter(c => c.active !== false).length} active cars, ${S.cars.length} in total</p>
+  ${cats.map(cat => `<h2 class="cat-h"><span class="dot" style="background:${catColor(cat)}"></span>${esc(cat)} <span class="muted small">${groups[cat].length}</span></h2>
+    <div class="car-grid">${groups[cat].map(c => { n++; return `<${a ? 'button' : 'div'} class="car-tile ${c.active === false ? 'off' : ''}" ${a ? `data-act="car-edit" data-id="${c.id}"` : ''} style="--cc:${catColor(cat)}">
+      <span class="sno num">${n}</span>${CAR}<span class="ct-name">${esc(c.name)}</span><span class="plate">${esc(c.plate)}</span>
+      <span class="ct-sub">${esc(c.color || '')}${c.active === false ? ' <span class="chip cancelled">Inactive</span>' : ''}</span></${a ? 'button' : 'div'}>`; }).join('')}</div>`).join('')}`
+    : `<div class="empty">${CAR.replace('car-ico', 'car-ico big')}<h3>Add your cars</h3><p>Cars and plate numbers you add here appear in the booking form.${a ? ' Use <strong>Add many cars</strong> to paste your whole fleet from Excel at once.' : ''}</p></div>`}`;
   return { title: 'Cars and plates', back: '#/more', html };
 }
+function parseCarLines(text) {
+  const known = new Set(S.cars.map(c => (c.plate || '').replace(/\s/g, '').toUpperCase()));
+  const seen = new Set(), ok = [], skipped = [];
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const line = raw.trim(); if (!line) return;
+    const parts = (line.includes('\t') ? line.split('\t') : line.split(',')).map(x => x.trim());
+    const [name = '', plate = '', color = '', category = ''] = parts;
+    if (i === 0 && /^plate/i.test(plate)) return;
+    const key = plate.replace(/\s/g, '').toUpperCase();
+    if (!name || !plate) skipped.push(`Line ${i + 1}: needs a model and a plate`);
+    else if (known.has(key)) skipped.push(`Line ${i + 1}: plate ${plate} is already in your list`);
+    else if (seen.has(key)) skipped.push(`Line ${i + 1}: plate ${plate} appears twice`);
+    else { seen.add(key); ok.push({ name, plate: plate.toUpperCase(), color, category, active: true }); }
+  });
+  return { ok, skipped };
+}
+ACT['car-bulk'] = () => {
+  const o = openSheet(`<h2>Add many cars</h2>
+    <p class="muted small" style="margin:4px 0 0">One car per line in this order: <strong>Model, Plate, Color, Category</strong>. You can copy the rows straight from Excel and paste them here. Color and category are optional.</p>
+    <label class="f">Cars<textarea id="bk-text" rows="9" spellcheck="false" placeholder="Nissan Sunny 2025, N 45821, White, Economy Cars&#10;Toyota Camry 2024, K 11203, Black, Luxury Cars&#10;Kia Picanto 2025, M 77310, Red, Small Cars"></textarea></label>
+    <div id="bk-prev" class="small" style="margin-top:8px"></div>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="bk-save" disabled>Add cars</button></div>`);
+  const ta = o.querySelector('#bk-text'), btn = o.querySelector('#bk-save');
+  const upd = () => {
+    const { ok, skipped } = parseCarLines(ta.value);
+    o.querySelector('#bk-prev').innerHTML = (ok.length ? `<p style="margin:0 0 4px"><strong>${ok.length} car${ok.length === 1 ? '' : 's'} ready to add</strong></p>` : '')
+      + (skipped.length ? `<div class="warn" style="margin-top:6px">${skipped.length} line${skipped.length === 1 ? '' : 's'} will be skipped:<br>${skipped.slice(0, 8).map(esc).join('<br>')}${skipped.length > 8 ? '<br>…' : ''}</div>` : '');
+    btn.disabled = !ok.length; btn.textContent = ok.length ? `Add ${ok.length} car${ok.length === 1 ? '' : 's'}` : 'Add cars';
+    return ok;
+  };
+  ta.addEventListener('input', upd);
+  btn.onclick = async () => {
+    const ok = upd(); if (!ok.length) return;
+    btn.disabled = true;
+    try {
+      for (let i = 0; i < ok.length; i += 400) { const b = db.batch(); ok.slice(i, i + 400).forEach(c => b.set(db.collection('cars').doc(), c)); await b.commit(); }
+      closeSheet(); toast(`${ok.length} cars added.`);
+    } catch (e) { btn.disabled = false; toast(friendlyError(e)); }
+  };
+};
 ACT['car-edit'] = ({ id }) => {
   const c = S.cars.find(x => x.id === id) || { active: true };
   const cats = [...new Set(S.cars.map(x => x.category).filter(Boolean))];
@@ -1226,10 +1361,10 @@ function viewAccount() {
 
 /* ========================================================= auth screens */
 function viewNotConfigured() {
-  return `<div class="auth"><div class="auth-card">${brand()}<h1>Connect Firebase first</h1><p class="muted">Open <strong>index.html</strong>, paste your Firebase settings into <strong>FIREBASE_CONFIG</strong> near the top, then upload it to GitHub again. SETUP.md walks through every step.</p></div></div>`;
+  return `<div class="auth"><div class="auth-card">${brand()}<h1>Connect Firebase first</h1><p class="muted">The file <strong>config.js</strong> is missing from your GitHub repository, or still has <strong>PASTE_</strong> values. Upload config.js with your Firebase keys, wait a minute, and reload.</p></div></div>`;
 }
 function viewLogin() {
-  return `<div class="auth"><div class="auth-card">${brand()}<h1>Sign in</h1><p class="muted" style="margin-top:0">Thomson Car Rental Booking Service</p>
+  return `<div class="auth">${SKYLINE}<div class="auth-card">${brand()}<h1>Sign in</h1><p class="muted" style="margin-top:0">Thomson Car Rental Booking Service</p>
     <label class="f">Username<input id="l-user" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
     <label class="f">Password<input id="l-pass" type="password" autocomplete="current-password"></label>
     <p class="err" id="l-err" role="alert"></p><button class="btn primary block" id="l-go">Sign in</button></div></div>`;
@@ -1244,7 +1379,7 @@ function mountLogin() {
   $('#l-go').onclick = go; $('#l-pass').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
 }
 function viewSetup() {
-  return `<div class="auth"><div class="auth-card">${brand()}<h1>First-time setup</h1><p class="muted" style="margin-top:0">Create the main admin account. This screen appears only once.</p>
+  return `<div class="auth">${SKYLINE}<div class="auth-card">${brand()}<h1>First-time setup</h1><p class="muted" style="margin-top:0">Create the main admin account. This screen appears only once.</p>
     <label class="f">Full name<input id="su-name" placeholder="Sajid Ali"></label>
     <label class="f">Username<input id="su-user" autocapitalize="none" placeholder="sajid.admin"></label>
     <label class="f">Password<input id="su-pass" type="password" autocomplete="new-password" placeholder="At least 6 characters"></label>
