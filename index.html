@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thomson Booking</title>
+<meta name="theme-color" content="#16324F">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Thomson Booking">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#122033;--navy:#16324F;--navy-2:#234A72;--paper:#F2F4F7;--card:#FFFFFF;--line:#DCE2E9;--line-2:#C5CFDA;--muted:#5A6A7B;
+  --deliv:#1D63B8;--deliv-bg:#E6EFFA;--pick:#9A5800;--pick-bg:#FCEFD8;--done:#2B7A4B;--done-bg:#E1F1E7;--late:#B92F26;--late-bg:#FBE7E5;
+  --head:'Archivo',system-ui,-apple-system,Segoe UI,sans-serif;--body:'Public Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+  --r:12px;--r-sm:8px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 var(--body);-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+body.no-nav{padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--deliv)}
+h1,h2,h3{font-family:var(--head);margin:0;line-height:1.2}
+.main{max-width:760px;margin:0 auto;padding:16px}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+.num{font-variant-numeric:tabular-nums}
+.hidden{display:none!important}
+:focus-visible{outline:3px solid #7FB0EA;outline-offset:2px}
+
+/* top bars */
+.topbar{background:var(--navy);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px}
+.topbar h1{font-size:19px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .back svg{width:26px;height:26px}
+.topbar .back{color:#fff;text-decoration:none;font-size:15px;display:flex;align-items:center;gap:4px;min-height:40px}
+.hero{background:var(--navy);color:#fff;padding:calc(18px + env(safe-area-inset-top)) 16px 22px}
+.hero-in{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.hero .logo{height:52px;width:auto;max-width:150px;background:#fff;border-radius:var(--r-sm);padding:4px}
+.wordmark{display:flex;flex-direction:column;line-height:1;background:#fff;color:var(--navy);border-radius:var(--r-sm);padding:8px 10px}
+.wm-1{font-family:var(--head);font-weight:800;font-size:20px;letter-spacing:.02em}
+.wm-2{font-size:11px;margin-top:3px;color:var(--navy-2)}
+.hero .welcome{font-size:15px;line-height:1.35}
+.hero .who{font-size:13px;opacity:.8;margin-top:2px}
+
+/* date bar */
+.datebar{max-width:760px;margin:0 auto;padding:18px 16px 6px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px}
+.bigdate{font-size:clamp(24px,6.5vw,32px);font-weight:800;letter-spacing:-.01em;text-align:center}
+.datebar .sub{text-align:center;margin:4px 0 0;color:var(--muted);font-size:14px}
+.seg{display:flex;justify-content:center;gap:6px;margin-bottom:8px}
+.seg button{border:1px solid var(--line-2);background:var(--card);border-radius:999px;padding:6px 14px;font-size:14px;cursor:pointer;min-height:36px}
+.seg button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-2);background:var(--card);display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:20px;height:20px}
+
+/* strips */
+.strip{border-radius:var(--r);padding:12px 14px;margin:12px 0}
+.strip h3{font-size:15px;margin-bottom:6px}
+.strip.late{background:var(--late-bg);border:1px solid #F1B8B2;color:#7A1C16}
+.strip.info{background:var(--deliv-bg);border:1px solid #B9D1F0;color:#123E73}
+.strip a.row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(0,0,0,.08);text-decoration:none;color:inherit;font-size:14px}
+.strip a.row:first-of-type{border-top:0}
+
+/* timeline */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.timeline{list-style:none;margin:8px 0 0;padding:0;position:relative}
+.timeline::before{content:"";position:absolute;left:71px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.task{display:grid;grid-template-columns:58px 1fr;column-gap:26px;position:relative;padding:6px 0}
+.task::before{content:"";position:absolute;left:66px;top:22px;width:12px;height:12px;border-radius:50%;background:var(--deliv);box-shadow:0 0 0 3px var(--paper)}
+.task.pickup::before{background:#D08A1C}
+.task.done::before{background:var(--done)}
+.task.late::before{background:var(--late)}
+.t-time{font-family:var(--head);font-weight:800;font-size:17px;text-align:right;padding-top:14px;line-height:1.1}
+.t-time small{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted);margin-top:2px}
+.t-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0}
+.task.done .t-card{background:#F7FBF8;border-color:#CBE5D4}
+.task.late .t-card{border-color:#E9A39C;background:#FFF8F7}
+.task.soon .t-card{border-color:#E4A94A;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(228,169,74,.0)}50%{box-shadow:0 0 0 6px rgba(228,169,74,.35)}}
+@media (prefers-reduced-motion:reduce){.task.soon .t-card{animation:none;box-shadow:0 0 0 4px rgba(228,169,74,.35)}}
+.t-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.t-car{font-weight:700;font-size:16px}
+.plate{display:inline-block;border:1.5px solid var(--ink);border-radius:5px;padding:0 6px;font-size:13px;font-weight:700;letter-spacing:.04em;margin-left:4px;vertical-align:1px;font-variant-numeric:tabular-nums}
+.t-meta{font-size:14px;color:var(--muted);margin-top:2px}
+.t-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#EDF0F4;color:#34465A;white-space:nowrap}
+.chip.delivery{background:var(--deliv-bg);color:#154C8E}
+.chip.pickup{background:var(--pick-bg);color:#7A4500}
+.chip.done,.chip.closed{background:var(--done-bg);color:#1F5E39}
+.chip.late,.chip.cancelled{background:var(--late-bg);color:#8E231C}
+.chip.soon{background:#FFE7BF;color:#7A4500}
+.chip.mine{background:var(--navy);color:#fff}
+.chip.booked{background:var(--deliv-bg);color:#154C8E}
+.chip.onrent{background:#E8E4F8;color:#3E2F8A}
+.chip.returned,.chip.pending{background:var(--pick-bg);color:#7A4500}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 14px;border-radius:var(--r-sm);border:1px solid var(--line-2);background:var(--card);cursor:pointer;font-size:15px;font-weight:500;text-decoration:none;color:var(--ink)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.good{background:var(--done);border-color:var(--done);color:#fff}
+.btn.danger{color:var(--late);border-color:#E9A39C}
+.btn.sm{min-height:36px;padding:6px 11px;font-size:14px}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.55;cursor:default}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btnrow .btn{flex:1 1 auto}
+
+/* cards, sections */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:12px 0}
+.card h2{font-size:17px;margin-bottom:10px}
+.kv{display:grid;grid-template-columns:minmax(110px,38%) 1fr;gap:6px 12px;font-size:15px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.kv .big{font-family:var(--head);font-weight:800;font-size:18px}
+.empty{text-align:center;padding:36px 16px;color:var(--muted)}
+.empty h3{color:var(--ink);font-size:17px;margin-bottom:6px}
+.list-row{display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:8px 0;text-decoration:none;color:inherit}
+.list-row .lr-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.list-row .lr-sub{font-size:14px;color:var(--muted);margin-top:3px}
+.list-row .lr-when{font-weight:700;margin-top:4px}
+.menu a,.menu button{display:flex;justify-content:space-between;align-items:center;width:100%;padding:15px 16px;background:var(--card);border:0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink);font-size:16px;cursor:pointer;text-align:left}
+.menu{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin:12px 0}
+.menu :last-child{border-bottom:0}
+
+/* forms */
+label.f{display:block;font-size:14px;color:var(--muted);margin:12px 0 0}
+label.f>input,label.f>select,label.f>textarea,.f-in{display:block;width:100%;margin-top:5px;min-height:44px;padding:10px 12px;border:1px solid var(--line-2);border-radius:var(--r-sm);background:#fff;color:var(--ink);font-size:16px}
+label.f>textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 12px}
+.grid2>*{min-width:0}
+label.f>input{min-width:0;-webkit-appearance:none;appearance:none}
+label.f>input[type=date],label.f>input[type=time]{-webkit-appearance:none;appearance:none}
+.err{color:var(--late);font-size:14px;margin:8px 0 0;min-height:1em}
+.warn{background:var(--pick-bg);border:1px solid #EFC98A;color:#6B3D00;border-radius:var(--r-sm);padding:10px 12px;font-size:14px;margin-top:12px}
+.calc{background:#F6F8FB;border:1px dashed var(--line-2);border-radius:var(--r-sm);padding:12px;margin-top:14px;font-size:15px}
+.calc .r{display:flex;justify-content:space-between;gap:10px;padding:2px 0}
+.calc .r.t{font-weight:700;border-top:1px solid var(--line-2);margin-top:6px;padding-top:6px}
+.calc .r.g{font-family:var(--head);font-weight:800;font-size:19px}
+.pill-choice{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap}
+.pill-choice label{flex:1 1 0;min-width:90px}
+.pill-choice input{position:absolute;opacity:0;pointer-events:none}
+.pill-choice span{display:block;text-align:center;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 8px;background:#fff;cursor:pointer;color:var(--ink);font-size:15px}
+.pill-choice input:checked+span{background:var(--navy);border-color:var(--navy);color:#fff}
+.pill-choice input:focus-visible+span{outline:3px solid #7FB0EA}
+.line{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr) 102px 26px;gap:6px;align-items:center;margin-top:8px}
+.line input,.line select{min-height:42px;padding:8px 6px;border:1px solid var(--line-2);border-radius:var(--r-sm);background:#fff;width:100%;font-size:15px;min-width:0}
+.line .x{border:0;background:none;font-size:22px;color:var(--muted);cursor:pointer}
+.line .lock{font-size:13px;color:var(--muted);padding-left:4px}
+
+/* bottom nav */
+.nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:30}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--muted);text-decoration:none;padding:4px 0;min-height:48px}
+.nav a svg{width:23px;height:23px}
+.nav a.on{color:var(--navy);font-weight:700}
+.nav a.add span.plus{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;margin-top:-4px}
+.nav a.add svg{width:24px;height:24px}
+svg.i{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(10,20,35,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+.sheet h2{font-size:19px;margin-bottom:4px}
+@media(min-width:700px){.overlay{align-items:center}.sheet{border-radius:16px}}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;width:min(92vw,460px)}
+.toast{background:var(--ink);color:#fff;padding:12px 14px;border-radius:var(--r-sm);font-size:15px}
+.toast.alert{background:#7A4500}
+
+/* auth */
+.auth{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--navy)}
+.auth-card{background:#fff;border-radius:16px;padding:24px 20px;width:100%;max-width:400px}
+.auth-card .wordmark{background:var(--paper);display:inline-flex}
+.auth-card .logo{height:56px;width:auto}
+.auth-card h1{font-size:22px;margin:16px 0 4px}
+
+/* tables on screen */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{color:var(--muted);font-weight:600}
+.scroll-x{overflow-x:auto}
+
+/* print */
+#print{display:none}
+@media print{
+  html,body{background:#fff!important;padding:0}
+  body>*:not(#print){display:none!important}
+  #print{display:block;color:#000;font:11px/1.4 var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.p-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #16324F;padding-bottom:8px;margin-bottom:12px;gap:16px}
+.p-brand{display:flex;align-items:center;gap:10px}
+.p-logo{height:46px;width:auto}
+.p-wm{font-family:var(--head);font-weight:800;font-size:20px;color:#16324F;border:2px solid #16324F;padding:4px 8px;border-radius:4px}
+.p-co{font-family:var(--head);font-weight:800;font-size:15px;color:#16324F}
+.p-addr{font-size:10px;color:#444}
+.p-title{text-align:right}
+.p-title h1{font-size:17px;color:#16324F}
+.p-tbl{width:100%;border-collapse:collapse;margin-top:6px}
+.p-tbl th{background:#16324F;color:#fff;text-align:left;padding:5px 6px;font-weight:600;font-size:10.5px}
+.p-tbl td{padding:5px 6px;border-bottom:1px solid #CCD3DB;vertical-align:top}
+.p-tbl tr:nth-child(even) td{background:#F3F6F9}
+.p-tbl .r{text-align:right}
+.p-tbl tfoot td{font-weight:700;background:#E6ECF2!important;border-top:2px solid #16324F}
+.p-sec{margin-top:12px}
+.p-sec h2{font-size:12.5px;color:#16324F;border-bottom:1px solid #16324F;padding-bottom:3px;margin-bottom:6px}
+.p-kv{display:grid;grid-template-columns:140px 1fr 140px 1fr;gap:4px 10px}
+.p-kv dt{color:#555}
+.p-kv dd{margin:0}
+.p-big{font-weight:800;font-size:13px}
+.p-sign{display:flex;justify-content:space-between;gap:30px;margin-top:40px}
+.p-sign div{flex:1;border-top:1px solid #000;padding-top:4px;text-align:center}
+.p-foot{margin-top:14px;font-size:9.5px;color:#555;text-align:right}
+.p-type-d{color:#154C8E;font-weight:700}
+.p-type-p{color:#7A4500;font-weight:700}
+.p-total td{font-size:12.5px}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" aria-live="polite"></div>
+<div id="print"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   SETTINGS YOU EDIT ONCE (see SETUP.md)
+   ========================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
+  projectId: "PASTE_PROJECT_ID",
+  storageBucket: "PASTE_PROJECT_ID.appspot.com",
+  messagingSenderId: "PASTE_SENDER_ID",
+  appId: "PASTE_APP_ID"
+};
+const LOGO_URL = '';            // e.g. 'logo.png' after uploading your logo to the repository
+const COMPANY = 'Thomson Rent A Car LLC';
+const EMAIL_DOMAIN = 'thomson-booking.app'; // internal only: usernames become username@this-domain
+
+/* ========================================================= helpers */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const dstr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const localStr = d => `${dstr(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const todayStr = () => dstr(new Date());
+const nowLocal = () => localStr(new Date());
+const parseDT = s => { if (!s) return null; const [a, b = '00:00'] = s.split('T'); const [y, m, d] = a.split('-').map(Number); const [h, mi] = b.split(':').map(Number); return new Date(y, m - 1, d, h || 0, mi || 0); };
+const addDays = (ds, n) => { const [y, m, d] = ds.split('-').map(Number); return dstr(new Date(y, m - 1, d + n)); };
+const dayDiff = (a, b) => Math.round((parseDT(b + 'T12:00') - parseDT(a + 'T12:00')) / 864e5);
+const fmtLong = ds => parseDT(ds + 'T12:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const fmtDate = ds => ds ? parseDT(ds.slice(0, 10) + 'T12:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+const fmtDay = ds => ds ? parseDT(ds.slice(0, 10) + 'T12:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+const time12 = t => { if (!t) return ''; let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${pad(m)} ${ap}`; };
+const tOf = s => s ? s.slice(11, 16) : '';
+const fmtDT = s => s ? `${fmtDate(s)}, ${time12(tOf(s))}` : '';
+const money = n => (Math.round(((+n || 0) + Number.EPSILON) * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const r2 = n => Math.round(((+n || 0) + Number.EPSILON) * 100) / 100;
+const durText = ms => { const m = Math.max(1, Math.round(Math.abs(ms) / 60000)); if (m < 60) return `${m} min`; const h = Math.floor(m / 60), mm = m % 60; if (h < 48) return mm ? `${h} h ${mm} min` : `${h} h`; return `${Math.round(h / 24)} days`; };
+const ICON = {
+  home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  car: '<path d="M3.5 13.5 5.5 7h13l2 6.5V18h-17z M3.5 13.5h17 M7 16h.01 M17 16h.01 M6 18v2 M18 18v2"/>',
+  more: '<path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3.2"/>',
+  left: '<path d="M15 6l-6 6 6 6"/>',
+  right: '<path d="M9 6l6 6-6 6"/>'
+};
+const ico = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+const STATUS = { booked: 'Booked', onrent: 'On rent', returned: 'Returned, to settle', pending: 'Pending charges', closed: 'Closed', cancelled: 'Cancelled' };
+const ACTIVE = ['booked', 'onrent', 'returned', 'pending'];
+const MODE_LABEL = { plus: '+VAT', incl: 'Incl. VAT', none: 'No VAT' };
+const FUEL = ['Empty', '1/4', '1/2', '3/4', 'Full'];
+
+/* ========================================================= VAT & totals */
+const vatRate = () => ((S.settings.vatRate ?? 5) / 100);
+function lineCalc(amount, mode, v = vatRate()) {
+  amount = +amount || 0;
+  if (mode === 'plus') { const vat = r2(amount * v); return { net: r2(amount), vat, gross: r2(amount + vat) }; }
+  if (mode === 'incl') { const net = r2(amount / (1 + v)); return { net, vat: r2(amount - net), gross: r2(amount) }; }
+  return { net: r2(amount), vat: 0, gross: r2(amount) };
+}
+function calcSettlement(s, v = vatRate()) {
+  const rows = [];
+  const rent = lineCalc((+s.rentDays || 0) * (+s.rate || 0), s.vatMode, v);
+  rows.push({ label: `Rent ${+s.rentDays || 0} day${+s.rentDays === 1 ? '' : 's'} × ${money(s.rate)}`, mode: s.vatMode, ...rent });
+  (s.lines || []).forEach(l => { if (+l.amount) rows.push({ label: l.label || 'Other', mode: l.mode, ...lineCalc(l.amount, l.mode, v) }); });
+  if (+s.fines) rows.push({ label: 'Traffic fines', mode: 'none', ...lineCalc(s.fines, 'none', v) });
+  const taxable = r2(rows.filter(r => r.mode !== 'none').reduce((a, r) => a + r.net, 0));
+  const vat = r2(rows.reduce((a, r) => a + r.vat, 0));
+  const nonTaxable = r2(rows.filter(r => r.mode === 'none').reduce((a, r) => a + r.gross, 0));
+  const subtotal = r2(rows.reduce((a, r) => a + r.gross, 0));
+  const cc = s.method === 'card' ? r2(subtotal * (+s.ccPct || 0) / 100) : 0;
+  const ccVat = r2(cc * v);
+  const total = r2(subtotal + cc + ccVat);
+  const advance = r2(s.advance);
+  return { rows, taxable, vat, nonTaxable, subtotal, cc, ccVat, total, advance, balance: r2(total - advance) };
+}
+const estimate = (b, f) => lineCalc((+b.days || 0) * (+f.rate || 0), f.vatMode);
+const bookingTotal = (b, f) => !f ? 0 : (f.settlement && f.settlement.totals ? f.settlement.totals.total : estimate(b, f).gross);
+
+/* ========================================================= state */
+const S = {
+  me: null, settings: {}, cars: [], sales: [], users: [],
+  active: new Map(), day: new Map(), cache: new Map(), fin: new Map(),
+  viewDate: todayStr(), unsub: [], dayUnsub: [], detailId: null, detailUnsub: [],
+  formOpen: false, route: 'home', filter: null, listRows: null, listFin: new Map(), settingUp: false
+};
+try { S.notified = new Set(JSON.parse(localStorage.getItem('tb-notified') || '[]')); } catch (e) { S.notified = new Set(); }
+const role = () => S.me && S.me.role;
+const isAdmin = () => role() === 'admin';
+const isStaff = () => role() === 'admin' || role() === 'sales';
+const getB = id => S.active.get(id) || S.day.get(id) || S.cache.get(id);
+const drivers = () => S.users.filter(u => u.role === 'driver' && u.active !== false);
+
+/* ========================================================= firebase */
+const configured = !String(FIREBASE_CONFIG.apiKey).startsWith('PASTE');
+let auth, db, FV;
+if (configured) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  auth = firebase.auth(); db = firebase.firestore(); FV = firebase.firestore.FieldValue;
+}
+const emailOf = u => `${String(u).trim().toLowerCase()}@${EMAIL_DOMAIN}`;
+function friendlyError(e) {
+  const c = (e && e.code) || '';
+  if (/invalid-credential|wrong-password|user-not-found|invalid-login/.test(c)) return 'Username or password is incorrect.';
+  if (/email-already-in-use/.test(c)) return 'That username is already taken. Try another.';
+  if (/weak-password/.test(c)) return 'Password must be at least 6 characters.';
+  if (/too-many-requests/.test(c)) return 'Too many attempts. Wait a few minutes and try again.';
+  if (/permission-denied/.test(c)) return "You don't have permission for this.";
+  if (/unavailable|network/.test(c)) return 'No connection. Check your internet and try again.';
+  if (/requires-recent-login/.test(c)) return 'Sign out and sign in again, then retry.';
+  return (e && e.message) || 'Something went wrong. Try again.';
+}
+
+function boot() {
+  if (!configured) { document.body.classList.add('no-nav'); $('#app').innerHTML = viewNotConfigured(); return; }
+  auth.onAuthStateChanged(u => { if (!S.settingUp) handleAuth(u); });
+  window.addEventListener('hashchange', () => { S.formOpen = false; render(); window.scrollTo(0, 0); });
+  document.addEventListener('click', onClick);
+  document.addEventListener('pointerdown', unlockAudio, { once: true });
+  setInterval(tick, 30000);
+}
+async function handleAuth(u) {
+  stopAll();
+  S.me = null;
+  if (!u) {
+    document.body.classList.add('no-nav');
+    let setupDone = true;
+    try { const s = await db.doc('meta/setup').get(); setupDone = s.exists; } catch (e) { setupDone = true; }
+    $('#app').innerHTML = setupDone ? viewLogin() : viewSetup();
+    setupDone ? mountLogin() : mountSetup();
+    return;
+  }
+  let snap;
+  try { snap = await db.doc('users/' + u.uid).get(); } catch (e) { snap = null; }
+  if (!snap || !snap.exists || snap.data().active === false) {
+    document.body.classList.add('no-nav');
+    $('#app').innerHTML = `<div class="auth"><div class="auth-card">${brand()}<h1>Account not active</h1><p class="muted">Ask your admin to activate your account.</p><button class="btn primary block" data-act="signout">Sign out</button></div></div>`;
+    return;
+  }
+  S.me = { id: u.uid, ...snap.data() };
+  document.body.classList.remove('no-nav');
+  startListeners();
+  if (!location.hash || location.hash === '#') location.hash = '#/home';
+  render();
+}
+function stopAll() {
+  S.unsub.forEach(f => f()); S.unsub = [];
+  S.dayUnsub.forEach(f => f()); S.dayUnsub = [];
+  S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = null;
+  S.active = new Map(); S.day = new Map(); S.cache = new Map(); S.fin = new Map();
+}
+function onErr(e) { console.error(e); toast(friendlyError(e)); }
+function startListeners() {
+  const L = S.unsub;
+  L.push(db.collection('cars').onSnapshot(s => { S.cars = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '') || (a.plate || '').localeCompare(b.plate || '')); refresh(); }, onErr));
+  L.push(db.collection('salespeople').onSnapshot(s => { S.sales = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); refresh(); }, onErr));
+  L.push(db.collection('users').onSnapshot(s => { S.users = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); refresh(); }, onErr));
+  L.push(db.doc('meta/settings').onSnapshot(d => { S.settings = d.exists ? d.data() : {}; refresh(); }, onErr));
+  L.push(db.collection('bookings').where('status', 'in', ACTIVE).onSnapshot(s => { S.active = new Map(s.docs.map(d => [d.id, { id: d.id, ...d.data() }])); refresh(); tick(true); }, onErr));
+  subscribeDay();
+}
+function subscribeDay() {
+  S.dayUnsub.forEach(f => f()); S.dayUnsub = [];
+  const D = S.viewDate, dd = new Map(), pp = new Map();
+  const merge = () => { S.day = new Map([...dd, ...pp]); refresh(); };
+  S.dayUnsub.push(db.collection('bookings').where('deliveryDate', '==', D).onSnapshot(s => { dd.clear(); s.docs.forEach(d => dd.set(d.id, { id: d.id, ...d.data() })); merge(); }, onErr));
+  S.dayUnsub.push(db.collection('bookings').where('pickupDate', '==', D).onSnapshot(s => { pp.clear(); s.docs.forEach(d => pp.set(d.id, { id: d.id, ...d.data() })); merge(); }, onErr));
+}
+function ensureDetail(id) {
+  if (S.detailId === id) return;
+  S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = id;
+  S.detailUnsub.push(db.doc('bookings/' + id).onSnapshot(d => { if (d.exists) S.cache.set(id, { id, ...d.data() }); else S.cache.set(id, { id, missing: true }); refresh(); }, onErr));
+  if (isStaff()) S.detailUnsub.push(db.doc('finance/' + id).onSnapshot(d => { S.fin.set(id, d.exists ? d.data() : { rate: 0, vatMode: 'plus', advance: 0 }); refresh(); }, onErr));
+}
+async function getFinMany(ids) {
+  const out = new Map();
+  if (!isStaff()) return out;
+  const idField = firebase.firestore.FieldPath.documentId();
+  for (let i = 0; i < ids.length; i += 30) {
+    const chunk = ids.slice(i, i + 30);
+    if (!chunk.length) continue;
+    const s = await db.collection('finance').where(idField, 'in', chunk).get();
+    s.docs.forEach(d => out.set(d.id, d.data()));
+  }
+  return out;
+}
+let refreshQueued = false;
+function refresh() {
+  if (!S.me || S.formOpen || refreshQueued) return;
+  refreshQueued = true;
+  requestAnimationFrame(() => { refreshQueued = false; if (!S.formOpen) render(); });
+}
+
+/* ========================================================= ui primitives */
+function toast(msg, kind) {
+  const el = document.createElement('div'); el.className = 'toast' + (kind ? ' ' + kind : ''); el.setAttribute('role', 'status'); el.textContent = msg;
+  $('#toast').appendChild(el); setTimeout(() => el.remove(), kind === 'alert' ? 9000 : 3800);
+}
+function openSheet(html) {
+  closeSheet();
+  const o = document.createElement('div'); o.className = 'overlay'; o.id = 'overlay';
+  o.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  o.addEventListener('click', e => { if (e.target === o) closeSheet(); });
+  document.body.appendChild(o);
+  const f = o.querySelector('input,select,textarea'); if (f && window.innerWidth > 700) f.focus();
+  return o;
+}
+function closeSheet() { const o = $('#overlay'); if (o) o.remove(); }
+function ask({ title, text = '', ok = 'Confirm', input = null, danger = false }) {
+  return new Promise(res => {
+    const o = openSheet(`<h2>${esc(title)}</h2>${text ? `<p class="muted">${text}</p>` : ''}
+      ${input ? `<label class="f">${esc(input.label)}<input id="ask-in" type="${input.type || 'text'}" ${input.mode ? `inputmode="${input.mode}"` : ''} value="${esc(input.value || '')}"></label><p class="err" id="ask-err"></p>` : ''}
+      <div class="btnrow"><button class="btn" id="ask-no">Go back</button><button class="btn ${danger ? 'danger' : 'primary'}" id="ask-ok">${esc(ok)}</button></div>`);
+    o.querySelector('#ask-no').onclick = () => { closeSheet(); res(null); };
+    o.querySelector('#ask-ok').onclick = () => {
+      if (input) { const v = o.querySelector('#ask-in').value.trim(); if (input.required && !v) { o.querySelector('#ask-err').textContent = input.required; return; } closeSheet(); res(v); }
+      else { closeSheet(); res(true); }
+    };
+  });
+}
+function brand(cls = '') {
+  return LOGO_URL ? `<img src="${esc(LOGO_URL)}" class="logo ${cls}" alt="Thomson Rent A Car">`
+    : `<div class="wordmark ${cls}" aria-label="Thomson Rent A Car"><span class="wm-1">Thomson</span><span class="wm-2">Rent A Car</span></div>`;
+}
+const loading = () => `<div class="empty"><p>Loading…</p></div>`;
+const deny = () => ({ title: 'Not available', back: '#/home', html: `<div class="empty"><h3>This page isn't available for your role</h3><p><a href="#/home">Go to tasks</a></p></div>` });
+const statusChip = s => `<span class="chip ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
+const carLabel = b => `${esc(b.carName || 'Car')} <span class="plate">${esc(b.plate || '')}</span>`;
+
+/* ========================================================= audio reminder */
+let audioCtx = null;
+function unlockAudio() { try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) { } }
+function beep() {
+  try {
+    if (!audioCtx) return;
+    [0, 0.35].forEach(t => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+      const s = audioCtx.currentTime + t; g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.35, s + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, s + 0.28);
+      o.start(s); o.stop(s + 0.3);
+    });
+  } catch (e) { }
+  try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) { }
+}
+function isMine(t) {
+  const b = t.b; const drv = t.type === 'delivery' ? b.deliveryDriverId : b.pickupDriverId;
+  if (drv && drv === S.me.id) return true;
+  if (b.salespersonUid && b.salespersonUid === S.me.id) return true;
+  if (!drv && isAdmin()) return true;
+  return false;
+}
+function tick(silentRender) {
+  if (!S.me) return;
+  const now = Date.now();
+  const due = [];
+  for (const b of S.active.values()) {
+    if (b.status === 'booked') due.push({ b, type: 'delivery', at: b.deliveryAt });
+    if (b.status === 'onrent') due.push({ b, type: 'pickup', at: b.pickupAt });
+  }
+  due.forEach(t => {
+    const ms = parseDT(t.at) - now;
+    if (ms > 30 * 60000 || ms < -6 * 3600000 || !isMine(t)) return;
+    const stage = ms > 0 ? 'soon' : 'late';
+    const key = `${t.b.id}|${t.type}|${t.at}|${stage}`;
+    if (S.notified.has(key)) return;
+    S.notified.add(key);
+    try { localStorage.setItem('tb-notified', JSON.stringify([...S.notified].slice(-300))); } catch (e) { }
+    beep();
+    toast(`${t.type === 'delivery' ? 'Delivery' : 'Pickup'} ${stage === 'soon' ? 'in ' + durText(ms) : 'is late by ' + durText(ms)}: ${t.b.carName} ${t.b.plate}, ${t.b.clientName}, ${time12(tOf(t.at))}`, 'alert');
+  });
+  if (silentRender !== true && S.route === 'home') refresh();
+}
+/* ========================================================= router & shell */
+function render() {
+  if (!S.me) return;
+  const parts = location.hash.replace(/^#\/?/, '').split('/');
+  const r = parts[0] || 'home', id = parts[1];
+  const views = {
+    home: viewHome, bookings: viewBookings, new: () => viewForm(null), edit: () => viewForm(id), booking: () => viewDetail(id),
+    settle: () => viewSettle(id), onrent: viewOnRent, more: viewMore, cars: viewCars, sales: viewSales, users: viewUsers,
+    settings: viewSettings, account: viewAccount
+  };
+  if (!['booking', 'edit', 'settle'].includes(r) && S.detailId) { S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = null; }
+  const v = (views[r] || viewHome)();
+  S.route = r; S.formOpen = !!v.form;
+  const head = v.head != null ? v.head : `<header class="topbar">${v.back ? `<a class="back" href="${v.back}" aria-label="Back">${ico('left')}</a>` : ''}<h1>${esc(v.title || '')}</h1>${v.right || ''}</header>`;
+  $('#app').innerHTML = `${head}<main class="main">${v.html}</main>${navBar(r)}`;
+  if (v.mount) v.mount();
+}
+function navBar(r) {
+  const staff = isStaff();
+  const items = [['home', 'Tasks', 'home']];
+  if (staff) items.push(['bookings', 'Bookings', 'list'], ['new', 'New', 'plus']);
+  items.push(['onrent', 'On rent', 'car'], ['more', 'More', 'more']);
+  const map = { booking: staff ? 'bookings' : 'home', edit: 'bookings', settle: 'bookings', cars: 'more', sales: 'more', users: 'more', settings: 'more', account: 'more' };
+  const cur = map[r] || r;
+  return `<nav class="nav" aria-label="Main">${items.map(([k, label, ic]) => k === 'new'
+    ? `<a href="#/new" class="add ${cur === k ? 'on' : ''}"><span class="plus">${ico(ic)}</span>${label}</a>`
+    : `<a href="#/${k}" class="${cur === k ? 'on' : ''}" ${cur === k ? 'aria-current="page"' : ''}>${ico(ic)}${label}</a>`).join('')}</nav>`;
+}
+
+/* ========================================================= tasks */
+function tasksFor(D) {
+  const map = new Map([...S.day, ...S.active]);
+  const out = [];
+  for (const b of map.values()) {
+    if (b.status === 'cancelled') continue;
+    if (b.deliveryDate === D) out.push({ b, type: 'delivery', at: b.deliveryAt, done: !!b.deliveredAt });
+    if (b.pickupDate === D && b.deliveredAt) out.push({ b, type: 'pickup', at: b.pickupAt, done: !!b.pickedUpAt });
+  }
+  return out.sort((a, c) => a.at.localeCompare(c.at) || (a.type === 'delivery' ? -1 : 1));
+}
+function overdueTasks() {
+  const t = todayStr(), out = [];
+  for (const b of S.active.values()) {
+    if (b.status === 'booked' && b.deliveryDate < t) out.push({ b, type: 'delivery', at: b.deliveryAt });
+    if (b.status === 'onrent' && b.pickupDate < t) out.push({ b, type: 'pickup', at: b.pickupAt });
+  }
+  return out.sort((a, c) => a.at.localeCompare(c.at));
+}
+function taskState(t) {
+  if (t.done) return 'done';
+  const ms = parseDT(t.at) - Date.now();
+  if (ms < 0) return 'late';
+  if (ms <= 30 * 60000) return 'soon';
+  return 'upcoming';
+}
+function taskCard(t) {
+  const b = t.b, st = taskState(t), mine = isMine(t);
+  const ms = parseDT(t.at) - Date.now();
+  const doneAt = t.type === 'delivery' ? b.deliveredAt : b.pickedUpAt;
+  const badge = st === 'done' ? `<span class="chip done">Done ${time12(tOf(doneAt))}</span>`
+    : st === 'late' ? `<span class="chip late">Late by ${durText(ms)}</span>`
+    : st === 'soon' ? `<span class="chip soon">Due in ${durText(ms)}</span>` : '';
+  const drvName = t.type === 'delivery' ? b.deliveryDriverName : b.pickupDriverName;
+  const loc = t.type === 'pickup' ? (b.pickupLocation || b.location) : b.location;
+  const acts = [`<a class="btn sm" href="#/booking/${b.id}">View</a>`];
+  if (!t.done) {
+    acts.push(`<button class="btn sm" data-act="resched" data-id="${b.id}" data-type="${t.type}">Reschedule</button>`);
+    if (isStaff()) acts.push(`<button class="btn sm" data-act="assign" data-id="${b.id}">${drvName ? 'Driver' : 'Assign driver'}</button>`);
+    acts.push(`<button class="btn sm" data-act="ics" data-id="${b.id}" data-type="${t.type}">Add to calendar</button>`);
+    acts.push(`<button class="btn sm good" data-act="done" data-id="${b.id}" data-type="${t.type}">Mark done</button>`);
+  }
+  return `<li class="task ${t.type} ${st}">
+    <div class="t-time num">${time12(tOf(t.at)).replace(' ', '<br>')}</div>
+    <div class="t-card">
+      <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
+      <div class="t-car">${carLabel(b)}</div>
+      <div class="t-meta">${esc(b.clientName)}${loc ? `<br>${esc(loc)}` : ''}</div>
+      <div class="t-meta">${t.type === 'delivery' ? `${b.days} day${b.days == 1 ? '' : 's'}, ` : ''}${t.done ? `Done by ${esc(((t.type === 'delivery' ? b.deliveryHandover : b.pickupHandover) || {}).by || drvName || '-')}` : drvName ? `Driver: ${esc(drvName)}` : '<strong>No driver assigned</strong>'}</div>
+      <div class="t-actions">${acts.join('')}</div>
+    </div></li>`;
+}
+function viewHome() {
+  const D = S.viewDate, today = todayStr(), tomorrow = addDays(today, 1);
+  const tasks = tasksFor(D);
+  const nd = tasks.filter(t => t.type === 'delivery').length, np = tasks.length - nd, ndone = tasks.filter(t => t.done).length;
+  const overdue = D === today ? overdueTasks() : [];
+  const awaiting = isStaff() ? [...S.active.values()].filter(b => b.status === 'returned' || b.status === 'pending').sort((a, c) => a.pickupAt.localeCompare(c.pickupAt)) : [];
+  const head = `<section class="hero"><div class="hero-in">${brand()}<div><div class="welcome">Welcome to Thomson Car Rental Booking Service</div><div class="who">${esc(S.me.name)}, ${esc(role())}</div></div></div></section>`;
+  const html = `
+  <div class="datebar" style="padding-left:0;padding-right:0">
+    <button class="iconbtn" data-act="day" data-d="-1" aria-label="Previous day">${ico('left')}</button>
+    <div>
+      <div class="seg" role="group" aria-label="Day"><button class="${D === today ? 'on' : ''}" data-act="day" data-set="${today}">Today</button><button class="${D === tomorrow ? 'on' : ''}" data-act="day" data-set="${tomorrow}">Tomorrow</button></div>
+      <h1 class="bigdate">${esc(fmtLong(D))}</h1>
+      <p class="sub">${nd} deliver${nd === 1 ? 'y' : 'ies'}, ${np} pickup${np === 1 ? '' : 's'}${tasks.length ? `, ${ndone} done` : ''}</p>
+    </div>
+    <button class="iconbtn" data-act="day" data-d="1" aria-label="Next day">${ico('right')}</button>
+  </div>
+  ${overdue.length ? `<div class="strip late" role="alert"><h3>Overdue from earlier days (${overdue.length})</h3>${overdue.map(t => `<a class="row" href="#/booking/${t.b.id}"><span>${t.type === 'delivery' ? 'Delivery' : 'Pickup'}: ${esc(t.b.carName)} ${esc(t.b.plate)}, ${esc(t.b.clientName)}</span><strong class="num">${esc(fmtDay(t.at))}</strong></a>`).join('')}</div>` : ''}
+  ${awaiting.length ? `<div class="strip info"><h3>Returned, waiting for settlement (${awaiting.length})</h3>${awaiting.map(b => `<a class="row" href="#/settle/${b.id}"><span>${esc(b.ref)}: ${esc(b.carName)} ${esc(b.plate)}, ${esc(b.clientName)}</span><strong>${b.status === 'pending' ? 'Pending charges' : 'Settle'}</strong></a>`).join('')}</div>` : ''}
+  <div class="toolbar"><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm" href="#/new">New booking</a>' : ''}</div>
+  ${tasks.length ? `<ol class="timeline">${tasks.map(taskCard).join('')}</ol>`
+    : `<div class="empty"><h3>No tasks on this day</h3><p>Deliveries and pickups for ${esc(fmtDate(D))} will appear here.${isStaff() ? ' <a href="#/new">Create a booking</a>' : ''}</p></div>`}`;
+  return { head, html };
+}
+
+/* ========================================================= actions */
+const ACT = {};
+function onClick(e) {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const fn = ACT[el.dataset.act]; if (!fn) return;
+  e.preventDefault();
+  Promise.resolve(fn(el.dataset, el)).catch(onErr);
+}
+ACT.close = () => closeSheet();
+ACT.signout = () => { stopAll(); auth.signOut(); location.hash = ''; };
+ACT.day = d => {
+  S.viewDate = d.set ? d.set : addDays(S.viewDate, +d.d);
+  subscribeDay(); render();
+};
+ACT.done = ({ id, type }) => {
+  const b = getB(id); if (!b) return;
+  const del = type === 'delivery';
+  const o = openSheet(`<h2>${del ? 'Mark delivered' : 'Mark picked up'}</h2>
+    <p class="muted">${carLabel(b)}, ${esc(b.clientName)}</p>
+    <div class="grid2"><label class="f">KM reading<input id="h-km" inputmode="numeric" placeholder="45210"></label>
+    <label class="f">Fuel<select id="h-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>
+    <label class="f">Damage and notes<textarea id="h-notes" placeholder="${del ? 'Scratch on rear bumper' : 'No new damage'}"></textarea></label>
+    <p class="err" id="h-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn good" id="h-save">${del ? 'Confirm delivery' : 'Confirm pickup'}</button></div>`);
+  o.querySelector('#h-save').onclick = async ev => {
+    ev.target.disabled = true;
+    const ho = { km: $('#h-km').value.trim(), fuel: $('#h-fuel').value, notes: $('#h-notes').value.trim(), by: S.me.name, byId: S.me.id };
+    const at = nowLocal();
+    const upd = del ? { status: 'onrent', deliveredAt: at, deliveryHandover: ho } : { status: 'returned', pickedUpAt: at, pickupHandover: ho };
+    upd.updatedAt = FV.serverTimestamp(); upd.updatedBy = S.me.name;
+    upd.log = FV.arrayUnion({ at, by: S.me.name, text: del ? `Delivered (KM ${ho.km || '-'}, fuel ${ho.fuel})` : `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` });
+    try { await db.doc('bookings/' + id).update(upd); closeSheet(); toast(del ? 'Marked delivered. Pickup task added.' : 'Marked picked up.'); }
+    catch (e) { ev.target.disabled = false; $('#h-err').textContent = friendlyError(e); }
+  };
+};
+ACT.resched = ({ id, type }) => {
+  const b = getB(id); if (!b) return;
+  const cur = type === 'delivery' ? b.deliveryAt : b.pickupAt;
+  const base = new Date(Math.max(parseDT(cur).getTime(), Date.now()));
+  base.setSeconds(0, 0); base.setMinutes(Math.ceil(base.getMinutes() / 5) * 5);
+  const plus = m => localStr(new Date(base.getTime() + m * 60000));
+  const o = openSheet(`<h2>Reschedule ${type}</h2>
+    <p class="muted">${carLabel(b)}, ${esc(b.clientName)}<br>Now: <strong>${esc(fmtDT(cur))}</strong></p>
+    <div class="btnrow" style="margin-top:6px">${[30, 60, 120].map(m => `<button class="btn sm" data-q="${plus(m)}">+${m < 60 ? m + ' min' : m / 60 + ' hour' + (m > 60 ? 's' : '')}</button>`).join('')}</div>
+    <div class="grid2"><label class="f">New date<input type="date" id="r-date" value="${cur.slice(0, 10)}"></label><label class="f">New time<input type="time" id="r-time" value="${tOf(cur)}"></label></div>
+    <label class="f">Reason (optional)<input id="r-why" list="r-reasons" placeholder="Client requested later time"><datalist id="r-reasons"><option>Client requested</option><option>Client not reachable</option><option>Client delayed</option><option>Car not ready</option><option>Driver delayed</option></datalist></label>
+    <p class="err" id="r-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="r-save">Save new time</button></div>`);
+  o.querySelectorAll('[data-q]').forEach(btn => btn.onclick = () => { o.querySelector('#r-date').value = btn.dataset.q.slice(0, 10); o.querySelector('#r-time').value = tOf(btn.dataset.q); });
+  o.querySelector('#r-save').onclick = async ev => {
+    const nd = $('#r-date').value, nt = $('#r-time').value, why = $('#r-why').value.trim();
+    if (!nd || !nt) { $('#r-err').textContent = 'Pick a date and time.'; return; }
+    const at = `${nd}T${nt}`;
+    if (at === cur) { closeSheet(); return; }
+    const upd = { updatedAt: FV.serverTimestamp(), updatedBy: S.me.name };
+    let text = `${type === 'delivery' ? 'Delivery' : 'Pickup'} moved from ${fmtDT(cur)} to ${fmtDT(at)}`;
+    if (type === 'delivery') {
+      upd.deliveryAt = at; upd.deliveryDate = nd;
+      const pu = `${addDays(nd, +b.days)}T${nt}`; upd.pickupAt = pu; upd.pickupDate = pu.slice(0, 10);
+    } else {
+      upd.pickupAt = at; upd.pickupDate = nd;
+      const newDays = dayDiff(b.deliveryDate, nd);
+      if (isStaff() && newDays > 0 && newDays !== +b.days) {
+        closeSheet();
+        const yes = await ask({ title: newDays > b.days ? 'Charge as extension?' : 'Early return', text: `Pickup is now ${newDays} day${newDays === 1 ? '' : 's'} after delivery. Change rental days from ${b.days} to ${newDays}?`, ok: `Change to ${newDays} days` });
+        if (yes) { upd.days = newDays; text += `, days changed ${b.days} to ${newDays}`; }
+      }
+    }
+    if (why) text += ` (${why})`;
+    upd.log = FV.arrayUnion({ at: nowLocal(), by: S.me.name, text });
+    try { await db.doc('bookings/' + id).update(upd); closeSheet(); toast('New time saved.'); }
+    catch (e) { const er = $('#r-err'); if (er) er.textContent = friendlyError(e); else onErr(e); }
+  };
+};
+ACT.assign = ({ id }) => {
+  const b = getB(id); if (!b) return;
+  const opts = sel => `<option value="">Not assigned</option>${drivers().map(u => `<option value="${u.id}" ${u.id === sel ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}`;
+  const o = openSheet(`<h2>Assign drivers</h2><p class="muted">${carLabel(b)}, ${esc(b.clientName)}</p>
+    <label class="f">Delivery driver<select id="a-d">${opts(b.deliveryDriverId)}</select></label>
+    <label class="f">Pickup driver<select id="a-p">${opts(b.pickupDriverId)}</select></label>
+    ${drivers().length ? '' : '<p class="warn">No driver accounts yet. An admin can add them under More, Users.</p>'}
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="a-save">Save drivers</button></div>`);
+  o.querySelector('#a-save').onclick = async () => {
+    const d = $('#a-d').value, p = $('#a-p').value, nm = x => (S.users.find(u => u.id === x) || {}).name || '';
+    await db.doc('bookings/' + id).update({ deliveryDriverId: d, deliveryDriverName: nm(d), pickupDriverId: p, pickupDriverName: nm(p), updatedAt: FV.serverTimestamp(), updatedBy: S.me.name, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Drivers: delivery ${nm(d) || 'none'}, pickup ${nm(p) || 'none'}` }) });
+    closeSheet(); toast('Drivers saved.');
+  };
+};
+ACT.ics = ({ id, type }) => {
+  const b = getB(id); if (!b) return;
+  const at = type === 'delivery' ? b.deliveryAt : b.pickupAt;
+  const f = s => s.replace(/[-:]/g, '') + '00';
+  const end = localStr(new Date(parseDT(at).getTime() + 30 * 60000));
+  const loc = type === 'pickup' ? (b.pickupLocation || b.location) : b.location;
+  const clean = s => String(s || '').replace(/[\\,;]/g, m => '\\' + m).replace(/\n/g, '\\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Thomson Booking//EN', 'BEGIN:VEVENT',
+    `UID:${b.id}-${type}-${f(at)}@thomson-booking`, `DTSTAMP:${f(nowLocal())}`, `DTSTART:${f(at)}`, `DTEND:${f(end)}`,
+    `SUMMARY:${clean(`${type === 'delivery' ? 'Delivery' : 'Pickup'}: ${b.carName} ${b.plate}, ${b.clientName}`)}`,
+    `LOCATION:${clean(loc)}`, `DESCRIPTION:${clean(`${b.ref}\nClient phone: ${b.clientPhone || '-'}`)}`,
+    'BEGIN:VALARM', 'TRIGGER:-PT30M', 'ACTION:DISPLAY', 'DESCRIPTION:Task in 30 minutes', 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${b.ref}-${type}.ics`;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast('Calendar file created. Open it to add the event with a 30-minute alert.');
+};
+ACT.cancelbk = async ({ id }) => {
+  const b = getB(id);
+  const why = await ask({ title: `Cancel ${b.ref}?`, text: 'The booking stays in history as cancelled.', ok: 'Cancel booking', danger: true, input: { label: 'Reason', required: 'Enter a reason.' } });
+  if (!why) return;
+  await db.doc('bookings/' + id).update({ status: 'cancelled', cancelReason: why, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Cancelled: ${why}` }) });
+  toast('Booking cancelled.');
+};
+ACT.deletebk = async ({ id }) => {
+  const b = getB(id);
+  let pin = '';
+  try { const s = await db.doc('meta/secure').get(); pin = s.exists ? String(s.data().pin || '') : ''; } catch (e) { }
+  const v = await ask({ title: `Delete ${b.ref} permanently?`, text: 'This removes the booking and its payment record. It can\'t be undone.', ok: 'Delete', danger: true,
+    input: pin ? { label: 'Delete PIN', type: 'password', mode: 'numeric', required: 'Enter the PIN.' } : { label: 'Type DELETE to confirm', required: 'Type DELETE.' } });
+  if (!v) return;
+  if (pin ? v !== pin : v !== 'DELETE') { toast(pin ? 'Wrong PIN. Nothing was deleted.' : 'Not confirmed. Nothing was deleted.'); return; }
+  const batch = db.batch(); batch.delete(db.doc('bookings/' + id)); batch.delete(db.doc('finance/' + id)); await batch.commit();
+  S.cache.delete(id); location.hash = '#/bookings'; toast('Booking deleted.');
+};
+function waText(b, f) {
+  const lines = [`*${S.settings.companyName || COMPANY}*`, `Booking ${b.ref}`, '', `Client: ${b.clientName}`, `Car: ${b.carName} (${b.plate})`,
+    `*Delivery: ${fmtDT(b.deliveryAt)}*`, `Location: ${b.location || '-'}`, `*Return: ${fmtDT(b.pickupAt)}*`, `Days: ${b.days}`];
+  if (f && isStaff()) { const e = estimate(b, f); lines.push(`Rate: AED ${money(f.rate)} per day (${MODE_LABEL[f.vatMode]})`, `Total: AED ${money(e.gross)} incl. VAT`); }
+  return lines.join('\n');
+}
+const waNum = p => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '971' + d.slice(1); return d; };
+ACT.wa = ({ id }) => { const b = getB(id); window.open('https://wa.me/?text=' + encodeURIComponent(waText(b, S.fin.get(id))), '_blank'); };
+ACT.waclient = ({ id }) => { const b = getB(id); window.open(`https://wa.me/${waNum(b.clientPhone)}?text=` + encodeURIComponent(waText(b, S.fin.get(id))), '_blank'); };
+
+/* ========================================================= booking detail */
+function viewDetail(id) {
+  ensureDetail(id);
+  const b = getB(id);
+  if (!b) return { title: 'Booking', back: '#/home', html: loading() };
+  if (b.missing) return { title: 'Booking', back: '#/home', html: `<div class="empty"><h3>This booking no longer exists</h3><p><a href="#/home">Go to tasks</a></p></div>` };
+  const staff = isStaff(), f = S.fin.get(id);
+  let price = '';
+  if (staff) {
+    if (!f) price = `<div class="card">${loading()}</div>`;
+    else {
+      const e = estimate(b, f);
+      price = `<section class="card"><h2>Price</h2><dl class="kv num">
+        <dt>Rate</dt><dd>AED ${money(f.rate)} per day, ${MODE_LABEL[f.vatMode] || ''}</dd>
+        <dt>Rent (${b.days} days)</dt><dd>AED ${money(e.net)} + VAT ${money(e.vat)}</dd>
+        <dt>Rent total</dt><dd class="big">AED ${money(e.gross)}</dd>
+        ${+f.advance ? `<dt>Advance paid</dt><dd>AED ${money(f.advance)} (${esc(f.advanceMethod || 'cash')})</dd>` : ''}
+      </dl>${f.settlement && f.settlement.totals ? `<div class="calc">${settlementRowsHtml(f.settlement)}</div>` : ''}</section>`;
+    }
+  }
+  const ho = (h, label) => h ? `<dt>${label}</dt><dd>KM ${esc(h.km || '-')}, fuel ${esc(h.fuel || '-')}${h.notes ? `<br>${esc(h.notes)}` : ''}<br><span class="muted small">by ${esc(h.by || '')}</span></dd>` : '';
+  const acts = [];
+  if (b.status === 'booked') acts.push(`<button class="btn good" data-act="done" data-id="${id}" data-type="delivery">Mark delivered</button>`, `<button class="btn" data-act="resched" data-id="${id}" data-type="delivery">Reschedule delivery</button>`);
+  if (b.status === 'onrent') acts.push(`<button class="btn good" data-act="done" data-id="${id}" data-type="pickup">Mark picked up</button>`, `<button class="btn" data-act="resched" data-id="${id}" data-type="pickup">Reschedule pickup</button>`);
+  if (staff && (b.status === 'returned' || b.status === 'pending' || b.status === 'closed')) acts.push(`<a class="btn primary" href="#/settle/${id}">${b.status === 'closed' ? 'View settlement' : 'Settle return'}</a>`);
+  if (staff && ['booked', 'onrent'].includes(b.status)) acts.push(`<button class="btn" data-act="assign" data-id="${id}">Assign drivers</button>`);
+  if (staff && b.status !== 'cancelled' && b.status !== 'closed') acts.push(`<a class="btn" href="#/edit/${id}">Edit booking</a>`);
+  acts.push(`<button class="btn" data-act="slip" data-id="${id}">Booking slip PDF</button>`);
+  if (staff && f && f.settlement && f.settlement.totals) acts.push(`<button class="btn" data-act="bill" data-id="${id}">Final bill PDF</button>`);
+  if (staff) acts.push(`<button class="btn" data-act="wa" data-id="${id}">Share on WhatsApp</button>`);
+  if (staff && b.clientPhone) acts.push(`<button class="btn" data-act="waclient" data-id="${id}">Send to client</button>`);
+  if (staff && b.status === 'booked') acts.push(`<button class="btn danger" data-act="cancelbk" data-id="${id}">Cancel booking</button>`);
+  if (isAdmin()) acts.push(`<button class="btn danger" data-act="deletebk" data-id="${id}">Delete</button>`);
+  const log = (b.log || []).slice().reverse();
+  const html = `
+  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2>${statusChip(b.status)}</div>
+    ${b.status === 'cancelled' ? `<p class="warn">Cancelled: ${esc(b.cancelReason || '')}</p>` : ''}
+    <dl class="kv" style="margin-top:10px">
+      <dt>Client</dt><dd><strong>${esc(b.clientName)}</strong></dd>
+      ${b.clientPhone ? `<dt>Phone</dt><dd><a href="tel:${esc(b.clientPhone)}">${esc(b.clientPhone)}</a></dd>` : ''}
+      <dt>Delivery location</dt><dd>${esc(b.location || '-')}</dd>
+      ${b.pickupLocation ? `<dt>Pickup location</dt><dd>${esc(b.pickupLocation)}</dd>` : ''}
+      <dt>Car</dt><dd>${carLabel(b)}${carExtra(b.carId)}</dd>
+      <dt>Delivery</dt><dd class="big">${esc(fmtDT(b.deliveryAt))}</dd>
+      <dt>Pickup</dt><dd class="big">${esc(fmtDT(b.pickupAt))}</dd>
+      <dt>Days</dt><dd>${esc(b.days)}</dd>
+      <dt>Salesperson</dt><dd>${esc(b.salespersonName || '-')}</dd>
+      <dt>Drivers</dt><dd>Delivery: ${esc(b.deliveryDriverName || 'not assigned')}<br>Pickup: ${esc(b.pickupDriverName || 'not assigned')}</dd>
+      ${b.notes ? `<dt>Notes</dt><dd>${esc(b.notes)}</dd>` : ''}
+    </dl></section>
+  ${price}
+  ${b.deliveryHandover || b.pickupHandover ? `<section class="card"><h2>Handover</h2><dl class="kv">${ho(b.deliveryHandover, 'At delivery')}${ho(b.pickupHandover, 'At pickup')}</dl></section>` : ''}
+  <div class="btnrow">${acts.join('')}</div>
+  ${log.length ? `<section class="card"><h2>History</h2>${log.map(l => `<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><strong>${esc(fmtDT(l.at))}</strong>, ${esc(l.by)}<br>${esc(l.text)}</div>`).join('')}</section>` : ''}`;
+  return { title: `Booking ${b.ref}`, back: staff ? '#/bookings' : '#/home', html };
+}
+function carExtra(carId) { const c = S.cars.find(x => x.id === carId); return c && (c.color || c.category) ? `<br><span class="muted small">${esc([c.color, c.category].filter(Boolean).join(', '))}</span>` : ''; }
+function settlementRowsHtml(st) {
+  const t = st.totals;
+  return `${t.rows.map(r => `<div class="r"><span>${esc(r.label)} <span class="muted small">${MODE_LABEL[r.mode] || ''}</span></span><span class="num">${money(r.gross)}</span></div>`).join('')}
+    <div class="r t"><span>Taxable amount</span><span class="num">${money(t.taxable)}</span></div>
+    <div class="r"><span>VAT ${S.settings.vatRate ?? 5}%</span><span class="num">${money(t.vat)}</span></div>
+    ${t.nonTaxable ? `<div class="r"><span>Non-taxable (fines)</span><span class="num">${money(t.nonTaxable)}</span></div>` : ''}
+    <div class="r t"><span>Subtotal</span><span class="num">${money(t.subtotal)}</span></div>
+    ${t.cc ? `<div class="r"><span>CC charges ${esc(st.ccPct)}%</span><span class="num">${money(t.cc)}</span></div><div class="r"><span>VAT on CC charges</span><span class="num">${money(t.ccVat)}</span></div>` : ''}
+    <div class="r t g"><span>Total AED</span><span class="num">${money(t.total)}</span></div>
+    ${t.advance ? `<div class="r"><span>Less advance paid</span><span class="num">-${money(t.advance)}</span></div><div class="r t g"><span>Balance due</span><span class="num">${money(t.balance)}</span></div>` : ''}
+    <div class="r"><span>Payment</span><span>${esc(({ cash: 'Cash', card: 'Card', bank: 'Bank transfer' })[st.method] || st.method)}</span></div>`;
+}
+/* ========================================================= booking form */
+function conflicts(carId, startAt, endAt, excludeId) {
+  const s = parseDT(startAt), e = parseDT(endAt);
+  return [...S.active.values()].filter(b => b.id !== excludeId && b.carId === carId && (b.status === 'booked' || b.status === 'onrent') && parseDT(b.deliveryAt) < e && parseDT(b.pickupAt) > s);
+}
+async function nextRef() {
+  const ref = db.doc('meta/counter');
+  const n = await db.runTransaction(async tx => { const d = await tx.get(ref); const next = d.exists ? (+d.data().next || 1) : 1; tx.set(ref, { next: next + 1 }); return next; });
+  return 'BK-' + String(n).padStart(4, '0');
+}
+function viewForm(id) {
+  if (!isStaff()) return deny();
+  let b = null, f = null;
+  if (id) {
+    ensureDetail(id); b = getB(id); f = S.fin.get(id);
+    if (!b || !f) return { title: 'Edit booking', back: '#/booking/' + id, html: loading() };
+  }
+  const cars = S.cars.filter(c => c.active !== false || (b && c.id === b.carId));
+  const sps = S.sales.filter(s => s.active !== false || (b && s.id === b.salespersonId));
+  const mySp = S.sales.find(s => s.uid === S.me.id);
+  const v = {
+    clientName: b ? b.clientName : '', clientPhone: b ? b.clientPhone || '' : '', location: b ? b.location || '' : '', pickupLocation: b ? b.pickupLocation || '' : '',
+    carId: b ? b.carId : '', date: b ? b.deliveryDate : S.viewDate, time: b ? tOf(b.deliveryAt) : '10:00', days: b ? b.days : 1,
+    rate: f ? f.rate : '', vatMode: f ? f.vatMode : (S.settings.defaultVatMode || 'plus'), sp: b ? b.salespersonId : (mySp ? mySp.id : ''),
+    drv: b ? b.deliveryDriverId || '' : '', advance: f ? f.advance || '' : '', advMethod: f ? f.advanceMethod || 'cash' : 'cash', notes: b ? b.notes || '' : ''
+  };
+  const html = `
+  ${!cars.length ? `<p class="warn">Add your cars first. ${isAdmin() ? '<a href="#/cars">Go to cars</a>' : 'Ask an admin to add them.'}</p>` : ''}
+  <section class="card"><h2>Client</h2>
+    <label class="f">Client name<input id="b-name" value="${esc(v.clientName)}" autocomplete="off" placeholder="Mohammed Khan"></label>
+    <label class="f">Phone<input id="b-phone" type="tel" value="${esc(v.clientPhone)}" placeholder="050 123 4567"></label>
+    <label class="f">Delivery location<input id="b-loc" value="${esc(v.location)}" placeholder="Business Bay, Bay Square 3"></label>
+    <label class="f">Pickup location, if different<input id="b-ploc" value="${esc(v.pickupLocation)}" placeholder="Same as delivery"></label>
+  </section>
+  <section class="card"><h2>Car and dates</h2>
+    <label class="f">Car<select id="b-car"><option value="">Choose a car</option>${cars.map(c => `<option value="${c.id}" ${c.id === v.carId ? 'selected' : ''}>${esc(c.name)} (${esc(c.plate)})${c.active === false ? ', inactive' : ''}</option>`).join('')}</select></label>
+    <div class="grid2"><label class="f">Delivery date<input id="b-date" type="date" value="${esc(v.date)}"></label><label class="f">Delivery time<input id="b-time" type="time" value="${esc(v.time)}"></label></div>
+    <label class="f">Number of days<input id="b-days" type="number" inputmode="numeric" min="1" step="1" value="${esc(v.days)}"></label>
+    <div id="b-conf"></div>
+  </section>
+  <section class="card"><h2>Price</h2>
+    <label class="f">Daily rate (AED)<input id="b-rate" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(v.rate)}" placeholder="120"></label>
+    <div class="f" style="margin-top:12px;color:var(--muted);font-size:14px">VAT</div>
+    <div class="pill-choice" role="radiogroup" aria-label="VAT"><label><input type="radio" name="b-vat" value="plus" ${v.vatMode === 'plus' ? 'checked' : ''}><span>Price + VAT</span></label><label><input type="radio" name="b-vat" value="incl" ${v.vatMode === 'incl' ? 'checked' : ''}><span>VAT inclusive</span></label></div>
+    <div class="grid2"><label class="f">Advance paid (AED)<input id="b-adv" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(v.advance)}" placeholder="0"></label>
+    <label class="f">Advance method<select id="b-advm">${[['cash', 'Cash'], ['card', 'Card'], ['bank', 'Bank transfer']].map(([k, l]) => `<option value="${k}" ${v.advMethod === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+    <div class="calc num" id="b-calc"></div>
+  </section>
+  <section class="card"><h2>Team</h2>
+    <label class="f">Salesperson<select id="b-sp"><option value="">Choose salesperson</option>${sps.map(s => `<option value="${s.id}" ${s.id === v.sp ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
+    <label class="f">Delivery driver (optional)<select id="b-drv"><option value="">Assign later</option>${drivers().map(u => `<option value="${u.id}" ${u.id === v.drv ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select></label>
+    <label class="f">Notes<textarea id="b-notes" placeholder="Child seat needed">${esc(v.notes)}</textarea></label>
+  </section>
+  <p class="err" id="b-err" role="alert"></p>
+  <div class="btnrow"><a class="btn" href="${id ? '#/booking/' + id : '#/home'}">Go back</a><button class="btn primary" id="b-save">${id ? 'Save changes' : 'Create booking'}</button></div>`;
+  const mount = () => {
+    const val = () => ({
+      name: $('#b-name').value.trim(), phone: $('#b-phone').value.trim(), loc: $('#b-loc').value.trim(), ploc: $('#b-ploc').value.trim(),
+      carId: $('#b-car').value, date: $('#b-date').value, time: $('#b-time').value, days: parseInt($('#b-days').value, 10) || 0,
+      rate: parseFloat($('#b-rate').value) || 0, vat: ($('input[name=b-vat]:checked') || {}).value || 'plus',
+      adv: parseFloat($('#b-adv').value) || 0, advm: $('#b-advm').value, sp: $('#b-sp').value, drv: $('#b-drv').value, notes: $('#b-notes').value.trim()
+    });
+    const upd = () => {
+      const x = val();
+      const e = lineCalc(x.days * x.rate, x.vat);
+      const pu = x.date && x.time && x.days ? `${addDays(x.date, x.days)}T${x.time}` : '';
+      $('#b-calc').innerHTML = `${pu ? `<div class="r"><span>Return</span><strong>${esc(fmtDT(pu))}</strong></div>` : ''}
+        <div class="r"><span>Rent ${x.days} × ${money(x.rate)}</span><span>${money(e.net)}</span></div>
+        <div class="r"><span>VAT ${S.settings.vatRate ?? 5}%${x.vat === 'incl' ? ' (included)' : ''}</span><span>${money(e.vat)}</span></div>
+        <div class="r t g"><span>Total AED</span><span>${money(e.gross)}</span></div>
+        ${x.adv ? `<div class="r"><span>Balance after advance</span><span>${money(e.gross - x.adv)}</span></div>` : ''}`;
+      const cf = x.carId && pu ? conflicts(x.carId, `${x.date}T${x.time}`, pu, id) : [];
+      $('#b-conf').innerHTML = cf.length ? `<div class="warn"><strong>This car is already booked for overlapping dates:</strong>${cf.map(c => `<br>${esc(c.ref)}, ${esc(c.clientName)}, ${esc(fmtDT(c.deliveryAt))} to ${esc(fmtDT(c.pickupAt))}`).join('')}</div>` : '';
+      return { x, pu, cf };
+    };
+    $$('#app input, #app select, #app textarea').forEach(el => el.addEventListener('input', upd));
+    upd();
+    $('#b-save').onclick = async ev => {
+      const { x, pu, cf } = upd();
+      const err = !x.name ? 'Enter the client name.' : !x.loc ? 'Enter the delivery location.' : !x.carId ? 'Choose a car.' : !x.date || !x.time ? 'Enter the delivery date and time.'
+        : x.days < 1 ? 'Days must be at least 1.' : !x.rate ? 'Enter the daily rate.' : !x.sp ? 'Choose the salesperson.' : '';
+      $('#b-err').textContent = err; if (err) return;
+      if (cf.length && !(await ask({ title: 'Car already booked', text: 'This car overlaps with another booking. Save anyway?', ok: 'Save anyway' }))) return;
+      ev.target.disabled = true;
+      const car = S.cars.find(c => c.id === x.carId) || {}, sp = S.sales.find(s => s.id === x.sp) || {}, dr = S.users.find(u => u.id === x.drv) || {};
+      const data = {
+        clientName: x.name, clientPhone: x.phone, location: x.loc, pickupLocation: x.ploc, carId: x.carId, carName: car.name || '', plate: car.plate || '',
+        deliveryAt: `${x.date}T${x.time}`, deliveryDate: x.date, pickupAt: pu, pickupDate: pu.slice(0, 10), days: x.days,
+        salespersonId: x.sp, salespersonName: sp.name || '', salespersonUid: sp.uid || '', deliveryDriverId: x.drv, deliveryDriverName: dr.name || '',
+        notes: x.notes, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name
+      };
+      const fin = { rate: x.rate, vatMode: x.vat, advance: x.adv, advanceMethod: x.advm };
+      try {
+        const batch = db.batch();
+        if (!id) {
+          const ref = await nextRef();
+          const docRef = db.collection('bookings').doc();
+          batch.set(docRef, { ...data, ref, status: 'booked', pickupDriverId: '', pickupDriverName: '', createdAt: FV.serverTimestamp(), createdBy: S.me.name, log: [{ at: nowLocal(), by: S.me.name, text: 'Booking created' }] });
+          batch.set(db.doc('finance/' + docRef.id), { ...fin, ref });
+          await batch.commit(); S.formOpen = false; toast(`Booking ${ref} created.`); location.hash = '#/booking/' + docRef.id;
+        } else {
+          batch.update(db.doc('bookings/' + id), { ...data, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: 'Booking edited' }) });
+          batch.set(db.doc('finance/' + id), fin, { merge: true });
+          await batch.commit(); S.formOpen = false; toast('Changes saved.'); location.hash = '#/booking/' + id;
+        }
+      } catch (e) { ev.target.disabled = false; $('#b-err').textContent = friendlyError(e); }
+    };
+  };
+  return { title: id ? `Edit ${b.ref}` : 'New booking', back: id ? '#/booking/' + id : '#/home', html, mount, form: true };
+}
+
+/* ========================================================= return settlement */
+function viewSettle(id) {
+  if (!isStaff()) return deny();
+  ensureDetail(id);
+  const b = getB(id), f = S.fin.get(id);
+  if (!b || !f) return { title: 'Settle return', back: '#/booking/' + id, html: loading() };
+  const st = f.settlement || {};
+  const vm = f.vatMode || 'plus';
+  const ccOpts = String(S.settings.ccOptions || '4,5').split(',').map(s => +s.trim()).filter(n => n > 0);
+  const init = {
+    rentDays: st.rentDays ?? b.days, lines: st.lines || [{ label: 'Salik', amount: '', mode: vm }, { label: 'Parking', amount: '', mode: vm }],
+    fines: st.fines ?? '', advance: st.advance ?? (f.advance || 0), method: st.method || 'cash', ccPct: st.ccPct ?? (S.settings.defaultCc || ccOpts[ccOpts.length - 1] || 5), notes: st.notes || ''
+  };
+  const elapsed = b.deliveredAt && b.pickedUpAt ? Math.max(1, Math.ceil((parseDT(b.pickedUpAt) - parseDT(b.deliveredAt)) / 864e5 - 0.0417)) : null;
+  const modeSel = m => `<select aria-label="VAT">${['plus', 'incl'].map(k => `<option value="${k}" ${m === k ? 'selected' : ''}>${MODE_LABEL[k]}</option>`).join('')}</select>`;
+  const lineRow = l => `<div class="line" data-line><input aria-label="Charge" value="${esc(l.label)}" placeholder="Other charge"><input aria-label="Amount" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(l.amount)}" placeholder="0">${modeSel(l.mode)}<button class="x" type="button" aria-label="Remove">×</button></div>`;
+  const locked = b.status === 'closed';
+  const html = `
+  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2>${statusChip(b.status)}</div>
+    <p style="margin:6px 0 0">${carLabel(b)}, ${esc(b.clientName)}</p>
+    <p class="small muted" style="margin:4px 0 0">Delivered ${esc(fmtDT(b.deliveredAt) || '-')}, returned ${esc(fmtDT(b.pickedUpAt) || '-')}${elapsed ? `, about ${elapsed} day${elapsed === 1 ? '' : 's'} used` : ''}</p>
+    ${locked ? '<p class="warn">This booking is closed. Change any figure and save to reopen and update it.</p>' : ''}
+  </section>
+  <section class="card"><h2>Rent</h2>
+    <div class="grid2"><label class="f">Rent days<input id="s-days" type="number" inputmode="numeric" min="0" step="1" value="${esc(init.rentDays)}"></label>
+    <label class="f">Daily rate (AED)<input id="s-rate" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(f.rate)}"></label></div>
+    <p class="small muted" style="margin:6px 0 0">Booked for ${b.days} days, ${MODE_LABEL[vm]}. Add extension days here.</p>
+  </section>
+  <section class="card"><h2>Charges at return</h2>
+    <div class="line small muted" style="margin-top:0"><span>Charge</span><span>Amount</span><span>VAT</span><span></span></div>
+    <div id="s-lines">${init.lines.map(lineRow).join('')}</div>
+    <button class="btn sm" id="s-add" type="button" style="margin-top:8px">Add charge</button>
+    <div class="line" style="margin-top:12px"><span style="font-weight:600">Traffic fines</span><input id="s-fines" type="number" inputmode="decimal" step="0.01" min="0" value="${esc(init.fines)}" placeholder="0" aria-label="Fines amount"><span class="lock">No VAT</span><span></span></div>
+  </section>
+  <section class="card"><h2>Payment</h2>
+    <label class="f">Advance already paid (AED)<input id="s-adv" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(init.advance)}"></label>
+    <div class="f" style="margin-top:12px;color:var(--muted);font-size:14px">Payment method</div>
+    <div class="pill-choice" role="radiogroup" aria-label="Payment method">${[['cash', 'Cash'], ['card', 'Card'], ['bank', 'Bank transfer']].map(([k, l]) => `<label><input type="radio" name="s-pay" value="${k}" ${init.method === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
+    <div id="s-ccbox"><div class="f" style="margin-top:12px;color:var(--muted);font-size:14px">CC charges</div>
+    <div class="pill-choice" role="radiogroup" aria-label="CC charges">${ccOpts.map(p => `<label><input type="radio" name="s-cc" value="${p}" ${+init.ccPct === p ? 'checked' : ''}><span>${p}%</span></label>`).join('')}</div></div>
+    <label class="f">Notes<input id="s-notes" value="${esc(init.notes)}" placeholder="Salik for 24 Sep still to post"></label>
+    <div class="calc" id="s-sum"></div>
+  </section>
+  <p class="err" id="s-err" role="alert"></p>
+  <div class="btnrow"><button class="btn" id="s-pending">Save, charges pending</button><button class="btn primary" id="s-close">Close booking</button></div>
+  <div class="btnrow"><a class="btn" href="#/booking/${id}">Go back</a>${f.settlement ? `<button class="btn" data-act="bill" data-id="${id}">Final bill PDF</button>` : ''}</div>`;
+  const mount = () => {
+    const read = () => {
+      const lines = $$('[data-line]').map(r => { const [l, a, m] = r.querySelectorAll('input,select'); return { label: l.value.trim(), amount: parseFloat(a.value) || 0, mode: m.value }; });
+      const method = ($('input[name=s-pay]:checked') || {}).value || 'cash';
+      const s = { rentDays: parseInt($('#s-days').value, 10) || 0, rate: parseFloat($('#s-rate').value) || 0, vatMode: vm, lines, fines: parseFloat($('#s-fines').value) || 0,
+        advance: parseFloat($('#s-adv').value) || 0, method, ccPct: +((($('input[name=s-cc]:checked') || {}).value) || 0), notes: $('#s-notes').value.trim() };
+      if (method !== 'card') s.ccPct = 0;
+      return s;
+    };
+    const upd = () => {
+      const s = read();
+      $('#s-ccbox').classList.toggle('hidden', s.method !== 'card');
+      const totals = calcSettlement(s);
+      $('#s-sum').innerHTML = settlementRowsHtml({ ...s, totals });
+      return { s, totals };
+    };
+    const wire = root => {
+      root.querySelectorAll('input,select').forEach(el => el.addEventListener('input', upd));
+      root.querySelectorAll('.x').forEach(x => x.onclick = () => { x.closest('[data-line]').remove(); upd(); });
+    };
+    wire($('#app'));
+    $('#s-add').onclick = () => { const w = document.createElement('div'); w.innerHTML = lineRow({ label: '', amount: '', mode: vm }); const row = w.firstElementChild; $('#s-lines').appendChild(row); wire(row); row.querySelector('input').focus(); };
+    upd();
+    const save = async (status, btn) => {
+      const { s, totals } = upd();
+      const bad = s.lines.find(l => l.amount && !l.label);
+      if (bad) { $('#s-err').textContent = 'Give every charge a name.'; return; }
+      if (status === 'closed' && !(await ask({ title: `Close ${b.ref}?`, text: `Total AED ${money(totals.total)}${totals.advance ? `, balance due AED ${money(totals.balance)}` : ''}. You can still reopen it later.`, ok: 'Close booking' }))) return;
+      btn.disabled = true;
+      const settlement = { ...s, totals, settledAt: nowLocal(), settledBy: S.me.name };
+      try {
+        const batch = db.batch();
+        batch.set(db.doc('finance/' + id), { rate: s.rate, settlement }, { merge: true });
+        batch.update(db.doc('bookings/' + id), { status, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: status === 'closed' ? `Closed, total AED ${money(totals.total)}, paid by ${s.method}` : `Settlement saved, charges pending (AED ${money(totals.total)} so far)` }) });
+        await batch.commit(); S.formOpen = false; toast(status === 'closed' ? 'Booking closed.' : 'Saved as pending charges.'); location.hash = '#/booking/' + id;
+      } catch (e) { btn.disabled = false; $('#s-err').textContent = friendlyError(e); }
+    };
+    $('#s-pending').onclick = e => save('pending', e.target);
+    $('#s-close').onclick = e => save('closed', e.target);
+  };
+  return { title: 'Settle return', back: '#/booking/' + id, html, mount, form: true };
+}
+
+/* ========================================================= bookings list (bulk) */
+async function loadList() {
+  const F = S.filter;
+  const s = await db.collection('bookings').where('deliveryDate', '>=', F.from).where('deliveryDate', '<=', F.to).get();
+  S.listRows = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, c) => a.deliveryAt.localeCompare(c.deliveryAt));
+  S.listFin = await getFinMany(S.listRows.map(r => r.id));
+}
+function filteredRows() {
+  const F = S.filter, q = F.q.toLowerCase();
+  return (S.listRows || []).filter(b => (F.status === 'all' || (F.status === 'active' ? ACTIVE.includes(b.status) : b.status === F.status))
+    && (F.sp === 'all' || b.salespersonId === F.sp) && (F.car === 'all' || b.carId === F.car)
+    && (!q || [b.ref, b.clientName, b.clientPhone, b.plate, b.carName, b.location].join(' ').toLowerCase().includes(q)));
+}
+function viewBookings() {
+  if (!isStaff()) return deny();
+  if (!S.filter) { const t = todayStr(); S.filter = { from: t.slice(0, 8) + '01', to: addDays(t, 30), status: 'all', sp: 'all', car: 'all', q: '' }; }
+  const F = S.filter;
+  if (!S.listRows) { loadList().then(render).catch(onErr); }
+  const rows = filteredRows();
+  const total = rows.filter(b => b.status !== 'cancelled').reduce((a, b) => a + bookingTotal(b, S.listFin.get(b.id)), 0);
+  const html = `
+  <section class="card">
+    <div class="grid2"><label class="f">From<input type="date" id="f-from" value="${F.from}"></label><label class="f">To<input type="date" id="f-to" value="${F.to}"></label></div>
+    <div class="grid2"><label class="f">Status<select id="f-st">${[['all', 'All'], ['active', 'All open'], ...Object.entries(STATUS)].map(([k, l]) => `<option value="${k}" ${F.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    <label class="f">Salesperson<select id="f-sp"><option value="all">All</option>${S.sales.map(s => `<option value="${s.id}" ${F.sp === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label></div>
+    <div class="grid2"><label class="f">Car<select id="f-car"><option value="all">All</option>${S.cars.map(c => `<option value="${c.id}" ${F.car === c.id ? 'selected' : ''}>${esc(c.name)} (${esc(c.plate)})</option>`).join('')}</select></label>
+    <label class="f">Search<input id="f-q" type="search" value="${esc(F.q)}" placeholder="Client, plate, BK-0012"></label></div>
+    <p class="small muted" style="margin:8px 0 0">Dates filter by delivery date.</p>
+  </section>
+  <div class="toolbar" style="justify-content:space-between;align-items:center"><strong>${S.listRows ? `${rows.length} booking${rows.length === 1 ? '' : 's'}, AED ${money(total)}` : 'Loading…'}</strong>
+    <span style="display:flex;gap:6px"><button class="btn sm" data-act="list-reload">Refresh</button><button class="btn sm" data-act="list-print">Print list PDF</button></span></div>
+  ${S.listRows && !rows.length ? `<div class="empty"><h3>No bookings match these filters</h3><p>Widen the dates or clear the search.</p></div>` : ''}
+  ${rows.map(b => { const f = S.listFin.get(b.id); return `<a class="list-row" href="#/booking/${b.id}">
+      <div class="lr-top"><strong>${esc(b.ref)}, ${esc(b.clientName)}</strong>${statusChip(b.status)}</div>
+      <div class="lr-sub">${carLabel(b)}</div>
+      <div class="lr-when num">${esc(fmtDT(b.deliveryAt))} to ${esc(fmtDT(b.pickupAt))}</div>
+      <div class="lr-top lr-sub"><span>${b.days} days, ${esc(b.salespersonName || '-')}</span><strong class="num" style="color:var(--ink)">AED ${money(bookingTotal(b, f))}</strong></div></a>`; }).join('')}`;
+  const mount = () => {
+    const apply = reload => { Object.assign(S.filter, { from: $('#f-from').value, to: $('#f-to').value, status: $('#f-st').value, sp: $('#f-sp').value, car: $('#f-car').value, q: $('#f-q').value }); if (reload) { S.listRows = null; } render(); };
+    ['#f-from', '#f-to'].forEach(s => $(s).addEventListener('change', () => apply(true)));
+    ['#f-st', '#f-sp', '#f-car'].forEach(s => $(s).addEventListener('change', () => apply(false)));
+    let t; $('#f-q').addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { apply(false); const q = $('#f-q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }, 400); });
+  };
+  return { title: 'Bookings', html, mount, form: true };
+}
+ACT['list-reload'] = () => { S.listRows = null; render(); };
+
+/* ========================================================= on rent */
+function viewOnRent() {
+  const on = [...S.active.values()].filter(b => b.status === 'onrent').sort((a, c) => a.pickupAt.localeCompare(c.pickupAt));
+  const now = Date.now();
+  const D = S.freeDate || todayStr();
+  const busy = new Set([...S.active.values()].filter(b => (b.status === 'booked' || b.status === 'onrent') && b.deliveryDate <= D && b.pickupDate >= D).map(b => b.carId));
+  const free = S.cars.filter(c => c.active !== false && !busy.has(c.id));
+  const html = `
+  <h2 style="font-size:18px;margin:4px 0 8px">Cars with clients now (${on.length})</h2>
+  ${on.length ? on.map(b => { const late = parseDT(b.pickupAt) < now; return `<a class="list-row" href="#/booking/${b.id}">
+    <div class="lr-top"><span>${carLabel(b)}</span>${late ? '<span class="chip late">Pickup overdue</span>' : ''}</div>
+    <div class="lr-sub">${esc(b.clientName)}${b.clientPhone ? `, ${esc(b.clientPhone)}` : ''}</div>
+    <div class="lr-when">Pickup ${esc(fmtDT(b.pickupAt))}</div></a>`; }).join('') : '<div class="empty"><h3>No cars on rent right now</h3><p>Delivered bookings show here until they are picked up.</p></div>'}
+  <section class="card"><h2>Free cars on a date</h2>
+    <label class="f">Date<input type="date" id="fr-date" value="${D}"></label>
+    <p class="small muted">${free.length} of ${S.cars.filter(c => c.active !== false).length} cars have no booking on ${esc(fmtDate(D))}.</p>
+    ${free.map(c => `<div style="padding:8px 0;border-top:1px solid var(--line)">${esc(c.name)} <span class="plate">${esc(c.plate)}</span>${c.category ? ` <span class="muted small">${esc(c.category)}</span>` : ''}</div>`).join('')}
+  </section>`;
+  return { title: 'On rent', html, mount: () => { $('#fr-date').addEventListener('change', e => { S.freeDate = e.target.value; render(); }); } };
+}
+/* ========================================================= more / admin */
+function viewMore() {
+  const a = isAdmin();
+  const html = `<div class="menu">
+    <a href="#/account">My account<span class="muted small">${esc(S.me.username || '')}</span></a>
+    <a href="#/cars">Cars and plates<span class="muted small">${S.cars.length}</span></a>
+    ${a ? `<a href="#/sales">Salespeople<span class="muted small">${S.sales.length}</span></a><a href="#/users">Users and roles<span class="muted small">${S.users.length}</span></a><a href="#/settings">Company and VAT settings<span></span></a>` : ''}
+    <button data-act="signout">Sign out<span></span></button></div>
+    <p class="small muted" style="text-align:center">Thomson Car Rental Booking Service</p>`;
+  return { title: 'More', html };
+}
+function viewCars() {
+  const a = isAdmin();
+  const html = `${a ? '<div class="toolbar"><button class="btn primary" data-act="car-edit">Add car</button></div>' : ''}
+  ${S.cars.length ? `<div class="card scroll-x" style="padding:6px 10px"><table class="tbl"><thead><tr><th>S.No</th><th>Car</th><th>Plate</th><th>Details</th>${a ? '<th></th>' : ''}</tr></thead><tbody>
+  ${S.cars.map((c, i) => `<tr><td class="num">${i + 1}</td><td>${esc(c.name)}${c.active === false ? ' <span class="chip cancelled">Inactive</span>' : ''}</td><td><span class="plate">${esc(c.plate)}</span></td><td class="muted">${esc([c.color, c.category].filter(Boolean).join(', '))}</td>${a ? `<td><button class="btn sm" data-act="car-edit" data-id="${c.id}">Edit</button></td>` : ''}</tr>`).join('')}
+  </tbody></table></div>` : `<div class="empty"><h3>Add your first car</h3><p>Cars and plate numbers you add here appear in the booking form.</p></div>`}`;
+  return { title: 'Cars and plates', back: '#/more', html };
+}
+ACT['car-edit'] = ({ id }) => {
+  const c = S.cars.find(x => x.id === id) || { active: true };
+  const cats = [...new Set(S.cars.map(x => x.category).filter(Boolean))];
+  const o = openSheet(`<h2>${id ? 'Edit car' : 'Add car'}</h2>
+    <label class="f">Model<input id="c-name" value="${esc(c.name || '')}" placeholder="Nissan Sunny 2025"></label>
+    <label class="f">Plate number<input id="c-plate" value="${esc(c.plate || '')}" placeholder="Dubai N 45821" autocapitalize="characters"></label>
+    <div class="grid2"><label class="f">Color<input id="c-color" value="${esc(c.color || '')}" placeholder="White"></label>
+    <label class="f">Category<input id="c-cat" list="c-cats" value="${esc(c.category || '')}" placeholder="Economy Cars"><datalist id="c-cats">${cats.map(x => `<option>${esc(x)}</option>`).join('')}</datalist></label></div>
+    <label class="f"><select id="c-active"><option value="1" ${c.active !== false ? 'selected' : ''}>Active, available for bookings</option><option value="0" ${c.active === false ? 'selected' : ''}>Inactive, hidden from new bookings</option></select></label>
+    <p class="err" id="c-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="c-save">${id ? 'Save car' : 'Add car'}</button></div>`);
+  o.querySelector('#c-save').onclick = async () => {
+    const d = { name: $('#c-name').value.trim(), plate: $('#c-plate').value.trim().toUpperCase(), color: $('#c-color').value.trim(), category: $('#c-cat').value.trim(), active: $('#c-active').value === '1' };
+    if (!d.name || !d.plate) { $('#c-err').textContent = 'Enter the model and plate number.'; return; }
+    if (S.cars.some(x => x.id !== id && (x.plate || '').replace(/\s/g, '') === d.plate.replace(/\s/g, ''))) { $('#c-err').textContent = 'This plate number is already in the list.'; return; }
+    try { id ? await db.doc('cars/' + id).update(d) : await db.collection('cars').add(d); closeSheet(); toast(id ? 'Car saved.' : 'Car added.'); }
+    catch (e) { $('#c-err').textContent = friendlyError(e); }
+  };
+};
+function viewSales() {
+  if (!isAdmin()) return deny();
+  const html = `<div class="toolbar"><button class="btn primary" data-act="sp-edit">Add salesperson</button></div>
+  ${S.sales.length ? S.sales.map(s => { const u = S.users.find(x => x.id === s.uid); return `<div class="list-row"><div class="lr-top"><strong>${esc(s.name)}</strong><button class="btn sm" data-act="sp-edit" data-id="${s.id}">Edit</button></div>
+    <div class="lr-sub">${esc(s.phone || 'No phone')}, ${u ? `login: ${esc(u.username)} (gets reminders)` : 'no login linked (no reminders)'}${s.active === false ? ', inactive' : ''}</div></div>`; }).join('')
+    : '<div class="empty"><h3>Add your salespeople</h3><p>Every booking records who made the sale.</p></div>'}`;
+  return { title: 'Salespeople', back: '#/more', html };
+}
+ACT['sp-edit'] = ({ id }) => {
+  const s = S.sales.find(x => x.id === id) || { active: true };
+  const cands = S.users.filter(u => u.role !== 'driver');
+  const o = openSheet(`<h2>${id ? 'Edit salesperson' : 'Add salesperson'}</h2>
+    <label class="f">Name<input id="sp-name" value="${esc(s.name || '')}" placeholder="Rashid"></label>
+    <label class="f">Phone<input id="sp-phone" type="tel" value="${esc(s.phone || '')}" placeholder="050 123 4567"></label>
+    <label class="f">Linked login, for reminders<select id="sp-uid"><option value="">None</option>${cands.map(u => `<option value="${u.id}" ${u.id === s.uid ? 'selected' : ''}>${esc(u.name)} (${esc(u.username)})</option>`).join('')}</select></label>
+    <label class="f"><select id="sp-active"><option value="1" ${s.active !== false ? 'selected' : ''}>Active</option><option value="0" ${s.active === false ? 'selected' : ''}>Inactive</option></select></label>
+    <p class="err" id="sp-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="sp-save">Save salesperson</button></div>`);
+  o.querySelector('#sp-save').onclick = async () => {
+    const d = { name: $('#sp-name').value.trim(), phone: $('#sp-phone').value.trim(), uid: $('#sp-uid').value, active: $('#sp-active').value === '1' };
+    if (!d.name) { $('#sp-err').textContent = 'Enter a name.'; return; }
+    try { id ? await db.doc('salespeople/' + id).update(d) : await db.collection('salespeople').add(d); closeSheet(); toast('Salesperson saved.'); }
+    catch (e) { $('#sp-err').textContent = friendlyError(e); }
+  };
+};
+function viewUsers() {
+  if (!isAdmin()) return deny();
+  const RL = { admin: 'Admin', sales: 'Sales', driver: 'Driver' };
+  const html = `<div class="toolbar"><button class="btn primary" data-act="user-new">Create user</button></div>
+  ${S.users.map(u => `<div class="list-row"><div class="lr-top"><strong>${esc(u.name)}</strong><span class="chip ${u.active === false ? 'cancelled' : 'booked'}">${u.active === false ? 'Inactive' : RL[u.role] || u.role}</span></div>
+    <div class="lr-sub">Username: ${esc(u.username)}</div>
+    ${u.id !== S.me.id ? `<div class="t-actions"><select class="f-in" style="width:auto;min-height:36px;margin:0;padding:4px 8px" data-role="${u.id}" aria-label="Role">${Object.entries(RL).map(([k, l]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <button class="btn sm" data-act="user-toggle" data-id="${u.id}">${u.active === false ? 'Activate' : 'Deactivate'}</button></div>` : '<div class="lr-sub">This is you</div>'}</div>`).join('')}
+  <p class="small muted">Forgotten password: deactivate the old login and create a new one. People can change their own password under More, My account.</p>`;
+  const mount = () => $$('[data-role]').forEach(s => s.addEventListener('change', async () => {
+    try { await db.doc('users/' + s.dataset.role).update({ role: s.value }); toast('Role updated.'); } catch (e) { onErr(e); }
+  }));
+  return { title: 'Users and roles', back: '#/more', html, mount };
+}
+ACT['user-toggle'] = async ({ id }) => { const u = S.users.find(x => x.id === id); await db.doc('users/' + id).update({ active: u.active === false }); toast(u.active === false ? 'User activated.' : 'User deactivated.'); };
+ACT['user-new'] = () => {
+  const o = openSheet(`<h2>Create user</h2>
+    <label class="f">Full name<input id="u-name" placeholder="Ahmed Ali"></label>
+    <label class="f">Username<input id="u-user" autocapitalize="none" autocomplete="off" placeholder="ahmed.driver"></label>
+    <label class="f">Password<input id="u-pass" type="text" autocomplete="off" placeholder="At least 6 characters"></label>
+    <label class="f">Role<select id="u-role"><option value="driver">Driver: tasks and handover, no prices</option><option value="sales">Sales: bookings, prices, settlement</option><option value="admin">Admin: everything</option></select></label>
+    <label class="f" id="u-linkwrap"><select id="u-link"><option value="1">Also add as salesperson, with reminders</option><option value="0">Don't add as salesperson</option></select></label>
+    <p class="err" id="u-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="u-save">Create user</button></div>`);
+  const sync = () => o.querySelector('#u-linkwrap').classList.toggle('hidden', o.querySelector('#u-role').value !== 'sales');
+  o.querySelector('#u-role').onchange = sync; sync();
+  o.querySelector('#u-save').onclick = async ev => {
+    const name = $('#u-name').value.trim(), username = $('#u-user').value.trim().toLowerCase(), pass = $('#u-pass').value, r = $('#u-role').value;
+    const err = !name ? 'Enter the full name.' : !/^[a-z0-9._-]{3,30}$/.test(username) ? 'Username: 3 to 30 letters, numbers, dots or dashes, no spaces.' : pass.length < 6 ? 'Password must be at least 6 characters.' : '';
+    $('#u-err').textContent = err; if (err) return;
+    ev.target.disabled = true;
+    try {
+      const sec = firebase.apps.find(a => a.name === 'secondary') || firebase.initializeApp(FIREBASE_CONFIG, 'secondary');
+      const cred = await sec.auth().createUserWithEmailAndPassword(emailOf(username), pass);
+      const uid = cred.user.uid; await sec.auth().signOut();
+      await db.doc('users/' + uid).set({ name, username, role: r, active: true, createdAt: FV.serverTimestamp() });
+      if (r === 'sales' && $('#u-link').value === '1') await db.collection('salespeople').add({ name, phone: '', uid, active: true });
+      closeSheet(); toast(`User ${username} created. Share the username and password with them.`);
+    } catch (e) { ev.target.disabled = false; $('#u-err').textContent = friendlyError(e); }
+  };
+};
+function viewSettings() {
+  if (!isAdmin()) return deny();
+  const s = S.settings;
+  const html = `<section class="card"><h2>Company details for PDFs</h2>
+    <label class="f">Company name<input id="st-name" value="${esc(s.companyName || COMPANY)}"></label>
+    <label class="f">Address<input id="st-addr" value="${esc(s.address || '')}" placeholder="Al Qusais, Dubai, UAE"></label>
+    <div class="grid2"><label class="f">Phone<input id="st-phone" value="${esc(s.phone || '')}" placeholder="04 123 4567"></label><label class="f">TRN<input id="st-trn" value="${esc(s.trn || '')}" placeholder="100XXXXXXXXXXXX"></label></div></section>
+  <section class="card"><h2>VAT and card charges</h2>
+    <div class="grid2"><label class="f">VAT %<input id="st-vat" type="number" inputmode="decimal" step="0.01" value="${esc(s.vatRate ?? 5)}"></label>
+    <label class="f">Default VAT mode<select id="st-mode"><option value="plus" ${s.defaultVatMode !== 'incl' ? 'selected' : ''}>Price + VAT</option><option value="incl" ${s.defaultVatMode === 'incl' ? 'selected' : ''}>VAT inclusive</option></select></label></div>
+    <div class="grid2"><label class="f">CC charge options %<input id="st-cc" value="${esc(s.ccOptions || '4,5')}" placeholder="4,5"></label><label class="f">Default CC %<input id="st-ccd" type="number" inputmode="decimal" step="0.01" value="${esc(s.defaultCc ?? 5)}"></label></div></section>
+  <section class="card"><h2>Delete PIN</h2><p class="small muted" style="margin:0">Asked before an admin deletes a booking. Leave blank to keep the current PIN.</p>
+    <label class="f">New PIN<input id="st-pin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="4 to 8 digits"></label></section>
+  <p class="err" id="st-err"></p><div class="btnrow"><button class="btn primary" id="st-save">Save settings</button></div>`;
+  const mount = () => $('#st-save').onclick = async () => {
+    const pin = $('#st-pin').value.trim();
+    if (pin && !/^\d{4,8}$/.test(pin)) { $('#st-err').textContent = 'PIN must be 4 to 8 digits.'; return; }
+    const d = { companyName: $('#st-name').value.trim() || COMPANY, address: $('#st-addr').value.trim(), phone: $('#st-phone').value.trim(), trn: $('#st-trn').value.trim(),
+      vatRate: parseFloat($('#st-vat').value) || 0, defaultVatMode: $('#st-mode').value, ccOptions: $('#st-cc').value.replace(/[^\d.,]/g, '') || '4,5', defaultCc: parseFloat($('#st-ccd').value) || 5 };
+    try { await db.doc('meta/settings').set(d, { merge: true }); if (pin) await db.doc('meta/secure').set({ pin }, { merge: true }); S.formOpen = false; toast('Settings saved.'); render(); }
+    catch (e) { $('#st-err').textContent = friendlyError(e); }
+  };
+  return { title: 'Settings', back: '#/more', html, mount, form: true };
+}
+function viewAccount() {
+  const html = `<section class="card"><dl class="kv"><dt>Name</dt><dd>${esc(S.me.name)}</dd><dt>Username</dt><dd>${esc(S.me.username)}</dd><dt>Role</dt><dd>${esc(role())}</dd></dl></section>
+  <section class="card"><h2>Change password</h2>
+    <label class="f">Current password<input id="ac-cur" type="password" autocomplete="current-password"></label>
+    <label class="f">New password<input id="ac-new" type="password" autocomplete="new-password" placeholder="At least 6 characters"></label>
+    <p class="err" id="ac-err"></p><div class="btnrow"><button class="btn primary" id="ac-save">Change password</button></div></section>
+  <div class="btnrow"><button class="btn" data-act="signout">Sign out</button></div>`;
+  const mount = () => $('#ac-save').onclick = async () => {
+    const cur = $('#ac-cur').value, nw = $('#ac-new').value;
+    if (nw.length < 6) { $('#ac-err').textContent = 'New password must be at least 6 characters.'; return; }
+    try { const u = auth.currentUser; await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, cur)); await u.updatePassword(nw); $('#ac-cur').value = $('#ac-new').value = ''; $('#ac-err').textContent = ''; toast('Password changed.'); }
+    catch (e) { $('#ac-err').textContent = friendlyError(e); }
+  };
+  return { title: 'My account', back: '#/more', html, mount, form: true };
+}
+
+/* ========================================================= auth screens */
+function viewNotConfigured() {
+  return `<div class="auth"><div class="auth-card">${brand()}<h1>Connect Firebase first</h1><p class="muted">Open <strong>index.html</strong>, paste your Firebase settings into <strong>FIREBASE_CONFIG</strong> near the top, then upload it to GitHub again. SETUP.md walks through every step.</p></div></div>`;
+}
+function viewLogin() {
+  return `<div class="auth"><div class="auth-card">${brand()}<h1>Sign in</h1><p class="muted" style="margin-top:0">Thomson Car Rental Booking Service</p>
+    <label class="f">Username<input id="l-user" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+    <label class="f">Password<input id="l-pass" type="password" autocomplete="current-password"></label>
+    <p class="err" id="l-err" role="alert"></p><button class="btn primary block" id="l-go">Sign in</button></div></div>`;
+}
+function mountLogin() {
+  const go = async () => {
+    const u = $('#l-user').value.trim(), p = $('#l-pass').value;
+    if (!u || !p) { $('#l-err').textContent = 'Enter your username and password.'; return; }
+    $('#l-go').disabled = true;
+    try { await auth.signInWithEmailAndPassword(emailOf(u), p); } catch (e) { $('#l-err').textContent = friendlyError(e); $('#l-go').disabled = false; }
+  };
+  $('#l-go').onclick = go; $('#l-pass').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+}
+function viewSetup() {
+  return `<div class="auth"><div class="auth-card">${brand()}<h1>First-time setup</h1><p class="muted" style="margin-top:0">Create the main admin account. This screen appears only once.</p>
+    <label class="f">Full name<input id="su-name" placeholder="Sajid Ali"></label>
+    <label class="f">Username<input id="su-user" autocapitalize="none" placeholder="sajid.admin"></label>
+    <label class="f">Password<input id="su-pass" type="password" autocomplete="new-password" placeholder="At least 6 characters"></label>
+    <p class="err" id="su-err" role="alert"></p><button class="btn primary block" id="su-go">Create admin account</button></div></div>`;
+}
+function mountSetup() {
+  $('#su-go').onclick = async ev => {
+    const name = $('#su-name').value.trim(), username = $('#su-user').value.trim().toLowerCase(), pass = $('#su-pass').value;
+    const err = !name ? 'Enter your name.' : !/^[a-z0-9._-]{3,30}$/.test(username) ? 'Username: 3 to 30 letters, numbers, dots or dashes.' : pass.length < 6 ? 'Password must be at least 6 characters.' : '';
+    $('#su-err').textContent = err; if (err) return;
+    ev.target.disabled = true; S.settingUp = true;
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(emailOf(username), pass);
+      const batch = db.batch();
+      batch.set(db.doc('users/' + cred.user.uid), { name, username, role: 'admin', active: true, createdAt: FV.serverTimestamp() });
+      batch.set(db.doc('meta/setup'), { doneAt: FV.serverTimestamp(), by: username });
+      await batch.commit();
+      S.settingUp = false; location.hash = '#/home'; handleAuth(auth.currentUser);
+    } catch (e) {
+      S.settingUp = false; ev.target.disabled = false; $('#su-err').textContent = friendlyError(e);
+      try { if (auth.currentUser) await auth.currentUser.delete(); } catch (x) { }
+    }
+  };
+}
+
+/* ========================================================= PDFs (print to PDF) */
+function printHeader(title, sub) {
+  const s = S.settings;
+  const addr = [s.address, s.phone, s.trn ? 'TRN ' + s.trn : ''].filter(Boolean).join('   |   ');
+  return `<header class="p-head"><div class="p-brand">${LOGO_URL ? `<img src="${esc(LOGO_URL)}" class="p-logo" alt="">` : '<div class="p-wm">Thomson</div>'}
+    <div><div class="p-co">${esc(s.companyName || COMPANY)}</div>${addr ? `<div class="p-addr">${esc(addr)}</div>` : ''}</div></div>
+    <div class="p-title"><h1>${esc(title)}</h1><div>${esc(sub || '')}</div></div></header>`;
+}
+const printFoot = () => `<div class="p-foot">Printed by ${esc(S.me.name)} on ${esc(fmtDT(nowLocal()))}</div>`;
+function doPrint(html, landscape) {
+  $('#print').innerHTML = html;
+  let ps = $('#pagestyle'); if (!ps) { ps = document.createElement('style'); ps.id = 'pagestyle'; document.head.appendChild(ps); }
+  ps.textContent = `@page{size:A4 ${landscape ? 'landscape' : 'portrait'};margin:12mm}`;
+  const imgs = $$('#print img'); let n = imgs.length;
+  const go = () => setTimeout(() => window.print(), 150);
+  if (!n) return go();
+  imgs.forEach(i => { if (i.complete) { if (--n === 0) go(); } else { i.onload = i.onerror = () => { if (--n === 0) go(); }; } });
+}
+ACT.daysheet = async () => {
+  const D = S.viewDate, tasks = tasksFor(D), staff = isStaff();
+  const fins = await getFinMany([...new Set(tasks.map(t => t.b.id))]);
+  let total = 0;
+  const rows = tasks.map((t, i) => {
+    const b = t.b, f = fins.get(b.id), e = f ? estimate(b, f) : null;
+    if (t.type === 'delivery' && e) total += e.gross;
+    const loc = t.type === 'pickup' ? (b.pickupLocation || b.location) : b.location;
+    return `<tr><td>${i + 1}</td><td><strong>${time12(tOf(t.at))}</strong></td><td class="${t.type === 'delivery' ? 'p-type-d' : 'p-type-p'}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}${t.done ? ' (done)' : ''}</td>
+      <td>${esc(b.carName)}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.clientName)}</td><td>${esc(b.clientPhone || '')}</td><td>${esc(loc || '')}</td><td class="r">${b.days}</td>
+      ${staff ? `<td class="r">${f ? money(f.rate) : ''}</td><td class="r">${e ? money(e.gross) : ''}</td>` : ''}<td>${esc(b.salespersonName || '')}</td><td>${esc((t.type === 'delivery' ? b.deliveryDriverName : b.pickupDriverName) || '')}</td></tr>`;
+  }).join('');
+  const nd = tasks.filter(t => t.type === 'delivery').length;
+  doPrint(`${printHeader('Daily delivery and pickup sheet', fmtLong(D))}
+    <table class="p-tbl"><thead><tr><th>#</th><th>Time</th><th>Task</th><th>Car</th><th>Plate</th><th>Client</th><th>Phone</th><th>Location</th><th class="r">Days</th>${staff ? '<th class="r">Rate</th><th class="r">Total AED</th>' : ''}<th>Sales</th><th>Driver</th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="${staff ? 13 : 11}">No tasks on this day.</td></tr>`}</tbody>
+    <tfoot><tr><td colspan="${staff ? 10 : 9}">${nd} deliveries, ${tasks.length - nd} pickups</td>${staff ? `<td class="r">${money(total)}</td>` : ''}<td colspan="2"></td></tr></tfoot></table>
+    ${staff ? '<p style="font-size:9.5px;color:#555">Total AED is the rent total including VAT for deliveries on this day.</p>' : ''}
+    <div class="p-sign"><div>Prepared by</div><div>Driver</div><div>Approved by</div></div>${printFoot()}`, true);
+};
+ACT.slip = ({ id }) => {
+  const b = getB(id), f = isStaff() ? S.fin.get(id) : null, e = f ? estimate(b, f) : null;
+  doPrint(`${printHeader('Booking confirmation', b.ref)}
+    <div class="p-sec"><h2>Client</h2><dl class="p-kv"><dt>Name</dt><dd class="p-big">${esc(b.clientName)}</dd><dt>Phone</dt><dd>${esc(b.clientPhone || '-')}</dd>
+      <dt>Delivery location</dt><dd>${esc(b.location || '-')}</dd><dt>Pickup location</dt><dd>${esc(b.pickupLocation || b.location || '-')}</dd></dl></div>
+    <div class="p-sec"><h2>Vehicle</h2><dl class="p-kv"><dt>Car</dt><dd class="p-big">${esc(b.carName)}</dd><dt>Plate</dt><dd class="p-big">${esc(b.plate)}</dd>${(() => { const c = S.cars.find(x => x.id === b.carId); return c ? `<dt>Color</dt><dd>${esc(c.color || '-')}</dd><dt>Category</dt><dd>${esc(c.category || '-')}</dd>` : ''; })()}</dl></div>
+    <div class="p-sec"><h2>Rental period</h2><dl class="p-kv"><dt>Delivery</dt><dd class="p-big">${esc(fmtDT(b.deliveryAt))}</dd><dt>Return</dt><dd class="p-big">${esc(fmtDT(b.pickupAt))}</dd><dt>Days</dt><dd>${b.days}</dd><dt>Salesperson</dt><dd>${esc(b.salespersonName || '-')}</dd></dl></div>
+    ${e ? `<div class="p-sec"><h2>Charges</h2><table class="p-tbl"><thead><tr><th>Description</th><th class="r">Amount</th><th class="r">VAT ${S.settings.vatRate ?? 5}%</th><th class="r">Total AED</th></tr></thead>
+      <tbody><tr><td>Rent ${b.days} days × AED ${money(f.rate)} (${MODE_LABEL[f.vatMode]})</td><td class="r">${money(e.net)}</td><td class="r">${money(e.vat)}</td><td class="r">${money(e.gross)}</td></tr></tbody>
+      <tfoot><tr class="p-total"><td colspan="3">Total</td><td class="r">${money(e.gross)}</td></tr>${+f.advance ? `<tr><td colspan="3">Advance paid (${esc(f.advanceMethod || 'cash')})</td><td class="r">${money(f.advance)}</td></tr><tr class="p-total"><td colspan="3">Balance</td><td class="r">${money(e.gross - f.advance)}</td></tr>` : ''}</tfoot></table>
+      <p style="font-size:9.5px;color:#555">Salik, parking, traffic fines and other charges during the rental are billed at return. Card payments carry a card charge.</p></div>` : ''}
+    ${b.notes ? `<div class="p-sec"><h2>Notes</h2><p>${esc(b.notes)}</p></div>` : ''}
+    <div class="p-sign"><div>Client signature</div><div>For ${esc(S.settings.companyName || COMPANY)}</div></div>${printFoot()}`, false);
+};
+ACT.bill = ({ id }) => {
+  const b = getB(id), f = S.fin.get(id); if (!f || !f.settlement) return;
+  const st = f.settlement, t = st.totals, vr = S.settings.vatRate ?? 5;
+  const h = (x, l) => x ? `<dt>${l}</dt><dd>KM ${esc(x.km || '-')}, fuel ${esc(x.fuel || '-')}</dd>` : '';
+  doPrint(`${printHeader('Final bill', `${b.ref}, ${fmtDate(st.settledAt)}`)}
+    <div class="p-sec"><dl class="p-kv"><dt>Client</dt><dd class="p-big">${esc(b.clientName)}</dd><dt>Phone</dt><dd>${esc(b.clientPhone || '-')}</dd>
+      <dt>Car</dt><dd class="p-big">${esc(b.carName)} (${esc(b.plate)})</dd><dt>Salesperson</dt><dd>${esc(b.salespersonName || '-')}</dd>
+      <dt>Delivered</dt><dd class="p-big">${esc(fmtDT(b.deliveredAt || b.deliveryAt))}</dd><dt>Returned</dt><dd class="p-big">${esc(fmtDT(b.pickedUpAt || b.pickupAt))}</dd>
+      ${h(b.deliveryHandover, 'Out')}${h(b.pickupHandover, 'In')}</dl></div>
+    <div class="p-sec"><h2>Charges</h2><table class="p-tbl"><thead><tr><th>Description</th><th>VAT</th><th class="r">Amount</th><th class="r">VAT ${vr}%</th><th class="r">Total AED</th></tr></thead><tbody>
+      ${t.rows.map(r => `<tr><td>${esc(r.label)}</td><td>${MODE_LABEL[r.mode]}</td><td class="r">${money(r.net)}</td><td class="r">${money(r.vat)}</td><td class="r">${money(r.gross)}</td></tr>`).join('')}
+      ${t.cc ? `<tr><td>CC charges ${esc(st.ccPct)}%</td><td>+VAT</td><td class="r">${money(t.cc)}</td><td class="r">${money(t.ccVat)}</td><td class="r">${money(t.cc + t.ccVat)}</td></tr>` : ''}</tbody>
+      <tfoot><tr><td colspan="4">Taxable amount</td><td class="r">${money(t.taxable + t.cc)}</td></tr><tr><td colspan="4">VAT ${vr}%</td><td class="r">${money(t.vat + t.ccVat)}</td></tr>
+      ${t.nonTaxable ? `<tr><td colspan="4">Non-taxable (traffic fines)</td><td class="r">${money(t.nonTaxable)}</td></tr>` : ''}
+      <tr class="p-total"><td colspan="4">Total</td><td class="r">${money(t.total)}</td></tr>
+      ${t.advance ? `<tr><td colspan="4">Less advance paid</td><td class="r">-${money(t.advance)}</td></tr><tr class="p-total"><td colspan="4">Balance due</td><td class="r">${money(t.balance)}</td></tr>` : ''}</tfoot></table>
+      <p>Payment method: <strong>${esc(({ cash: 'Cash', card: 'Card', bank: 'Bank transfer' })[st.method] || st.method)}</strong>${b.status === 'pending' ? '. <strong>Some charges may still be added.</strong>' : ''}</p>
+      ${st.notes ? `<p>Notes: ${esc(st.notes)}</p>` : ''}</div>
+    <div class="p-sign"><div>Client signature</div><div>For ${esc(S.settings.companyName || COMPANY)}</div></div>${printFoot()}`, false);
+};
+ACT['list-print'] = () => {
+  const rows = filteredRows(), F = S.filter;
+  let total = 0;
+  const body = rows.map((b, i) => { const v = b.status === 'cancelled' ? 0 : bookingTotal(b, S.listFin.get(b.id)); total += v;
+    return `<tr><td>${i + 1}</td><td>${esc(b.ref)}</td><td><strong>${esc(fmtDT(b.deliveryAt))}</strong></td><td>${esc(fmtDT(b.pickupAt))}</td><td>${esc(b.carName)}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.clientName)}</td><td class="r">${b.days}</td><td>${esc(b.salespersonName || '')}</td><td>${esc(STATUS[b.status] || b.status)}</td><td class="r">${money(v)}</td></tr>`; }).join('');
+  doPrint(`${printHeader('Bookings list', `${fmtDate(F.from)} to ${fmtDate(F.to)}`)}
+    <table class="p-tbl"><thead><tr><th>#</th><th>Ref</th><th>Delivery</th><th>Return</th><th>Car</th><th>Plate</th><th>Client</th><th class="r">Days</th><th>Sales</th><th>Status</th><th class="r">Total AED</th></tr></thead>
+    <tbody>${body || '<tr><td colspan="11">No bookings.</td></tr>'}</tbody><tfoot><tr><td colspan="10">${rows.length} bookings (cancelled excluded from total)</td><td class="r">${money(total)}</td></tr></tfoot></table>${printFoot()}`, true);
+};
+
+boot();
+
+</script>
+</body>
+</html>
