@@ -347,6 +347,39 @@ a.car-tile{text-decoration:none}
 .car-tile.picked .tick{background:var(--late);border-color:var(--late)}
 button.car-tile .car-ico{margin-left:26px}
 .bk-list{max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px 8px;line-height:1.9}
+.ext-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ext-opts .btn{flex:1 1 auto}
+.ext-opts .btn.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.mini-cal{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 10px 12px;margin:14px 0 6px}
+.mc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 4px 8px}
+.mc-head h2{font-size:15px}
+.mc-leg{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.mc-leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:6px}
+.mc-leg i.g,.mc-dots b.g{background:#2B8A57}.mc-leg i.r,.mc-dots b.r{background:#C8372D}
+.mc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+@media(min-width:1000px){.mc-grid{grid-template-columns:repeat(14,minmax(0,1fr))}}
+.mc-day{display:flex;flex-direction:column;align-items:center;gap:1px;border:1px solid transparent;background:#F6F8FB;border-radius:10px;padding:5px 0 6px;font:inherit;color:var(--ink);cursor:pointer;min-height:64px;transition:transform .15s}
+.mc-w{font-size:11px;color:var(--muted)}
+.mc-n{font-family:var(--head);font-weight:700;font-size:16px;line-height:1.2}
+.mc-dots{display:flex;gap:3px;min-height:16px}
+.mc-dots b{min-width:16px;height:16px;border-radius:999px;color:#fff;font-size:10.5px;line-height:16px;text-align:center;padding:0 3px}
+.mc-day.today{background:var(--navy);color:#fff;transform:scale(1.08);box-shadow:0 4px 12px rgba(19,41,75,.3);z-index:1}
+.mc-day.today .mc-w{color:#C9D6E6}
+.mc-day.today .mc-n{font-weight:800;font-size:19px}
+.mc-day.sel:not(.today){border-color:var(--amber);background:#FFF6E6}
+.mc-day.today.sel{outline:3px solid var(--amber);outline-offset:1px}
+@media (prefers-reduced-motion:reduce){.mc-day{transition:none}}
+.cat-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"ord name acts del";gap:8px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.cat-row:last-child{border-bottom:0}
+.cat-ord{grid-area:ord;display:flex;flex-direction:column;gap:2px}
+.cat-name{grid-area:name;display:flex;flex-direction:column;min-width:0}
+.cat-acts{grid-area:acts;display:flex;align-items:center;gap:10px}
+.cat-del{grid-area:del}
+.iconbtn.sm{width:30px;height:24px;border-radius:6px;font-size:11px}
+.iconbtn[disabled]{opacity:.35}
+.cat-rent{font-size:13px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.cat-rent input{width:18px;height:18px}
+@media(max-width:560px){.cat-row{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"ord name del" "ord acts acts"}}
 /* print */
 #print{display:none}
 @media print{
@@ -410,6 +443,7 @@ const todayStr = () => dstr(new Date());
 const nowLocal = () => localStr(new Date());
 const parseDT = s => { if (!s) return null; const [a, b = '00:00'] = s.split('T'); const [y, m, d] = a.split('-').map(Number); const [h, mi] = b.split(':').map(Number); return new Date(y, m - 1, d, h || 0, mi || 0); };
 const addDays = (ds, n) => { const [y, m, d] = ds.split('-').map(Number); return dstr(new Date(y, m - 1, d + n)); };
+const addMonths = (ds, n) => { const [y, m, d] = ds.split('-').map(Number); const last = new Date(y, m - 1 + n + 1, 0).getDate(); return dstr(new Date(y, m - 1 + n, Math.min(d, last))); };
 const dayDiff = (a, b) => Math.round((parseDT(b + 'T12:00') - parseDT(a + 'T12:00')) / 864e5);
 const fmtLong = ds => parseDT(ds + 'T12:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const fmtDate = ds => ds ? parseDT(ds.slice(0, 10) + 'T12:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
@@ -681,7 +715,7 @@ function render() {
     home: viewHome, bookings: viewBookings, new: () => viewForm(null), edit: () => viewForm(id), booking: () => viewDetail(id),
     settle: () => viewSettle(id), onrent: viewOnRent, more: viewMore, cars: viewCars, sales: viewSales, users: viewUsers,
     settings: viewSettings, account: viewAccount, calendar: viewCalendar, sublease: viewSublease,
-    client: () => viewClient(id), car: () => viewCarHistory(id), import: viewImport
+    client: () => viewClient(id), car: () => viewCarHistory(id), import: viewImport, categories: viewCategories
   };
   if (r !== 'cars') S.carSel = null;
   if (!['booking', 'edit', 'settle'].includes(r) && S.detailId) { S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = null; }
@@ -695,7 +729,7 @@ function navBar(r) {
   const staff = isStaff();
   const items = staff ? [['home', 'Tasks', 'home'], ['bookings', 'Bookings', 'list'], ['new', 'New', 'plus'], ['calendar', 'Calendar', 'cal'], ['more', 'More', 'more']]
     : [['home', 'Tasks', 'home'], ['calendar', 'Calendar', 'cal'], ['onrent', 'On rent', 'car'], ['more', 'More', 'more']];
-  const map = { booking: staff ? 'bookings' : 'home', edit: 'bookings', settle: 'bookings', client: 'bookings', car: staff ? 'more' : 'calendar', cars: 'more', sublease: 'more', import: 'more', sales: 'more', users: 'more', settings: 'more', account: 'more', onrent: staff ? 'more' : 'onrent' };
+  const map = { booking: staff ? 'bookings' : 'home', edit: 'bookings', settle: 'bookings', client: 'bookings', car: staff ? 'more' : 'calendar', cars: 'more', sublease: 'more', import: 'more', categories: 'more', sales: 'more', users: 'more', settings: 'more', account: 'more', onrent: staff ? 'more' : 'onrent' };
   const cur = map[r] || r;
   return `<nav class="nav" aria-label="Main">${items.map(([k, label, ic]) => k === 'new'
     ? `<a href="#/new" class="add ${cur === k ? 'on' : ''}"><span class="plus">${ico(ic)}</span>${label}</a>`
@@ -740,6 +774,7 @@ function taskCard(t) {
   const acts = [`<a class="btn sm" href="#/booking/${b.id}">View</a>`];
   if (!t.done) {
     acts.push(`<button class="btn sm" data-act="resched" data-id="${b.id}" data-type="${t.type}">Reschedule</button>`);
+    if (t.type === 'pickup' && isStaff()) acts.push(`<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button>`);
     if (isStaff()) acts.push(`<button class="btn sm" data-act="assign" data-id="${b.id}">${drvName ? 'Driver' : 'Assign driver'}</button>`);
     acts.push(`<button class="btn sm" data-act="ics" data-id="${b.id}" data-type="${t.type}">Add to calendar</button>`);
     acts.push(`<button class="btn sm good" data-act="done" data-id="${b.id}" data-type="${t.type}">Mark done</button>`);
@@ -767,12 +802,21 @@ function carDayStatus(carId, D) {
   return { state: 'busy', b: covers[0] };
 }
 function availableOn(D, mode) {
-  return S.cars.filter(c => c.active !== false && (mode === 'both' || (mode === 'sub' ? isSub(c) : !isSub(c))))
+  return S.cars.filter(c => c.active !== false && forRent(c) && (mode === 'both' || (mode === 'sub' ? isSub(c) : !isSub(c))))
     .map(c => ({ c, st: carDayStatus(c.id, D) })).filter(x => x.st.state !== 'busy');
 }
+/* categories: defined once under More, Categories (kept in order) */
+function catList() {
+  if (Array.isArray(S.settings.categories)) return S.settings.categories;
+  const order = String(S.settings.categoryOrder || '').split(',').map(x => x.trim()).filter(Boolean);
+  const seen = new Set(order.map(x => x.toLowerCase()));
+  S.cars.forEach(c => { const k = String(c.category || '').trim(); if (k && !seen.has(k.toLowerCase())) { seen.add(k.toLowerCase()); order.push(k); } });
+  return order.map(name => ({ name, rent: true }));
+}
+const catInfo = name => catList().find(c => c.name.toLowerCase() === String(name || '').trim().toLowerCase());
+const forRent = c => { const ci = catInfo(c.category); return !ci || ci.rent !== false; };
 function categoryRank(cat) {
-  const order = String(S.settings.categoryOrder || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
-  const i = order.indexOf(String(cat || '').trim().toLowerCase()); return i < 0 ? 999 : i;
+  const i = catList().findIndex(c => c.name.toLowerCase() === String(cat || '').trim().toLowerCase()); return i < 0 ? 999 : i;
 }
 const sortCars = list => list.sort((a, b) => categoryRank(a.c.category) - categoryRank(b.c.category) || carTitle(a.c).localeCompare(carTitle(b.c)));
 function dayWordFor(D) { const t = todayStr(); return D === t ? 'Today' : D === addDays(t, 1) ? 'Tomorrow' : parseDT(D + 'T12:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }
@@ -828,6 +872,7 @@ function viewHome() {
   const col = (key, title, list, cls) => `<section class="col col-${key}" aria-label="${title}"><header class="col-h ${cls}"><h2>${title}</h2><span class="num">${list.length}</span></header>
     ${list.length ? `<ol class="timeline">${list.map(taskCard).join('')}</ol>` : `<p class="col-empty">No ${title.toLowerCase()} ${dayWord}.</p>`}</section>`;
   const html = `
+  ${miniCal()}
   ${overdue.length ? `<div class="strip late" role="alert"><h3>Overdue from earlier days (${overdue.length})</h3>${overdue.map(t => `<a class="row" href="#/booking/${t.b.id}"><span>${t.type === 'delivery' ? 'Delivery' : 'Pickup'}: ${esc(t.b.carName)} ${esc(t.b.plate)}, ${esc(t.b.clientName)}</span><strong class="num">${esc(fmtDay(t.at))}</strong></a>`).join('')}</div>` : ''}
   ${awaiting.length ? `<div class="strip info"><h3>Returned, waiting for settlement (${awaiting.length})</h3>${awaiting.map(b => `<a class="row" href="#/settle/${b.id}"><span>${esc(b.ref)}: ${esc(b.carName)} ${esc(b.plate)}, ${esc(b.clientName)}</span><strong>${b.status === 'pending' ? 'Pending charges' : 'Settle'}</strong></a>`).join('')}</div>` : ''}
   <div class="sec-head"><div class="tabs-m" role="tablist" aria-label="Show">
@@ -1011,6 +1056,65 @@ const waNum = p => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWit
 ACT.wa = ({ id }) => { const b = getB(id); window.open('https://wa.me/?text=' + encodeURIComponent(waText(b, S.fin.get(id))), '_blank'); };
 ACT.waclient = ({ id }) => { const b = getB(id); window.open(`https://wa.me/${waNum(b.clientPhone)}?text=` + encodeURIComponent(waText(b, S.fin.get(id))), '_blank'); };
 
+
+ACT.extend = async ({ id }) => {
+  const b = getB(id); if (!b || !isStaff()) return;
+  let f = S.fin.get(id);
+  if (!f) { try { const d = await db.doc('finance/' + id).get(); f = d.exists ? d.data() : {}; } catch (e) { f = {}; } }
+  const monthly = f.rateType === 'month', cur = b.pickupAt, cd = cur.slice(0, 10), ct = tOf(cur);
+  const opts = monthly ? [['1 week', addDays(cd, 7)], ['2 weeks', addDays(cd, 14)], ['1 month', addMonths(cd, 1)], ['2 months', addMonths(cd, 2)]]
+    : [['1 day', addDays(cd, 1)], ['2 days', addDays(cd, 2)], ['3 days', addDays(cd, 3)], ['5 days', addDays(cd, 5)], ['1 week', addDays(cd, 7)]];
+  const o = openSheet(`<h2>Extend rental</h2>
+    <p class="muted" style="margin:4px 0 0">${carLabel(b)}, ${esc(b.clientName)}${monthly ? ', monthly contract' : ''}<br>Return now: <strong>${esc(fmtDT(cur))}</strong> (${b.days} days)</p>
+    <div class="ext-opts">${opts.map(([l, d]) => `<button class="btn" data-ext="${d}">+ ${l}</button>`).join('')}</div>
+    <div class="grid2"><label class="f">New return date<input type="date" id="x-date" value="${opts[0][1]}"></label><label class="f">Time<input type="time" id="x-time" value="${ct}"></label></div>
+    <div class="calc" id="x-sum"></div>
+    <p class="err" id="x-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="x-save">Extend</button></div>`);
+  const upd = () => {
+    const nd = $('#x-date').value, nt = $('#x-time').value || ct;
+    o.querySelectorAll('[data-ext]').forEach(x => x.classList.toggle('on', x.dataset.ext === nd));
+    if (!nd) return null;
+    const at = `${nd}T${nt}`, days = dayDiff(b.deliveryDate, nd), add = days - (+b.days);
+    const cf = conflicts(b.carId, b.deliveryAt, at, b.id);
+    $('#x-sum').innerHTML = `<div class="r"><span>New return</span><strong>${esc(fmtDT(at))}</strong></div><div class="r"><span>Total rental</span><span>${days} days (${add >= 0 ? '+' : ''}${add})</span></div>
+      ${cf.length ? `<div class="warn late-warn" style="margin-top:8px">This car is booked from ${esc(fmtDT(cf[0].deliveryAt))} (${esc(cf[0].ref)}, ${esc(cf[0].clientName)}). Extend anyway and arrange a different car for that booking.</div>` : ''}`;
+    return { at, nd, days, add, cf };
+  };
+  o.querySelectorAll('[data-ext]').forEach(x => x.onclick = () => { $('#x-date').value = x.dataset.ext; upd(); });
+  o.querySelector('#x-date').oninput = upd; o.querySelector('#x-time').oninput = upd; upd();
+  o.querySelector('#x-save').onclick = async ev => {
+    const r = upd();
+    if (!r || r.at <= cur) { $('#x-err').textContent = 'Choose a return date later than the current one.'; return; }
+    ev.target.disabled = true;
+    try {
+      await db.doc('bookings/' + id).update({ pickupAt: r.at, pickupDate: r.nd, days: r.days, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name,
+        log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Extended by ${r.add} day${r.add === 1 ? '' : 's'}: return moved from ${fmtDT(cur)} to ${fmtDT(r.at)}${r.cf.length ? ` (clashes with ${r.cf.map(c => c.ref).join(', ')})` : ''}` }) });
+      closeSheet(); toast(`Extended to ${fmtDT(r.at)}.`);
+    } catch (e) { ev.target.disabled = false; $('#x-err').textContent = friendlyError(e); }
+  };
+};
+
+/* two-week mini calendar on the home screen */
+function miniCal() {
+  const t = todayStr(), cnt = {};
+  const bump = (d, k) => { (cnt[d] = cnt[d] || { d: 0, p: 0 })[k]++; };
+  const all = new Map([...S.day, ...S.active]);
+  for (const b of all.values()) {
+    if (b.status === 'cancelled') continue;
+    if (b.status === 'booked') bump(b.deliveryDate, 'd');
+    if (b.status === 'booked' || b.status === 'onrent') bump(b.pickupDate, 'p');
+  }
+  const days = Array.from({ length: 14 }, (_, i) => addDays(t, i));
+  return `<section class="mini-cal" aria-label="Next two weeks">
+    <div class="mc-head"><h2>Next 2 weeks</h2><span class="mc-leg"><i class="g"></i>Deliveries <i class="r"></i>Pickups</span></div>
+    <div class="mc-grid">${days.map(d => { const dt = parseDT(d + 'T12:00'), c = cnt[d] || { d: 0, p: 0 };
+      return `<button class="mc-day ${d === t ? 'today' : ''} ${d === S.viewDate ? 'sel' : ''}" data-act="day" data-set="${d}" aria-label="${esc(fmtLong(d))}: ${c.d} deliveries, ${c.p} pickups">
+        <span class="mc-w">${dt.toLocaleDateString('en-GB', { weekday: 'short' })}</span><span class="mc-n">${dt.getDate()}</span>
+        <span class="mc-dots">${c.d ? `<b class="g">${c.d}</b>` : ''}${c.p ? `<b class="r">${c.p}</b>` : ''}</span></button>`; }).join('')}</div></section>`;
+}
+
+
 /* ========================================================= booking detail */
 function viewDetail(id) {
   ensureDetail(id);
@@ -1035,6 +1139,7 @@ function viewDetail(id) {
   const acts = [];
   if (b.status === 'booked') acts.push(`<button class="btn good" data-act="done" data-id="${id}" data-type="delivery">Mark delivered</button>`, `<button class="btn" data-act="resched" data-id="${id}" data-type="delivery">Reschedule delivery</button>`);
   if (b.status === 'onrent') acts.push(`<button class="btn good" data-act="done" data-id="${id}" data-type="pickup">Mark picked up</button>`, `<button class="btn" data-act="resched" data-id="${id}" data-type="pickup">Reschedule pickup</button>`);
+  if (staff && ['booked', 'onrent'].includes(b.status)) acts.push(`<button class="btn primary" data-act="extend" data-id="${id}">Extend rental</button>`);
   if (staff && (b.status === 'returned' || b.status === 'pending' || b.status === 'closed')) acts.push(`<a class="btn primary" href="#/settle/${id}">${b.status === 'closed' ? 'View settlement' : 'Settle return'}</a>`);
   if (staff && ['booked', 'onrent'].includes(b.status)) acts.push(`<button class="btn" data-act="assign" data-id="${id}">Assign drivers</button>`);
   if (staff && b.status !== 'cancelled' && b.status !== 'closed') acts.push(`<a class="btn" href="#/edit/${id}">Edit booking</a>`);
@@ -1085,6 +1190,7 @@ function conflicts(carId, startAt, endAt, excludeId) {
   const s = parseDT(startAt), e = parseDT(endAt);
   return [...S.active.values()].filter(b => b.id !== excludeId && b.carId === carId && (b.status === 'booked' || b.status === 'onrent') && parseDT(b.deliveryAt) < e && parseDT(b.pickupAt) > s);
 }
+function goHomeOn(d) { if (d && d !== S.viewDate) { S.viewDate = d; subscribeDay(); } if (location.hash === '#/home') render(); else location.hash = '#/home'; window.scrollTo(0, 0); }
 async function nextRef() {
   const yr = new Date().getFullYear(), k = 'y' + yr, ref = db.doc('meta/counter');
   const n = await db.runTransaction(async tx => { const d = await tx.get(ref); const next = d.exists && d.data()[k] ? +d.data()[k] : 1; tx.set(ref, { [k]: next + 1 }, { merge: true }); return next; });
@@ -1218,11 +1324,11 @@ function viewForm(id) {
           const docRef = db.collection('bookings').doc();
           batch.set(docRef, { ...data, ref, status: 'booked', pickupDriverId: '', pickupDriverName: '', createdAt: FV.serverTimestamp(), createdBy: S.me.name, log: [{ at: nowLocal(), by: S.me.name, text: 'Booking created' }] });
           batch.set(db.doc('finance/' + docRef.id), { ...fin, ref });
-          await batch.commit(); S.formOpen = false; toast(`Booking ${ref} created.`); location.hash = '#/booking/' + docRef.id;
+          await batch.commit(); S.formOpen = false; toast(`Booking ${ref} created for ${fmtDT(data.deliveryAt)}.`); goHomeOn(x.date);
         } else {
           batch.update(db.doc('bookings/' + id), { ...data, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: 'Booking edited' }) });
           batch.set(db.doc('finance/' + id), fin, { merge: true });
-          await batch.commit(); S.formOpen = false; toast('Changes saved.'); location.hash = '#/booking/' + id;
+          await batch.commit(); S.formOpen = false; toast('Changes saved.'); goHomeOn(x.date);
         }
       } catch (e) { ev.target.disabled = false; $('#b-err').textContent = friendlyError(e); }
     };
@@ -1313,7 +1419,7 @@ function viewSettle(id) {
         const batch = db.batch();
         batch.set(db.doc('finance/' + id), { rate: s.rate, settlement }, { merge: true });
         batch.update(db.doc('bookings/' + id), { status, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: status === 'closed' ? `Closed, total AED ${money(totals.total)}, paid by ${s.method}` : `Settlement saved, charges pending (AED ${money(totals.total)} so far)` }) });
-        await batch.commit(); S.formOpen = false; toast(status === 'closed' ? 'Booking closed.' : 'Saved as pending charges.'); location.hash = '#/booking/' + id;
+        await batch.commit(); S.formOpen = false; toast(status === 'closed' ? `${b.ref} closed.` : `${b.ref} saved as pending charges.`); goHomeOn(S.viewDate);
       } catch (e) { btn.disabled = false; $('#s-err').textContent = friendlyError(e); }
     };
     $('#s-pending').onclick = e => save('pending', e.target);
@@ -1516,7 +1622,7 @@ function viewMore() {
     ${isStaff() ? `<a href="#/sublease">Sub-lease cars<span class="muted small">${S.cars.filter(c => isSub(c) && c.active !== false).length} active</span></a>` : ''}
     <a href="#/calendar">Car calendar<span></span></a>
     <a href="#/onrent">Cars on rent now<span></span></a>
-    ${a ? `<a href="#/sales">Salespeople<span class="muted small">${S.sales.length}</span></a><a href="#/users">Users and roles<span class="muted small">${S.users.length}</span></a><a href="#/settings">Company and VAT settings<span></span></a><a href="#/import">Import open agreements<span class="muted small">From Excel</span></a>` : ''}
+    ${a ? `<a href="#/sales">Salespeople<span class="muted small">${S.sales.length}</span></a><a href="#/users">Users and roles<span class="muted small">${S.users.length}</span></a><a href="#/categories">Car categories<span class="muted small">${catList().length}</span></a><a href="#/settings">Company and VAT settings<span></span></a><a href="#/import">Import open agreements<span class="muted small">From Excel</span></a>` : ''}
     <button data-act="signout">Sign out<span></span></button></div>
     <p class="small muted" style="text-align:center">Thomson Car Rental Booking Service</p>`;
   return { title: 'More', html };
@@ -1536,18 +1642,18 @@ function viewCars() {
   ${own.length ? `<p class="muted small" style="margin:10px 0 0">${own.filter(c => c.active !== false).length} active own cars, ${own.length} in total. Tap a car for its booking history.</p>
   ${cats.map(cat => `<h2 class="cat-h"><span class="dot" style="background:${catColor(cat)}"></span>${esc(cat)} <span class="muted small">${groups[cat].length}</span></h2>
     <div class="car-grid">${groups[cat].map(c => { n++; const p = carParts(c); return `${sel ? `<button class="car-tile ${sel.has(c.id) ? 'picked' : ''}" data-act="car-pick" data-id="${c.id}" aria-pressed="${sel.has(c.id)}" style="--cc:${catColor(cat)}"><span class="tick">${sel.has(c.id) ? '✓' : ''}</span>` : `<a class="car-tile ${c.active === false ? 'off' : ''}" href="#/car/${c.id}" style="--cc:${catColor(cat)}">`}
-      <span class="sno num">${n}</span>${CAR}<span class="ct-name">${esc(p.make)} ${esc(p.model)}</span><span class="ct-sub">${[p.year, c.color].filter(Boolean).map(esc).join(', ')}</span><span class="plate">${esc(c.plate)}</span>
+      ${CAR}<span class="ct-name">${esc(p.make)} ${esc(p.model)}</span><span class="ct-sub">${[p.year, c.color].filter(Boolean).map(esc).join(', ')}</span><span class="plate">${esc(c.plate)}</span>
       ${c.active === false ? '<span class="chip cancelled">Inactive</span>' : ''}${sel ? '</button>' : '</a>'}`; }).join('')}</div>`).join('')}`
     : `<div class="empty">${CAR.replace('car-ico', 'car-ico big')}<h3>Add your cars</h3><p>Cars and plate numbers you add here appear in the booking form.${a ? ' Use <strong>Add many cars</strong> to paste your whole fleet from Excel at once.' : ''}</p></div>`}`;
   return { title: 'Own cars and plates', back: '#/more', html, wide: true };
 }
 function carFields(c, sub) {
   const p = carParts(c);
-  const cats = [...new Set(S.cars.map(x => x.category).filter(Boolean))];
   return `<div class="grid3"><label class="f">Make<input id="c-make" value="${esc(p.make)}" placeholder="GMC"></label><label class="f">Model<input id="c-model" value="${esc(p.model)}" placeholder="Yukon"></label><label class="f">Year<input id="c-year" inputmode="numeric" value="${esc(p.year)}" placeholder="2026"></label></div>
     <div class="grid2"><label class="f">Plate number<input id="c-plate" value="${esc(c.plate || '')}" placeholder="9185" autocapitalize="characters"></label><label class="f">Color<input id="c-color" value="${esc(c.color || '')}" placeholder="Black"></label></div>
     ${sub ? `<label class="f">Supplier<input id="c-sup" list="c-sups" value="${esc(c.supplier || '')}" placeholder="Al Futtaim Rent A Car"><datalist id="c-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label>` : ''}
-    <label class="f">Category${sub ? ' (optional)' : ''}<input id="c-cat" list="c-cats" value="${esc(c.category || '')}" placeholder="Luxury Cars"><datalist id="c-cats">${cats.map(x => `<option>${esc(x)}</option>`).join('')}</datalist></label>`;
+    <label class="f">Category${sub ? ' (optional)' : ''}<select id="c-cat"><option value="">${sub ? 'No category' : 'Choose category'}</option>${catList().map(x => `<option ${x.name.toLowerCase() === String(c.category || '').toLowerCase() ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}${c.category && !catInfo(c.category) ? `<option selected>${esc(c.category)}</option>` : ''}</select></label>
+    ${catList().length ? '' : `<p class="warn">No categories yet. ${isAdmin() ? '<a href="#/categories">Define your categories first</a>.' : 'Ask an admin to define them.'}</p>`}${isAdmin() ? '<p class="small" style="margin:6px 0 0"><a href="#/categories">Manage categories</a></p>' : ''}`;
 }
 function readCarFields(sub) {
   const d = { make: $('#c-make').value.trim(), model: $('#c-model').value.trim(), year: $('#c-year').value.trim(), plate: $('#c-plate').value.trim().toUpperCase(), color: $('#c-color').value.trim(), category: $('#c-cat').value.trim(), type: sub ? 'sublease' : 'own' };
@@ -1557,6 +1663,7 @@ function readCarFields(sub) {
 }
 function carCheck(d, id, sub) {
   if (!d.make || !d.model || !d.plate) return 'Enter the make, model and plate number.';
+  if (!sub && !d.category) return 'Choose a category.';
   if (sub && !d.supplier) return 'Enter the supplier name.';
   if (d.plate !== 'TBC') { const dup = S.cars.find(x => x.id !== id && plateKey(x.plate) === plateKey(d.plate)); if (dup) return isSub(dup) && dup.active === false ? `Plate ${d.plate} is already saved as a returned sub-lease car. Search it on the Sub-lease screen and tap Enable again.` : `Plate ${d.plate} is already in your list (${carTitle(dup)}).`; }
   return '';
@@ -1593,6 +1700,7 @@ function parseCarLines(text) {
     const sig = plateSig(d.plate).d + plateSig(d.plate).l;
     if (!d.make || !d.plate) { skipped.push(`Line ${lineNo}: needs a car name and plate`); return; }
     if (seen.has(sig)) { skipped.push(`Line ${lineNo}: plate ${d.plate} appears twice`); return; }
+    const ci = d.category && catInfo(d.category); if (ci) d.category = ci.name;
     seen.add(sig); out.push({ d, existing: findCarByPlate(d.plate) });
   };
   if (hIdx >= 0) {
@@ -1601,11 +1709,11 @@ function parseCarLines(text) {
     const C = { sno: col(/^s\.?\s*no/), name: col(/model \/ name|^name$|^car( name)?$|^vehicle$/), make: col(/^make$/), model: col(/^model$/), year: col(/year/), plate: col(/plate/),
       category: col(/categor/), own: col(/owner/), color: col(/colou?r/), status: col(/^status$/), supplier: col(/supplier/) };
     let rows = lines.slice(hIdx + 1);
-    if (C.sno >= 0) {
-      const g = [];
-      rows.forEach(l => { if (/^\s*\d+\t/.test(l) || !g.length) g.push(l); else if (l.trim()) g[g.length - 1] = g[g.length - 1].endsWith('\t') ? g[g.length - 1] + l : g[g.length - 1] + '\t' + l; });
-      rows = g;
-    }
+    const need = Math.max(C.plate, C.color, C.name, C.year, C.category);
+    const incomplete = l => { const c = l.split('\t'); return c.length <= need || (c.length === need + 1 && !String(c[need]).trim()); };
+    const g = [];
+    rows.forEach(l => { if (!l.trim()) return; const last = g[g.length - 1]; if (last != null && incomplete(last)) g[g.length - 1] = last.endsWith('\t') ? last + l : last + '\t' + l; else g.push(l); });
+    rows = g;
     rows.forEach((l, i) => {
       if (!l.trim()) return;
       const c = l.split('\t'), v = k => C[k] >= 0 ? String(c[C[k]] ?? '').trim() : '';
@@ -1629,7 +1737,7 @@ function parseCarLines(text) {
 }
 ACT['car-bulk'] = () => {
   const o = openSheet(`<h2>Add many cars</h2>
-    <p class="muted small" style="margin:4px 0 0">Paste your fleet list with its heading row (S.No, Model / Name, Model Year, Plate, Category, Ownership, Color, Status), straight from Excel or your fleet app. Without headings, use one car per line: <strong>Make, Model, Year, Plate, Color, Category</strong>.</p>
+    <p class="muted small" style="margin:4px 0 0">Paste your fleet list with its heading row (Model / Name, Model Year, Plate, Category, Ownership, Color, Status; S.No is optional), straight from Excel or your fleet app. Without headings, use one car per line: <strong>Make, Model, Year, Plate, Color, Category</strong>.</p>
     <label class="f">Cars<textarea id="bk-text" rows="9" spellcheck="false" placeholder="S.No	Model / Name	Model Year	Plate	Category	Ownership	Color	Status&#10;1	Nissan Patrol	2026	9182-G	Luxury Cars	Owned	White	Active"></textarea></label>
     <div id="bk-prev" class="small" style="margin-top:8px"></div>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="bk-save" disabled>Add cars</button></div>`);
@@ -1637,8 +1745,9 @@ ACT['car-bulk'] = () => {
   const upd = () => {
     const { ok, skipped } = parseCarLines(ta.value);
     const add = ok.filter(x => !x.existing), updt = ok.filter(x => x.existing);
+    const newCats = [...new Set(ok.map(x => x.d.category).filter(c => c && !catInfo(c)))];
     o.querySelector('#bk-prev').innerHTML = (ok.length ? `<p style="margin:0 0 6px"><strong>${add.length} new car${add.length === 1 ? '' : 's'}${updt.length ? `, ${updt.length} existing car${updt.length === 1 ? '' : 's'} will be updated` : ''}</strong></p>
-      <div class="bk-list">${ok.slice(0, 40).map(x => `<div>${x.existing ? '<span class="chip pickup">Update</span>' : '<span class="chip done">New</span>'} ${esc(x.d.make)} ${esc(x.d.model)} ${esc(x.d.year)} <span class="plate">${esc(x.d.plate)}</span> <span class="muted">${esc([x.d.color, x.d.category, x.d.ownership === 'investor' ? 'Investor' : '', x.d.active ? '' : 'Inactive'].filter(Boolean).join(', '))}</span></div>`).join('')}${ok.length > 40 ? `<div class="muted">and ${ok.length - 40} more</div>` : ''}</div>` : '')
+      ${newCats.length ? `<div class="warn" style="margin:0 0 6px">New categor${newCats.length === 1 ? 'y' : 'ies'} will be added to your list: <strong>${newCats.map(esc).join(', ')}</strong></div>` : ''}<div class="bk-list">${ok.slice(0, 40).map(x => `<div>${x.existing ? '<span class="chip pickup">Update</span>' : '<span class="chip done">New</span>'} ${esc(x.d.make)} ${esc(x.d.model)} ${esc(x.d.year)} <span class="plate">${esc(x.d.plate)}</span> <span class="muted">${esc([x.d.color, x.d.category, x.d.ownership === 'investor' ? 'Investor' : '', x.d.active ? '' : 'Inactive'].filter(Boolean).join(', '))}</span></div>`).join('')}${ok.length > 40 ? `<div class="muted">and ${ok.length - 40} more</div>` : ''}</div>` : '')
       + (skipped.length ? `<div class="warn" style="margin-top:6px">${skipped.length} line${skipped.length === 1 ? '' : 's'} will be skipped:<br>${skipped.slice(0, 8).map(esc).join('<br>')}${skipped.length > 8 ? '<br>…' : ''}</div>` : '');
     btn.disabled = !ok.length; btn.textContent = ok.length ? `Save ${ok.length} car${ok.length === 1 ? '' : 's'}` : 'Add cars';
     return ok;
@@ -1648,6 +1757,8 @@ ACT['car-bulk'] = () => {
     const ok = upd(); if (!ok.length) return;
     btn.disabled = true; btn.textContent = 'Saving…';
     try {
+      const nc = [...new Set(ok.map(x => x.d.category).filter(c => c && !catInfo(c)))];
+      if (nc.length || !Array.isArray(S.settings.categories)) await db.doc('meta/settings').set({ categories: [...catList(), ...nc.map(name => ({ name, rent: !/office/i.test(name) }))] }, { merge: true });
       let b = db.batch(), ops = 0;
       const flush = async () => { if (ops) { await b.commit(); b = db.batch(); ops = 0; } };
       for (const x of ok) {
@@ -1792,8 +1903,7 @@ function viewSettings() {
   <section class="card"><h2>WhatsApp available list</h2>
     <label class="f">Name at the top<input id="st-shn" value="${esc(s.shareName || 'Thomson Rent A Car')}"></label>
     <label class="f">Call or WhatsApp number<input id="st-wa" type="tel" value="${esc(s.waNumber || '')}" placeholder="050 123 4567"></label>
-    <label class="f">Category order, first to last<input id="st-cat" value="${esc(s.categoryOrder || '')}" placeholder="Luxury Cars, SUV, Economy Cars, Small Cars"></label>
-    <p class="small muted" style="margin:6px 0 0">Cars are listed in this category order everywhere: the home screen, the calendar and the WhatsApp message.</p></section>
+    <p class="small muted" style="margin:10px 0 0">Cars are listed in your category order everywhere. Set the order under <a href="#/categories">Categories</a>.</p></section>
   <section class="card"><h2>VAT and card charges</h2>
     <div class="grid2"><label class="f">VAT %<input id="st-vat" type="number" inputmode="decimal" step="0.01" value="${esc(s.vatRate ?? 5)}"></label>
     <label class="f">Default VAT mode<select id="st-mode"><option value="plus" ${s.defaultVatMode !== 'incl' ? 'selected' : ''}>Price + VAT</option><option value="incl" ${s.defaultVatMode === 'incl' ? 'selected' : ''}>VAT inclusive</option></select></label></div>
@@ -1806,7 +1916,7 @@ function viewSettings() {
     if (pin && !/^\d{4,8}$/.test(pin)) { $('#st-err').textContent = 'PIN must be 4 to 8 digits.'; return; }
     const d = { companyName: $('#st-name').value.trim() || COMPANY, address: $('#st-addr').value.trim(), phone: $('#st-phone').value.trim(), trn: $('#st-trn').value.trim(),
       vatRate: parseFloat($('#st-vat').value) || 0, defaultVatMode: $('#st-mode').value, ccOptions: $('#st-cc').value.replace(/[^\d.,]/g, '') || '4,5', defaultCc: parseFloat($('#st-ccd').value) || 5,
-      shareName: $('#st-shn').value.trim() || 'Thomson Rent A Car', waNumber: $('#st-wa').value.trim(), categoryOrder: $('#st-cat').value.trim() };
+      shareName: $('#st-shn').value.trim() || 'Thomson Rent A Car', waNumber: $('#st-wa').value.trim() };
     try { await db.doc('meta/settings').set(d, { merge: true }); if (pin) await db.doc('meta/secure').set({ pin }, { merge: true }); S.formOpen = false; toast('Settings saved.'); render(); }
     catch (e) { $('#st-err').textContent = friendlyError(e); }
   };
@@ -2164,6 +2274,55 @@ ACT['car-delsel'] = async () => { if (!S.carSel || !S.carSel.size) return; if (a
 ACT['car-del'] = async ({ id }) => {
   const c = S.cars.find(x => x.id === id); closeSheet();
   if (await deleteCars([id])) location.hash = c && isSub(c) ? '#/sublease' : '#/cars';
+};
+
+
+/* ========================================================= categories */
+function viewCategories() {
+  if (!isAdmin()) return deny();
+  const list = catList(), saved = Array.isArray(S.settings.categories);
+  const used = n => S.cars.filter(c => String(c.category || '').toLowerCase() === n.toLowerCase()).length;
+  const html = `<p class="small muted" style="margin:4px 0 12px">Define your car categories here. Cars choose from this list, and this order is used on the home screen, the calendar and the WhatsApp message. Turn off <strong>For rent</strong> for categories like Office use cars, so they never show as available.</p>
+  ${!saved && list.length ? '<div class="strip info"><h3>These categories were found on your cars</h3><p class="small" style="margin:0">Check the order and tap Save to confirm them.</p><div class="btnrow"><button class="btn primary sm" data-act="cat-save-found">Save this list</button></div></div>' : ''}
+  <div class="card" style="padding:6px 12px">${list.length ? list.map((c, i) => `<div class="cat-row">
+      <div class="cat-ord"><button class="iconbtn sm" data-act="cat-move" data-i="${i}" data-d="-1" aria-label="Move ${esc(c.name)} up" ${i === 0 ? 'disabled' : ''}>▲</button><button class="iconbtn sm" data-act="cat-move" data-i="${i}" data-d="1" aria-label="Move ${esc(c.name)} down" ${i === list.length - 1 ? 'disabled' : ''}>▼</button></div>
+      <div class="cat-name"><strong>${esc(c.name)}</strong><span class="muted small">${used(c.name)} car${used(c.name) === 1 ? '' : 's'}${c.rent === false ? ', not for rent' : ''}</span></div>
+      <div class="cat-acts"><label class="cat-rent"><input type="checkbox" data-rent="${i}" ${c.rent !== false ? 'checked' : ''}> For rent</label>
+      <button class="btn sm" data-act="cat-rename" data-i="${i}">Rename</button></div>
+      <button class="btn sm danger cat-del" data-act="cat-del" data-i="${i}" aria-label="Delete ${esc(c.name)}">✕</button></div>`).join('') : '<div class="empty"><h3>No categories yet</h3><p>Add your first one below, for example Luxury Cars.</p></div>'}</div>
+  <div class="card"><h2>Add a category</h2><div style="display:flex;gap:8px"><input id="cat-new" class="f-in" style="margin:0" placeholder="Sports Cars"><button class="btn primary" data-act="cat-add">Add</button></div><p class="err" id="cat-err"></p></div>`;
+  const mount = () => {
+    $$('[data-rent]').forEach(x => x.addEventListener('change', () => { const l = catList().map(c => ({ ...c })); l[+x.dataset.rent].rent = x.checked; saveCats(l); }));
+    const n = $('#cat-new'); n && n.addEventListener('keydown', e => { if (e.key === 'Enter') ACT['cat-add'](); });
+  };
+  return { title: 'Car categories', back: '#/more', html, mount };
+}
+async function saveCats(list, msg) { await db.doc('meta/settings').set({ categories: list }, { merge: true }); if (msg) toast(msg); }
+ACT['cat-save-found'] = () => saveCats(catList().map(c => ({ ...c, rent: !/office/i.test(c.name) })), 'Categories saved.');
+ACT['cat-add'] = async () => {
+  const v = $('#cat-new').value.trim().replace(/\s+/g, ' ');
+  if (!v) { $('#cat-err').textContent = 'Type a category name.'; return; }
+  if (catInfo(v) && Array.isArray(S.settings.categories)) { $('#cat-err').textContent = 'That category already exists.'; return; }
+  const l = catList().filter(c => c.name.toLowerCase() !== v.toLowerCase()); l.push({ name: v, rent: !/office/i.test(v) });
+  await saveCats(l, `${v} added.`);
+};
+ACT['cat-move'] = ({ i, d }) => { const l = catList().map(c => ({ ...c })), a = +i, z = a + +d; if (z < 0 || z >= l.length) return; [l[a], l[z]] = [l[z], l[a]]; saveCats(l); };
+ACT['cat-rename'] = async ({ i }) => {
+  const l = catList().map(c => ({ ...c })), old = l[+i].name;
+  const v = await ask({ title: `Rename ${old}`, text: 'All cars in this category are updated too.', ok: 'Rename', input: { label: 'New name', value: old, required: 'Type a name.' } });
+  if (!v || v === old) return;
+  if (l.some((c, k) => k !== +i && c.name.toLowerCase() === v.toLowerCase())) { toast('That category already exists.'); return; }
+  l[+i].name = v;
+  const cars = S.cars.filter(c => String(c.category || '').toLowerCase() === old.toLowerCase());
+  for (let n = 0; n < cars.length; n += 400) { const b = db.batch(); cars.slice(n, n + 400).forEach(c => b.update(db.doc('cars/' + c.id), { category: v })); await b.commit(); }
+  await saveCats(l, `Renamed to ${v}${cars.length ? `, ${cars.length} cars updated` : ''}.`);
+};
+ACT['cat-del'] = async ({ i }) => {
+  const l = catList().map(c => ({ ...c })), c = l[+i];
+  const n = S.cars.filter(x => String(x.category || '').toLowerCase() === c.name.toLowerCase()).length;
+  if (n) { await ask({ title: `${c.name} is in use`, text: `${n} car${n === 1 ? ' uses' : 's use'} this category. Move ${n === 1 ? 'it' : 'them'} to another category first, or rename this one instead.`, ok: 'OK' }); return; }
+  if (!(await ask({ title: `Delete ${c.name}?`, ok: 'Delete', danger: true }))) return;
+  l.splice(+i, 1); await saveCats(l, `${c.name} deleted.`);
 };
 
 boot();
