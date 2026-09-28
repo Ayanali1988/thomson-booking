@@ -380,6 +380,52 @@ button.car-tile .car-ico{margin-left:26px}
 .cat-rent{font-size:13px;display:flex;align-items:center;gap:4px;white-space:nowrap}
 .cat-rent input{width:18px;height:18px}
 @media(max-width:560px){.cat-row{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"ord name del" "ord acts acts"}}
+.mc-side{display:none}
+.hero-tools{display:none}
+.btn.amber{background:var(--amber);border-color:var(--amber);color:var(--night);font-weight:700}
+@media(min-width:1000px) and (min-height:620px){
+  .mc-top{display:none}
+  body.dash{overflow:hidden;padding-bottom:0}
+  body.dash #app{height:calc(100vh - 70px - env(safe-area-inset-bottom));display:flex;flex-direction:column;overflow:hidden}
+  body.dash .hero.home{padding:12px 20px 44px;flex:none}
+  body.dash .hero.home .skyline{height:110px}
+  body.dash .hero.home .hero-in{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"top date tools";align-items:center;gap:16px}
+  body.dash .hero-date{margin-top:0;grid-template-columns:40px auto 40px}
+  body.dash .hero .seg{margin-bottom:4px}
+  body.dash .hero .bigdate{font-size:28px;white-space:nowrap}
+  body.dash .stats{flex:none;margin-top:-32px}
+  body.dash .stat{padding:8px 12px 7px;flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}
+  body.dash .stat strong{font-size:24px}
+  body.dash .stat em{flex-basis:100%}
+  body.dash main.main{flex:1;min-height:0;display:flex;flex-direction:column;padding-top:10px;padding-bottom:10px;width:100%}
+  body.dash .strip{flex:none;max-height:92px;overflow:auto;margin:0 0 8px;padding:8px 12px}
+  body.dash .sec-head{display:none}
+  body.dash .hero-tools{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  body.dash .hero-tools .btn:not(.amber){background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff}
+  body.dash .board{flex:1;min-height:0;margin-top:0;grid-template-columns:118px repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:14px}
+  body.dash .board .col-d,body.dash .board .col-p,body.dash .board .col-a{max-height:none;height:100%}
+  .mc-side{display:flex;flex-direction:column;min-height:0;height:100%;margin:0;padding:8px 6px;overflow:auto}
+  .mc-side .mc-head{flex-direction:column;align-items:flex-start;margin:0 4px 8px;gap:4px}
+  .mc-side .mc-head h2{font-size:14px}
+  .mc-side .mc-leg{flex-direction:column;align-items:flex-start;gap:2px}
+  .mc-side .mc-leg i{margin-left:0;margin-right:4px}
+  .mc-side .mc-grid{display:flex;flex-direction:column;gap:4px}
+  .mc-side .mc-day{display:grid;grid-template-columns:30px 1fr;grid-template-areas:"w n" "m d";align-items:center;justify-items:start;min-height:0;padding:5px 8px;column-gap:6px;row-gap:0}
+  .mc-side .mc-w{grid-area:w}
+  .mc-side .mc-n{grid-area:n;font-size:17px;justify-self:end}
+  .mc-side .mc-m{grid-area:m;font-size:11px;color:var(--muted)}
+  .mc-side .mc-dots{grid-area:d;justify-self:end;min-height:16px}
+  .mc-side .mc-day.today{transform:scale(1.06)}
+  .mc-side .mc-day.today .mc-m{color:#C9D6E6}
+  .mc-side .mc-day.today .mc-n{font-size:21px}
+}
+.plate.big{font-size:14.5px;padding:1px 8px 1px 11px;letter-spacing:.05em}
+.car-tile .plate.big{font-size:17px;margin:0 0 6px}
+.pf-car{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.pf-line{display:block;margin-top:8px;padding:8px 10px;border-radius:10px;background:#F4F6FA;color:var(--ink);text-decoration:none;font-size:14px}
+.pf-line.late-true{background:var(--late-bg)}
+.cal-car strong{font-size:14px;letter-spacing:.03em}
+.plate-btn{font-weight:700}
 /* print */
 #print{display:none}
 @media print{
@@ -648,7 +694,7 @@ function brand(cls = '') {
 const loading = () => `<div class="empty"><p>Loading…</p></div>`;
 const deny = () => ({ title: 'Not available', back: '#/home', html: `<div class="empty"><h3>This page isn't available for your role</h3><p><a href="#/home">Go to tasks</a></p></div>` });
 const statusChip = s => `<span class="chip ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
-const carLabel = b => `${esc(b.carName || 'Car')} <span class="plate">${esc(b.plate || '')}</span>`;
+const carLabel = b => `<span class="plate big">${esc(b.plate || '?')}</span> ${esc(b.carName || 'Car')}`;
 /* car naming: Make, Model, Year (older cars saved with one name are split automatically) */
 function carParts(c) {
   if (!c) return { make: '', model: '', year: '' };
@@ -721,6 +767,7 @@ function render() {
   if (!['booking', 'edit', 'settle'].includes(r) && S.detailId) { S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = null; }
   const v = (views[r] || viewHome)();
   S.route = r; S.formOpen = !!v.form;
+  document.body.classList.toggle('dash', r === 'home');
   const head = v.head != null ? v.head : `<header class="topbar">${v.back ? `<a class="back" href="${v.back}" aria-label="Back">${ico('left')}</a>` : ''}<h1>${esc(v.title || '')}</h1>${v.right || ''}</header>`;
   $('#app').innerHTML = `${head}<main class="main${v.wide ? ' wide' : ''}">${v.html}</main>${navBar(r)}`;
   if (v.mount) v.mount();
@@ -823,7 +870,7 @@ function dayWordFor(D) { const t = todayStr(); return D === t ? 'Today' : D === 
 function availRow(x) {
   const c = x.c, p = carParts(c);
   const note = x.st.state === 'from' ? `<span class="chip pickup">Back at ${time12(tOf(x.st.at))}</span>` : x.st.state === 'until' ? `<span class="chip delivery">Free until ${time12(tOf(x.st.at))}</span>` : '';
-  return `<a class="av-row" href="#/car/${c.id}"><span class="av-main"><strong>${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</strong> <span class="plate">${esc(c.plate)}</span></span>
+  return `<a class="av-row" href="#/car/${c.id}"><span class="av-main"><span class="plate big">${esc(c.plate)}</span> <strong>${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</strong></span>
     <span class="av-sub">${esc([c.color, isSub(c) ? 'Sub-lease: ' + (c.supplier || '') : c.category].filter(Boolean).join(', '))} ${note}</span></a>`;
 }
 
@@ -862,7 +909,8 @@ function viewHome() {
         <h1 class="bigdate">${esc(fmtLong(D))}</h1>
       </div>
       <button class="iconbtn dark" data-act="day" data-d="1" aria-label="Next day">${ico('right')}</button>
-    </div></div></section>
+    </div>
+    <div class="hero-tools"><button class="btn sm" data-act="findplate">Find plate</button><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm amber" href="#/new">New booking</a>' : ''}</div></div></section>
   <div class="stats wide">
     <button class="stat s-d" data-act="tab" data-t="d"><strong class="num">${dl.length}</strong><span>Deliveries ${dayWord}</span><em>${dl.filter(t => t.done).length} done</em></button>
     <button class="stat s-p" data-act="tab" data-t="p"><strong class="num">${pk.length}</strong><span>Pickups ${dayWord}</span><em>${pk.filter(t => t.done).length} done</em></button>
@@ -872,14 +920,15 @@ function viewHome() {
   const col = (key, title, list, cls) => `<section class="col col-${key}" aria-label="${title}"><header class="col-h ${cls}"><h2>${title}</h2><span class="num">${list.length}</span></header>
     ${list.length ? `<ol class="timeline">${list.map(taskCard).join('')}</ol>` : `<p class="col-empty">No ${title.toLowerCase()} ${dayWord}.</p>`}</section>`;
   const html = `
-  ${miniCal()}
+  ${miniCal(false)}
   ${overdue.length ? `<div class="strip late" role="alert"><h3>Overdue from earlier days (${overdue.length})</h3>${overdue.map(t => `<a class="row" href="#/booking/${t.b.id}"><span>${t.type === 'delivery' ? 'Delivery' : 'Pickup'}: ${esc(t.b.carName)} ${esc(t.b.plate)}, ${esc(t.b.clientName)}</span><strong class="num">${esc(fmtDay(t.at))}</strong></a>`).join('')}</div>` : ''}
   ${awaiting.length ? `<div class="strip info"><h3>Returned, waiting for settlement (${awaiting.length})</h3>${awaiting.map(b => `<a class="row" href="#/settle/${b.id}"><span>${esc(b.ref)}: ${esc(b.carName)} ${esc(b.plate)}, ${esc(b.clientName)}</span><strong>${b.status === 'pending' ? 'Pending charges' : 'Settle'}</strong></a>`).join('')}</div>` : ''}
   <div class="sec-head"><div class="tabs-m" role="tablist" aria-label="Show">
       ${[['all', 'All', tasks.length], ['d', 'Deliveries', dl.length], ['p', 'Pickups', pk.length], ['a', 'Available', avCount]].map(([k, l, n]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-act="tab" data-t="${k}">${l} <span class="num">${n}</span></button>`).join('')}
     </div>
-    <div class="toolbar"><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm primary" href="#/new">New booking</a>' : ''}</div></div>
+    <div class="toolbar"><button class="btn sm plate-btn" data-act="findplate">Find plate</button><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm primary" href="#/new">New booking</a>' : ''}</div></div>
   <div class="board tab-${tab}">
+    ${miniCal(true)}
     <section class="col col-all" aria-label="All tasks">${tasks.length ? `<ol class="timeline">${tasks.map(taskCard).join('')}</ol>`
       : `<div class="empty">${CAR.replace('car-ico', 'car-ico big')}<h3>No deliveries or pickups ${dayWord}</h3><p>${isStaff() ? '<a class="btn primary" href="#/new">Create a booking</a>' : `Tasks for ${esc(fmtDate(D))} will appear here.`}</p></div>`}</section>
     ${col('d', 'Deliveries', dl, 'h-d')}
@@ -1096,7 +1145,7 @@ ACT.extend = async ({ id }) => {
 };
 
 /* two-week mini calendar on the home screen */
-function miniCal() {
+function miniCal(side) {
   const t = todayStr(), cnt = {};
   const bump = (d, k) => { (cnt[d] = cnt[d] || { d: 0, p: 0 })[k]++; };
   const all = new Map([...S.day, ...S.active]);
@@ -1106,14 +1155,50 @@ function miniCal() {
     if (b.status === 'booked' || b.status === 'onrent') bump(b.pickupDate, 'p');
   }
   const days = Array.from({ length: 14 }, (_, i) => addDays(t, i));
-  return `<section class="mini-cal" aria-label="Next two weeks">
-    <div class="mc-head"><h2>Next 2 weeks</h2><span class="mc-leg"><i class="g"></i>Deliveries <i class="r"></i>Pickups</span></div>
+  return `<section class="mini-cal ${side ? 'mc-side' : 'mc-top'}" aria-label="Next two weeks">
+    <div class="mc-head"><h2>Next 2 weeks</h2><span class="mc-leg"><span><i class="g"></i>Deliveries</span> <span><i class="r"></i>Pickups</span></span></div>
     <div class="mc-grid">${days.map(d => { const dt = parseDT(d + 'T12:00'), c = cnt[d] || { d: 0, p: 0 };
       return `<button class="mc-day ${d === t ? 'today' : ''} ${d === S.viewDate ? 'sel' : ''}" data-act="day" data-set="${d}" aria-label="${esc(fmtLong(d))}: ${c.d} deliveries, ${c.p} pickups">
-        <span class="mc-w">${dt.toLocaleDateString('en-GB', { weekday: 'short' })}</span><span class="mc-n">${dt.getDate()}</span>
+        <span class="mc-w">${dt.toLocaleDateString('en-GB', { weekday: 'short' })}</span><span class="mc-n">${dt.getDate()}</span>${side ? `<span class="mc-m">${dt.toLocaleDateString('en-GB', { month: 'short' })}</span>` : ''}
         <span class="mc-dots">${c.d ? `<b class="g">${c.d}</b>` : ''}${c.p ? `<b class="r">${c.p}</b>` : ''}</span></button>`; }).join('')}</div></section>`;
 }
 
+
+
+/* plate finder: type any part of a plate to see where the car is */
+function plateMatches(q) {
+  const t = plateSig(q); if (!t.d && !t.l) return [];
+  return S.cars.filter(c => { const x = plateSig(c.plate); return (!t.d || x.d.includes(t.d)) && (!t.l || x.l.includes(t.l)); })
+    .sort((a, b) => (a.active === false) - (b.active === false) || String(a.plate).localeCompare(String(b.plate)));
+}
+function carNowHtml(c) {
+  const now = new Date(), bs = [...S.active.values()].filter(b => b.carId === c.id && ACTIVE.includes(b.status)).sort((a, z) => a.deliveryAt.localeCompare(z.deliveryAt));
+  const onr = bs.find(b => b.status === 'onrent'), next = bs.filter(b => b.status === 'booked');
+  const back = bs.find(b => b.status === 'returned' || b.status === 'pending');
+  const p = carParts(c);
+  const state = c.active === false ? `<span class="chip cancelled">${isSub(c) ? 'Returned to supplier' : 'Inactive'}</span>`
+    : onr ? `<span class="chip onrent">On rent</span>` : `<span class="chip done">Available now</span>`;
+  return `<div class="pf-car"><div class="lr-top"><span><span class="plate big">${esc(c.plate)}</span> <strong>${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</strong></span>${state}</div>
+    <div class="lr-sub">${esc([c.color, isSub(c) ? 'Sub-lease: ' + (c.supplier || '-') : c.category].filter(Boolean).join(', '))}</div>
+    ${onr ? `<a class="pf-line late-${parseDT(onr.pickupAt) < now}" href="#/booking/${onr.id}"><strong>With ${esc(onr.clientName)}</strong>${onr.clientPhone ? `, ${esc(onr.clientPhone)}` : ''}<br>Return ${esc(fmtDT(onr.pickupAt))}${parseDT(onr.pickupAt) < now ? ' <span class="chip late">Overdue</span>' : ''} <span class="muted">(${esc(onr.ref)}${onr.oldRef ? ', ' + esc(onr.oldRef) : ''})</span></a>` : ''}
+    ${next.map(b => `<a class="pf-line" href="#/booking/${b.id}">Booked for <strong>${esc(b.clientName)}</strong><br>${esc(fmtDT(b.deliveryAt))} to ${esc(fmtDT(b.pickupAt))} <span class="muted">(${esc(b.ref)})</span></a>`).join('')}
+    ${back ? `<a class="pf-line" href="#/booking/${back.id}">Returned by ${esc(back.clientName)}, waiting for settlement</a>` : ''}
+    <div class="t-actions"><a class="btn sm" href="#/car/${c.id}">Full history</a>${isStaff() && c.active !== false ? `<button class="btn sm primary" data-act="newforcar" data-id="${c.id}">New booking with this car</button>` : ''}</div></div>`;
+}
+ACT.findplate = () => {
+  const o = openSheet(`<h2>Find a car by plate</h2>
+    <label class="f">Plate number, full or part<input id="pf-q" inputmode="text" autocapitalize="characters" autocomplete="off" placeholder="9185 or 9185-G"></label>
+    <div id="pf-res" style="margin-top:10px"></div>`);
+  const q = o.querySelector('#pf-q');
+  const upd = () => {
+    const list = plateMatches(q.value);
+    o.querySelector('#pf-res').innerHTML = !q.value.trim() ? '<p class="muted small">Type at least part of the plate, for example 9185.</p>'
+      : list.length ? list.slice(0, 8).map(carNowHtml).join('') + (list.length > 8 ? `<p class="muted small">${list.length - 8} more match. Type more of the plate.</p>` : '')
+      : `<p class="muted">No car with a plate matching "${esc(q.value)}".</p>`;
+  };
+  q.addEventListener('input', upd); upd(); setTimeout(() => q.focus(), 50);
+};
+ACT.newforcar = ({ id }) => { S.prefillCar = id; closeSheet(); location.hash = '#/new'; };
 
 /* ========================================================= booking detail */
 function viewDetail(id) {
@@ -1200,11 +1285,12 @@ const shortD = s => parseDT(s).toLocaleDateString('en-GB', { day: 'numeric', mon
 function carOptions(startAt, endAt, selected, excludeId) {
   const opt = c => {
     const cf = startAt && endAt ? conflicts(c.id, startAt, endAt, excludeId) : [];
-    const lbl = `${carTitle(c)} (${c.plate})${cf.length ? `, booked ${shortD(cf[0].deliveryAt)} to ${shortD(cf[0].pickupAt)} (${cf[0].ref})` : ''}`;
+    const lbl = `${c.plate}, ${carTitle(c)}${cf.length ? `, booked ${shortD(cf[0].deliveryAt)} to ${shortD(cf[0].pickupAt)} (${cf[0].ref})` : ''}`;
     return `<option value="${c.id}" ${c.id === selected ? 'selected' : ''} ${cf.length && c.id !== selected ? 'disabled' : ''}>${esc(lbl)}</option>`;
   };
-  const own = S.cars.filter(c => !isSub(c) && (c.active !== false || c.id === selected));
-  const sub = S.cars.filter(c => isSub(c) && (c.active !== false || c.id === selected));
+  const byPlate = (a, b) => String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true });
+  const own = S.cars.filter(c => !isSub(c) && (c.active !== false || c.id === selected)).sort(byPlate);
+  const sub = S.cars.filter(c => isSub(c) && (c.active !== false || c.id === selected)).sort(byPlate);
   return `<option value="">Choose a car</option>${own.length ? `<optgroup label="Own cars">${own.map(opt).join('')}</optgroup>` : ''}${sub.length ? `<optgroup label="Sub-lease cars">${sub.map(opt).join('')}</optgroup>` : ''}<option value="__hire" ${selected === '__hire' ? 'selected' : ''}>+ Sub-lease hire for this booking</option>`;
 }
 const suppliers = () => [...new Set(S.cars.filter(isSub).map(c => c.supplier).filter(Boolean))].sort();
@@ -1217,11 +1303,12 @@ function viewForm(id) {
     if (!b || !f) return { title: 'Edit booking', back: '#/booking/' + id, html: loading() };
   }
   const cars = S.cars.filter(c => c.active !== false || (b && c.id === b.carId));
+  const pre = S.prefillCar || ''; S.prefillCar = null;
   const sps = S.sales.filter(s => s.active !== false || (b && s.id === b.salespersonId));
   const mySp = S.sales.find(s => s.uid === S.me.id);
   const v = {
     clientName: b ? b.clientName : '', clientPhone: b ? b.clientPhone || '' : '', location: b ? b.location || '' : '', pickupLocation: b ? b.pickupLocation || '' : '',
-    carId: b ? b.carId : '', date: b ? b.deliveryDate : S.viewDate, time: b ? tOf(b.deliveryAt) : '10:00', days: b ? b.days : 1,
+    carId: b ? b.carId : pre, date: b ? b.deliveryDate : S.viewDate, time: b ? tOf(b.deliveryAt) : '10:00', days: b ? b.days : 1,
     rate: f ? f.rate : '', rateType: f ? f.rateType || 'day' : 'day', vatMode: f ? f.vatMode : (S.settings.defaultVatMode || 'plus'), sp: b ? b.salespersonId : (mySp ? mySp.id : ''),
     drv: b ? b.deliveryDriverId || '' : '', advance: f ? f.advance || '' : '', advMethod: f ? f.advanceMethod || 'cash' : 'cash', notes: b ? b.notes || '' : ''
   };
@@ -1234,6 +1321,7 @@ function viewForm(id) {
     <label class="f">Pickup location, if different<input id="b-ploc" value="${esc(v.pickupLocation)}" placeholder="Same as delivery"></label>
   </section>
   <section class="card"><h2>Car and dates</h2>
+    <label class="f">Type plate to find the car<input id="b-pq" autocomplete="off" autocapitalize="characters" placeholder="9185"></label>
     <label class="f">Car<select id="b-car">${carOptions(b ? b.deliveryAt : '', b ? b.pickupAt : '', v.carId, id)}</select></label>
     <p class="small muted" style="margin:6px 0 0">Cars already booked for these dates are greyed out. Pick a sub-lease car or choose Sub-lease hire instead.</p>
     <div id="b-hire" class="hire hidden"><h3>Sub-lease hire</h3>
@@ -1287,6 +1375,12 @@ function viewForm(id) {
     };
     $$('#app input, #app select, #app textarea').forEach(el => el.addEventListener('input', upd));
     upd();
+    $('#b-pq').addEventListener('input', e => {
+      const hits = plateMatches(e.target.value).filter(c => c.active !== false), sel = $('#b-car');
+      [...sel.options].forEach(o => { if (!o.value || o.value === '__hire') return; o.hidden = !!e.target.value.trim() && !hits.some(h => h.id === o.value); });
+      const ok = hits.filter(h => { const o = [...sel.options].find(x => x.value === h.id); return o && !o.disabled; });
+      if (ok.length === 1) { sel.value = ok[0].id; upd(); }
+    });
     $('#b-save').onclick = async ev => {
       const { x, pu, cf } = upd();
       const h = x.hire, hiring = x.carId === '__hire';
@@ -1456,7 +1550,7 @@ function filteredRows() {
   return (S.listRows || []).filter(b => (F.status === 'all' || (F.status === 'active' ? ACTIVE.includes(b.status) : b.status === F.status))
     && (F.sp === 'all' || b.salespersonId === F.sp) && (F.car === 'all' || b.carId === F.car)
     && (F.type === 'all' || (F.type === 'sub' ? b.carType === 'sublease' : b.carType !== 'sublease'))
-    && (!q || [b.ref, b.oldRef, b.clientName, b.clientPhone, b.plate, b.carName, b.location, b.supplier].join(' ').toLowerCase().includes(q)));
+    && (!q || (plateSig(q).d.length >= 3 && plateSig(b.plate).d.includes(plateSig(q).d)) || [b.ref, b.oldRef, b.clientName, b.clientPhone, b.plate, b.carName, b.location, b.supplier].join(' ').toLowerCase().includes(q)));
 }
 function rangeFor(r) {
   const t = todayStr(), y = t.slice(0, 4), m1 = t.slice(0, 8) + '01';
@@ -1486,7 +1580,7 @@ function viewBookings() {
     <label class="f">Search<input id="f-q" type="search" value="${esc(F.q)}" placeholder="Booking or old agreement number, client, phone, plate"></label>
     <div class="grid2"><label class="f">Status<select id="f-st">${[['all', 'All'], ['active', 'All open'], ...Object.entries(STATUS)].map(([k, l]) => `<option value="${k}" ${F.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
     <label class="f">Salesperson<select id="f-sp"><option value="all">All</option>${S.sales.map(s => `<option value="${s.id}" ${F.sp === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label></div>
-    <div class="grid2"><label class="f">Car<select id="f-car"><option value="all">All</option>${S.cars.map(c => `<option value="${c.id}" ${F.car === c.id ? 'selected' : ''}>${esc(carTitle(c))} (${esc(c.plate)})</option>`).join('')}</select></label>
+    <div class="grid2"><label class="f">Car<select id="f-car"><option value="all">All</option>${[...S.cars].sort((a, b) => String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true })).map(c => `<option value="${c.id}" ${F.car === c.id ? 'selected' : ''}>${esc(c.plate)}, ${esc(carTitle(c))}</option>`).join('')}</select></label>
     <label class="f">Car type<select id="f-type">${[['all', 'All'], ['own', 'Own cars'], ['sub', 'Sub-lease']].map(([k, l]) => `<option value="${k}" ${F.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
     <p class="small muted" style="margin:8px 0 0">Dates filter by delivery date. Searching a booking number finds it in any year.</p>
   </section>
@@ -1566,7 +1660,7 @@ function viewCalendar() {
   const all = new Map((S.calRows || []).map(b => [b.id, b])); S.active.forEach((b, k) => all.set(k, b));
   const bks = [...all.values()].filter(b => b.status !== 'cancelled' && parseDT(b.deliveryAt) < e0 && effEnd(b) > s0);
   const ids = new Set(bks.map(b => b.carId));
-  const cars = S.cars.filter(c => c.active !== false || ids.has(c.id)).sort((a, b) => (isSub(a) - isSub(b)) || categoryRank(a.category) - categoryRank(b.category) || carTitle(a).localeCompare(carTitle(b)));
+  const cars = S.cars.filter(c => c.active !== false || ids.has(c.id)).sort((a, b) => (isSub(a) - isSub(b)) || categoryRank(a.category) - categoryRank(b.category) || String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true }));
   const t = todayStr();
   const days = Array.from({ length: N }, (_, i) => addDays(start, i));
   const dayHead = days.map(d => { const dt = parseDT(d + 'T12:00'); return `<div class="cal-d ${d === t ? 'today' : ''} ${[0, 6].includes(dt.getDay()) ? 'we' : ''}"><span>${dt.toLocaleDateString('en-GB', { weekday: 'short' })}</span><strong>${dt.getDate()}</strong></div>`; }).join('');
@@ -1579,7 +1673,7 @@ function viewCalendar() {
   const rowsHtml = cars.map(c => {
     const sep = lastSub !== isSub(c) ? `<div class="cal-sep">${isSub(c) ? 'Sub-lease cars' : 'Own cars'}</div>` : ''; lastSub = isSub(c);
     const p = carParts(c);
-    return `${sep}<div class="cal-row"><a class="cal-car" href="#/car/${c.id}"><strong>${esc(p.make)} ${esc(p.model)}</strong><span>${esc(c.plate)}</span></a>
+    return `${sep}<div class="cal-row"><a class="cal-car" href="#/car/${c.id}"><strong class="num">${esc(c.plate)}</strong><span>${esc(p.make)} ${esc(p.model)}</span></a>
       <div class="cal-track">${days.map(d => `<i class="${d === t ? 'today' : ''}"></i>`).join('')}${bks.filter(b => b.carId === c.id).map(bar).join('')}</div></div>`;
   }).join('');
   const html = `
@@ -1633,7 +1727,7 @@ function viewCars() {
   const a = isAdmin();
   const own = S.cars.filter(c => !isSub(c));
   const groups = {};
-  own.forEach(c => { (groups[c.category || 'Other'] = groups[c.category || 'Other'] || []).push(c); });
+  own.sort((a, b) => String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true })).forEach(c => { (groups[c.category || 'Other'] = groups[c.category || 'Other'] || []).push(c); });
   const cats = Object.keys(groups).sort((x, y) => categoryRank(x) - categoryRank(y) || x.localeCompare(y));
   let n = 0;
   const sel = S.carSel;
@@ -1642,7 +1736,7 @@ function viewCars() {
   ${own.length ? `<p class="muted small" style="margin:10px 0 0">${own.filter(c => c.active !== false).length} active own cars, ${own.length} in total. Tap a car for its booking history.</p>
   ${cats.map(cat => `<h2 class="cat-h"><span class="dot" style="background:${catColor(cat)}"></span>${esc(cat)} <span class="muted small">${groups[cat].length}</span></h2>
     <div class="car-grid">${groups[cat].map(c => { n++; const p = carParts(c); return `${sel ? `<button class="car-tile ${sel.has(c.id) ? 'picked' : ''}" data-act="car-pick" data-id="${c.id}" aria-pressed="${sel.has(c.id)}" style="--cc:${catColor(cat)}"><span class="tick">${sel.has(c.id) ? '✓' : ''}</span>` : `<a class="car-tile ${c.active === false ? 'off' : ''}" href="#/car/${c.id}" style="--cc:${catColor(cat)}">`}
-      ${CAR}<span class="ct-name">${esc(p.make)} ${esc(p.model)}</span><span class="ct-sub">${[p.year, c.color].filter(Boolean).map(esc).join(', ')}</span><span class="plate">${esc(c.plate)}</span>
+      <span class="plate big">${esc(c.plate)}</span>${CAR}<span class="ct-name">${esc(p.make)} ${esc(p.model)}</span><span class="ct-sub">${[p.year, c.color].filter(Boolean).map(esc).join(', ')}</span>
       ${c.active === false ? '<span class="chip cancelled">Inactive</span>' : ''}${sel ? '</button>' : '</a>'}`; }).join('')}</div>`).join('')}`
     : `<div class="empty">${CAR.replace('car-ico', 'car-ico big')}<h3>Add your cars</h3><p>Cars and plate numbers you add here appear in the booking form.${a ? ' Use <strong>Add many cars</strong> to paste your whole fleet from Excel at once.' : ''}</p></div>`}`;
   return { title: 'Own cars and plates', back: '#/more', html, wide: true };
@@ -1726,11 +1820,23 @@ function parseCarLines(text) {
       push(d, hIdx + 2 + i);
     });
   } else {
-    lines.forEach((raw, i) => {
+    const g = [];
+    lines.forEach(l => { if (!l.trim()) return; const last = g[g.length - 1]; if (last != null && last.endsWith('\t') && !/^\s*\d{1,4}\t/.test(l)) g[g.length - 1] = last + l; else g.push(l); });
+    g.forEach((raw, i) => {
       const line = raw.trim(); if (!line) return;
-      const [make = '', model = '', year = '', plate = '', color = '', category = ''] = (line.includes('\t') ? line.split('\t') : line.split(',')).map(x => x.trim());
-      if (/^make$/i.test(make)) return;
-      push({ make: tidyCase(make), model: tidyCase(model), year, plate, color: tidyCase(color), category, type: 'own', ownership: 'owned', active: true }, i + 1);
+      let c = (line.includes('\t') ? raw.split('\t') : line.split(',')).map(x => x.trim());
+      if (/^\d{1,4}$/.test(c[0]) && !/^(19|20)\d\d$/.test(c[0]) && c.length >= 4) c = c.slice(1);
+      if (/^(make|model|s\.?\s*no)/i.test(c[0])) return;
+      if (/^(19|20)\d{2}$/.test(c[1] || '')) {
+        const [name = '', year = '', plate = '', category = '', own = '', color = '', status = ''] = c;
+        const nm = splitName(name, year), o = own.toLowerCase(), sub = /sub/.test(o);
+        const d = { make: nm.make, model: nm.model, year, plate, color: tidyCase(color), category, type: sub ? 'sublease' : 'own', ownership: sub ? 'sublease' : /investor/.test(o) ? 'investor' : 'owned', active: !status || /active/i.test(status) && !/inactive/i.test(status) };
+        if (sub) d.supplier = 'To confirm';
+        push(d, i + 1);
+      } else {
+        const [make = '', model = '', year = '', plate = '', color = '', category = ''] = c;
+        push({ make: tidyCase(make), model: tidyCase(model), year, plate, color: tidyCase(color), category, type: 'own', ownership: 'owned', active: true }, i + 1);
+      }
     });
   }
   return { ok: out, skipped };
@@ -2011,12 +2117,12 @@ ACT.daysheet = async () => {
     if (t.type === 'delivery' && e) total += e.gross;
     const loc = t.type === 'pickup' ? (b.pickupLocation || b.location) : b.location;
     return `<tr><td>${i + 1}</td><td><strong>${time12(tOf(t.at))}</strong></td><td class="${t.type === 'delivery' ? 'p-type-d' : 'p-type-p'}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}${t.done ? ' (done)' : ''}</td>
-      <td>${esc(b.carName)}${b.carType === 'sublease' ? `<br><em style="color:#7A4500">Sub-lease: ${esc(b.supplier || '')}</em>` : ''}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.clientName)}</td><td>${esc(b.clientPhone || '')}</td><td>${esc(loc || '')}</td><td class="r">${b.days}</td>
+      <td><strong style="font-size:12.5px">${esc(b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? `<br><em style="color:#7A4500">Sub-lease: ${esc(b.supplier || '')}</em>` : ''}</td><td>${esc(b.clientName)}</td><td>${esc(b.clientPhone || '')}</td><td>${esc(loc || '')}</td><td class="r">${b.days}</td>
       ${staff ? `<td class="r">${f ? money(f.rate) + (f.rateType === 'month' ? '/mo' : '') : ''}</td><td class="r">${e ? money(e.gross) : ''}</td>` : ''}<td>${esc(b.salespersonName || '')}</td><td>${esc((t.type === 'delivery' ? b.deliveryDriverName : b.pickupDriverName) || '')}</td></tr>`;
   }).join('');
   const nd = tasks.filter(t => t.type === 'delivery').length;
   doPrint(`${printHeader('Daily delivery and pickup sheet', fmtLong(D))}
-    <table class="p-tbl"><thead><tr><th>#</th><th>Time</th><th>Task</th><th>Car</th><th>Plate</th><th>Client</th><th>Phone</th><th>Location</th><th class="r">Days</th>${staff ? '<th class="r">Rate</th><th class="r">Total AED</th>' : ''}<th>Sales</th><th>Driver</th></tr></thead>
+    <table class="p-tbl"><thead><tr><th>#</th><th>Time</th><th>Task</th><th>Plate</th><th>Car</th><th>Client</th><th>Phone</th><th>Location</th><th class="r">Days</th>${staff ? '<th class="r">Rate</th><th class="r">Total AED</th>' : ''}<th>Sales</th><th>Driver</th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${staff ? 13 : 11}">No tasks on this day.</td></tr>`}</tbody>
     <tfoot><tr><td colspan="${staff ? 10 : 9}">${nd} deliveries, ${tasks.length - nd} pickups</td>${staff ? `<td class="r">${money(total)}</td>` : ''}<td colspan="2"></td></tr></tfoot></table>
     ${staff ? '<p style="font-size:9.5px;color:#555">Total AED is the rent total including VAT for deliveries on this day.</p>' : ''}
@@ -2060,9 +2166,9 @@ ACT['list-print'] = () => {
   const rows = filteredRows(), F = S.filter;
   let total = 0;
   const body = rows.map((b, i) => { const v = b.status === 'cancelled' ? 0 : bookingTotal(b, S.listFin.get(b.id)); total += v;
-    return `<tr><td>${i + 1}</td><td>${esc(b.ref)}</td><td><strong>${esc(fmtDT(b.deliveryAt))}</strong></td><td>${esc(fmtDT(b.pickupAt))}</td><td>${esc(b.carName)}${b.carType === 'sublease' ? ' (sub-lease)' : ''}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.clientName)}</td><td class="r">${b.days}</td><td>${esc(b.salespersonName || '')}</td><td>${esc(STATUS[b.status] || b.status)}</td><td class="r">${money(v)}</td></tr>`; }).join('');
+    return `<tr><td>${i + 1}</td><td>${esc(b.ref)}</td><td><strong>${esc(fmtDT(b.deliveryAt))}</strong></td><td>${esc(fmtDT(b.pickupAt))}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? ' (sub-lease)' : ''}</td><td>${esc(b.clientName)}</td><td class="r">${b.days}</td><td>${esc(b.salespersonName || '')}</td><td>${esc(STATUS[b.status] || b.status)}</td><td class="r">${money(v)}</td></tr>`; }).join('');
   doPrint(`${printHeader('Bookings list', `${fmtDate(F.from)} to ${fmtDate(F.to)}`)}
-    <table class="p-tbl"><thead><tr><th>#</th><th>Ref</th><th>Delivery</th><th>Return</th><th>Car</th><th>Plate</th><th>Client</th><th class="r">Days</th><th>Sales</th><th>Status</th><th class="r">Total AED</th></tr></thead>
+    <table class="p-tbl"><thead><tr><th>#</th><th>Ref</th><th>Delivery</th><th>Return</th><th>Plate</th><th>Car</th><th>Client</th><th class="r">Days</th><th>Sales</th><th>Status</th><th class="r">Total AED</th></tr></thead>
     <tbody>${body || '<tr><td colspan="11">No bookings.</td></tr>'}</tbody><tfoot><tr><td colspan="10">${rows.length} bookings (cancelled excluded from total)</td><td class="r">${money(total)}</td></tr></tfoot></table>${printFoot()}`, true);
 };
 
