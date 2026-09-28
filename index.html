@@ -436,6 +436,8 @@ label.check input{width:20px;height:20px}
 .gr,.cal-legend i.gr{background:repeating-linear-gradient(135deg,#6B7A8C 0 6px,#8594A6 6px 12px)}
 .cal-legend i.gr{background:#6B7A8C}
 .chip.agr{background:#FFF3D6;color:#6B4A00}
+.nrm,.cal-legend i.nrm{background:repeating-linear-gradient(135deg,#8A5A9E 0 6px,#A474B8 6px 12px)}
+.cal-legend i.nrm{background:#8A5A9E}
 /* print */
 #print{display:none}
 @media print{
@@ -567,7 +569,7 @@ const bookingTotal = (b, f) => !f ? 0 : (f.settlement && f.settlement.totals ? f
 
 const ACT = {};
 /* after saving, go back to the list the person came from */
-const LIST_ROUTES = ['home', 'bookings', 'onrent', 'calendar', 'cars', 'sublease', 'client', 'car', 'categories', 'users', 'sales', 'more', 'garage'];
+const LIST_ROUTES = ['home', 'bookings', 'onrent', 'calendar', 'cars', 'sublease', 'client', 'car', 'categories', 'users', 'sales', 'more', 'garage', 'nrm'];
 function go(h) { if (location.hash === h) { S.formOpen = false; render(); } else location.hash = h; }
 function backToList(fallback) { go(S.listHash || fallback || '#/home'); }
 /* ========================================================= state */
@@ -742,7 +744,9 @@ const isSub = c => c && c.type === 'sublease';
 const inGarage = carId => S.garage.get(carId);
 const garageEnd = g => new Date(Math.max(g.expectedOut ? parseDT(g.expectedOut + 'T23:59').getTime() : 8.64e15, Date.now() + 60000));
 function garageClash(carId, startAt, endAt) { const g = inGarage(carId); if (!g) return null; return parseDT(g.inAt) < parseDT(endAt) && garageEnd(g) > parseDT(startAt) ? g : null; }
-const garageText = g => `in garage${g.garage ? ' at ' + g.garage : ''}${g.expectedOut ? ', back ' + fmtDate(g.expectedOut) : ''}`;
+const isNrm = g => g && g.kind === 'nrm';
+const garageText = g => isNrm(g) ? `on NRM${g.staff ? ' with ' + g.staff : ''}${g.expectedOut ? ', back ' + fmtDate(g.expectedOut) : ''}` : `in garage${g.garage ? ' at ' + g.garage : ''}${g.expectedOut ? ', back ' + fmtDate(g.expectedOut) : ''}`;
+const moveCount = kind => [...S.garage.values()].filter(g => (kind === 'nrm') === isNrm(g)).length;
 async function nextNo(prefix, pad3) {
   const yr = new Date().getFullYear(), k = prefix.toLowerCase() + yr, ref = db.doc('meta/counter');
   const n = await db.runTransaction(async tx => { const d = await tx.get(ref); const next = d.exists && d.data()[k] ? +d.data()[k] : 1; tx.set(ref, { [k]: next + 1 }, { merge: true }); return next; });
@@ -806,7 +810,7 @@ function render() {
     home: viewHome, bookings: viewBookings, new: () => viewForm(null), edit: () => viewForm(id), booking: () => viewDetail(id),
     settle: () => viewSettle(id), onrent: viewOnRent, more: viewMore, cars: viewCars, sales: viewSales, users: viewUsers,
     settings: viewSettings, account: viewAccount, calendar: viewCalendar, sublease: viewSublease,
-    client: () => viewClient(id), car: () => viewCarHistory(id), import: viewImport, categories: viewCategories, garage: viewGarage
+    client: () => viewClient(id), car: () => viewCarHistory(id), import: viewImport, categories: viewCategories, garage: viewGarage, nrm: viewNrm
   };
   if (r !== 'cars') S.carSel = null;
   if (!['booking', 'edit', 'settle'].includes(r) && S.detailId) { S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = null; }
@@ -821,7 +825,7 @@ function navBar(r) {
   const staff = isStaff();
   const items = staff ? [['home', 'Tasks', 'home'], ['bookings', 'Bookings', 'list'], ['new', 'New', 'plus'], ['calendar', 'Calendar', 'cal'], ['more', 'More', 'more']]
     : [['home', 'Tasks', 'home'], ['calendar', 'Calendar', 'cal'], ['onrent', 'On rent', 'car'], ['more', 'More', 'more']];
-  const map = { booking: staff ? 'bookings' : 'home', edit: 'bookings', settle: 'bookings', client: 'bookings', car: staff ? 'more' : 'calendar', cars: 'more', sublease: 'more', import: 'more', categories: 'more', garage: 'more', sales: 'more', users: 'more', settings: 'more', account: 'more', onrent: staff ? 'more' : 'onrent' };
+  const map = { booking: staff ? 'bookings' : 'home', edit: 'bookings', settle: 'bookings', client: 'bookings', car: staff ? 'more' : 'calendar', cars: 'more', sublease: 'more', import: 'more', categories: 'more', garage: 'more', nrm: 'more', sales: 'more', users: 'more', settings: 'more', account: 'more', onrent: staff ? 'more' : 'onrent' };
   const cur = map[r] || r;
   return `<nav class="nav" aria-label="Main">${items.map(([k, label, ic]) => k === 'new'
     ? `<a href="#/new" class="add ${cur === k ? 'on' : ''}"><span class="plus">${ico(ic)}</span>${label}</a>`
@@ -960,7 +964,7 @@ function viewHome() {
   <div class="stats wide">
     <button class="stat s-d" data-act="tab" data-t="d"><strong class="num">${dl.length}</strong><span>Deliveries ${dayWord}</span><em>${dl.filter(t => t.done).length} done</em></button>
     <button class="stat s-p" data-act="tab" data-t="p"><strong class="num">${pk.length}</strong><span>Pickups ${dayWord}</span><em>${pk.filter(t => t.done).length} done</em></button>
-    <button class="stat s-f" data-act="tab" data-t="a"><strong class="num">${ownCount}${subCount ? `<small>+${subCount}</small>` : ''}</strong><span>Cars available</span><em>${subCount ? `${ownCount} own, ${subCount} sub-lease` : 'Own cars'}${S.garage.size ? `, ${S.garage.size} in garage` : ''}</em></button>
+    <button class="stat s-f" data-act="tab" data-t="a"><strong class="num">${ownCount}${subCount ? `<small>+${subCount}</small>` : ''}</strong><span>Cars available</span><em>${subCount ? `${ownCount} own, ${subCount} sub-lease` : 'Own cars'}${moveCount('garage') ? `, ${moveCount('garage')} in garage` : ''}${moveCount('nrm') ? `, ${moveCount('nrm')} on NRM` : ''}</em></button>
     <a class="stat s-r" href="#/onrent"><strong class="num">${onrent}</strong><span>Cars on rent now</span><em>View list</em></a>
   </div>`;
   const col = (key, title, list, cls) => `<section class="col col-${key}" aria-label="${title}"><header class="col-h ${cls}"><h2>${title}</h2><span class="num">${list.length}</span></header>
@@ -983,7 +987,7 @@ function viewHome() {
       <div class="seg left" role="group" aria-label="Car type">${[['own', `Own cars ${ownCount}`], ['sub', `Sub-lease ${subCount}`], ['both', 'Both']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="avmode" data-m="${k}">${l}</button>`).join('')}</div>
       ${isStaff() ? `<div class="btnrow" style="margin-top:8px"><button class="btn sm wa" data-act="shareavail">Share on WhatsApp</button></div>` : ''}
       <div class="av-list">${avAll.length ? avAll.map(availRow).join('') : `<p class="col-empty">${mode === 'sub' ? 'No sub-lease cars free. Add them under More, Sub-lease cars.' : 'Every car is booked or on rent ' + dayWord + '.'}</p>`}</div>
-      ${S.garage.size ? `<h3 class="sub-h" style="margin:14px 10px 6px">In garage (${S.garage.size})</h3><div class="av-list" style="margin-top:0">${[...S.garage.values()].sort((a, b) => a.inAt.localeCompare(b.inAt)).map(g => `<a class="av-row gar" href="#/garage"><span class="av-main"><span class="plate big">${esc(g.plate)}</span> <strong>${esc(g.carName)}</strong></span><span class="av-sub">${esc(g.purpose)} at ${esc(g.garage)}${g.expectedOut ? `, back ${esc(fmtDate(g.expectedOut))}` : ''}</span></a>`).join('')}</div>` : ''}
+      ${['garage', 'nrm'].map(kind => { const list = [...S.garage.values()].filter(g => (kind === 'nrm') === isNrm(g)).sort((a, b) => a.inAt.localeCompare(b.inAt)); return list.length ? `<h3 class="sub-h" style="margin:14px 10px 6px">${kind === 'nrm' ? 'On NRM, staff use' : 'In garage'} (${list.length})</h3><div class="av-list" style="margin-top:0">${list.map(g => `<a class="av-row gar" href="#/${kind === 'nrm' ? 'nrm' : 'garage'}"><span class="av-main"><span class="plate big">${esc(g.plate)}</span> <strong>${esc(g.carName)}</strong></span><span class="av-sub">${kind === 'nrm' ? `${esc(g.purpose)}${g.staff ? ', ' + esc(g.staff) : ''}` : `${esc(g.purpose)} at ${esc(g.garage)}`}${g.expectedOut ? `, back ${esc(fmtDate(g.expectedOut))}` : ''}</span></a>`).join('')}</div>` : ''; }).join('')}
     </section>
   </div>`;
   return { head, html, wide: true };
@@ -1246,15 +1250,15 @@ function carNowHtml(c) {
   const back = bs.find(b => b.status === 'returned' || b.status === 'pending');
   const p = carParts(c);
   const gar = inGarage(c.id);
-  const state = gar ? '<span class="chip pickup">In garage</span>' : c.active === false ? `<span class="chip cancelled">${isSub(c) ? 'Returned to supplier' : 'Inactive'}</span>`
+  const state = gar ? `<span class="chip pickup">${isNrm(gar) ? 'On NRM' : 'In garage'}</span>` : c.active === false ? `<span class="chip cancelled">${isSub(c) ? 'Returned to supplier' : 'Inactive'}</span>`
     : onr ? `<span class="chip onrent">On rent</span>` : `<span class="chip done">Available now</span>`;
   return `<div class="pf-car"><div class="lr-top"><span><span class="plate big">${esc(c.plate)}</span> <strong>${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</strong></span>${state}</div>
     <div class="lr-sub">${esc([c.color, isSub(c) ? 'Sub-lease: ' + (c.supplier || '-') : c.category].filter(Boolean).join(', '))}</div>
     ${onr ? `<a class="pf-line late-${parseDT(onr.pickupAt) < now}" href="#/booking/${onr.id}"><strong>With ${esc(onr.clientName)}</strong>${onr.clientPhone ? `, ${esc(onr.clientPhone)}` : ''}<br>Return ${esc(fmtDT(onr.pickupAt))}${parseDT(onr.pickupAt) < now ? ' <span class="chip late">Overdue</span>' : ''} <span class="muted">(${esc(onr.ref)}${onr.oldRef ? ', ' + esc(onr.oldRef) : ''})</span></a>` : ''}
     ${next.map(b => `<a class="pf-line" href="#/booking/${b.id}">Booked for <strong>${esc(b.clientName)}</strong><br>${esc(fmtDT(b.deliveryAt))} to ${esc(fmtDT(b.pickupAt))} <span class="muted">(${esc(b.ref)})</span></a>`).join('')}
     ${back ? `<a class="pf-line" href="#/booking/${back.id}">Returned by ${esc(back.clientName)}, waiting for settlement</a>` : ''}
-    ${gar ? `<div class="pf-line"><strong>${esc(gar.purpose)}</strong> at ${esc(gar.garage)} since ${esc(fmtDT(gar.inAt))}${gar.expectedOut ? `, expected back ${esc(fmtDate(gar.expectedOut))}` : ''} <span class="muted">(${esc(gar.no)})</span></div>` : ''}
-    <div class="t-actions"><a class="btn sm" href="#/car/${c.id}">Full history</a>${gar ? `<button class="btn sm good" data-act="garageout" data-car="${c.id}">Back from garage</button>` : c.active !== false && !onr ? `<button class="btn sm" data-act="garagein" data-car="${c.id}">Send to garage</button>` : ''}${isStaff() && c.active !== false ? `<button class="btn sm primary" data-act="newforcar" data-id="${c.id}">New booking with this car</button>` : ''}</div></div>`;
+    ${gar ? `<div class="pf-line"><strong>${esc(gar.purpose)}</strong> ${isNrm(gar) ? `with ${esc(gar.staff || '-')}` : `at ${esc(gar.garage)}`} since ${esc(fmtDT(gar.inAt))}${gar.expectedOut ? `, expected back ${esc(fmtDate(gar.expectedOut))}` : ''} <span class="muted">(${esc(gar.no)})</span></div>` : ''}
+    <div class="t-actions"><a class="btn sm" href="#/car/${c.id}">Full history</a>${gar ? (isNrm(gar) ? `<button class="btn sm good" data-act="nrmback" data-car="${c.id}">Back from NRM</button>` : `<button class="btn sm good" data-act="garageout" data-car="${c.id}">Back from garage</button>`) : c.active !== false && !onr ? `<button class="btn sm" data-act="garagein" data-car="${c.id}">Send to garage</button><button class="btn sm" data-act="nrmstart" data-car="${c.id}">Start NRM</button>` : ''}${isStaff() && c.active !== false ? `<button class="btn sm primary" data-act="newforcar" data-id="${c.id}">New booking with this car</button>` : ''}</div></div>`;
 }
 ACT.findplate = () => {
   const o = openSheet(`<h2>Find a car by plate</h2>
@@ -1756,10 +1760,11 @@ function viewCarHistory(id) {
   return { title: 'Car history', back: c && isSub(c) ? '#/sublease' : (isAdmin() ? '#/cars' : (S.listHash && !S.listHash.startsWith('#/car/') ? S.listHash : '#/home')), html: `<section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</h2>${c ? `<span class="plate">${esc(c.plate)}</span>` : ''}</div>
     ${c ? `<p class="muted" style="margin:6px 0 10px">${esc([c.color, isSub(c) ? 'Sub-lease from ' + (c.supplier || '-') : 'Own car', c.category].filter(Boolean).join(', '))}${c.active === false ? `, <strong>${isSub(c) ? 'returned to supplier' : 'inactive'}</strong>` : ''}</p>` : ''}
     ${histSummary(rows, fin)}
-    ${c && inGarage(c.id) ? `<div class="warn">In the garage: ${esc(inGarage(c.id).purpose)} at ${esc(inGarage(c.id).garage)} since ${esc(fmtDT(inGarage(c.id).inAt))} (${esc(inGarage(c.id).no)})</div>` : ''}
+    ${c && inGarage(c.id) ? (g0 => `<div class="warn">${isNrm(g0) ? `On NRM: ${esc(g0.purpose)} with ${esc(g0.staff || '-')}` : `In the garage: ${esc(g0.purpose)} at ${esc(g0.garage)}`} since ${esc(fmtDT(g0.inAt))} (${esc(g0.no)})</div>`)(inGarage(c.id)) : ''}
     <div class="btnrow">${canEdit ? `<button class="btn" data-act="${isSub(c) ? 'sub-edit' : 'car-edit'}" data-id="${c.id}">Edit car</button>${isSub(c) ? `<button class="btn" data-act="sub-toggle" data-id="${c.id}">${c.active === false ? 'Enable again' : 'Return to supplier'}</button>` : ''}` : ''}
-      ${c && c.active !== false ? (inGarage(c.id) ? `<button class="btn good" data-act="garageout" data-car="${c.id}">Back from garage</button>` : `<button class="btn" data-act="garagein" data-car="${c.id}">Send to garage</button>`) : ''}</div></section>
-    ${(S.hist.garage || []).length ? `<h2 class="cat-h">Garage visits (${S.hist.garage.length})</h2>${S.hist.garage.map(garageRow).join('')}` : ''}
+      ${c && c.active !== false ? (inGarage(c.id) ? (isNrm(inGarage(c.id)) ? `<button class="btn good" data-act="nrmback" data-car="${c.id}">Back from NRM</button>` : `<button class="btn good" data-act="garageout" data-car="${c.id}">Back from garage</button>`) : `<button class="btn" data-act="garagein" data-car="${c.id}">Send to garage</button><button class="btn" data-act="nrmstart" data-car="${c.id}">Start NRM</button>`) : ''}</div></section>
+    ${(S.hist.garage || []).filter(g => !isNrm(g)).length ? `<h2 class="cat-h">Garage visits (${S.hist.garage.filter(g => !isNrm(g)).length})</h2>${S.hist.garage.filter(g => !isNrm(g)).map(garageRow).join('')}` : ''}
+    ${(S.hist.garage || []).filter(isNrm).length ? `<h2 class="cat-h">NRM, staff use (${S.hist.garage.filter(isNrm).length})</h2>${S.hist.garage.filter(isNrm).map(nrmRow).join('')}` : ''}
     <h2 class="cat-h">Upcoming and past bookings</h2>
     ${rows.length ? rows.map(listRowHtml).join('') : '<div class="empty"><h3>No bookings for this car yet</h3></div>'}` };
 }
@@ -1790,7 +1795,8 @@ function viewCalendar() {
   const pos = (from, to) => { const a = Math.max(0, parseDT(from) - s0), z = Math.min(span, to - s0); return `left:${(a / span * 100).toFixed(3)}%;width:${Math.max(1.2, (z - a) / span * 100).toFixed(3)}%`; };
   const bar = x => { const b = x.b, cls = x.leg ? 'dn' : b.status === 'booked' ? 'bk' : b.status === 'onrent' ? 'or' : 'dn';
     return `<a class="cal-bar ${cls}" href="#/booking/${b.id}" style="${pos(x.from, x.to)}" title="${esc(`${b.ref}, ${b.clientName}: ${fmtDT(x.from)} to ${fmtDT(localStr(x.to))}${x.leg ? ' (replaced)' : ''}`)}"><span>${x.leg ? '↺ ' : ''}${esc(b.clientName)}</span></a>`; };
-  const gbar = x => `<a class="cal-bar gr" href="#/garage" style="${pos(x.from, x.to)}" title="${esc(`${x.g.no}: ${x.g.purpose} at ${x.g.garage}`)}"><span>🔧 ${esc(x.g.garage)}</span></a>`;
+  const gbar = x => isNrm(x.g) ? `<a class="cal-bar nrm" href="#/nrm" style="${pos(x.from, x.to)}" title="${esc(`${x.g.no}: ${x.g.purpose}, ${x.g.staff || ''}`)}"><span>NRM ${esc(x.g.staff || '')}</span></a>`
+    : `<a class="cal-bar gr" href="#/garage" style="${pos(x.from, x.to)}" title="${esc(`${x.g.no}: ${x.g.purpose} at ${x.g.garage}`)}"><span>🔧 ${esc(x.g.garage)}</span></a>`;
   let lastSub = null;
   const rowsHtml = cars.map(c => {
     const sep = lastSub !== isSub(c) ? `<div class="cal-sep">${isSub(c) ? 'Sub-lease cars' : 'Own cars'}</div>` : ''; lastSub = isSub(c);
@@ -1802,7 +1808,7 @@ function viewCalendar() {
   <div class="cal-ctl"><button class="iconbtn" data-act="calmove" data-n="-7" aria-label="Previous week">${ico('left')}</button>
     <div class="cal-range"><strong>${esc(fmtDate(start))} to ${esc(fmtDate(addDays(end, -1)))}</strong><span><button class="btn sm" data-act="calmove" data-n="0">Today</button> <input type="date" id="cal-jump" class="f-in" style="display:inline-block;width:auto;min-height:36px;padding:4px 8px;margin:0" value="${start}" aria-label="Jump to date"></span></div>
     <button class="iconbtn" data-act="calmove" data-n="7" aria-label="Next week">${ico('right')}</button></div>
-  <div class="cal-legend small"><span><i class="bk"></i>Booked</span><span><i class="or"></i>On rent</span><span><i class="dn"></i>Returned or replaced</span><span><i class="gr"></i>Garage</span></div>
+  <div class="cal-legend small"><span><i class="bk"></i>Booked</span><span><i class="or"></i>On rent</span><span><i class="dn"></i>Returned or replaced</span><span><i class="gr"></i>Garage</span><span><i class="nrm"></i>NRM</span></div>
   ${!S.calRows ? loading() : cars.length ? `<div class="cal-wrap"><div class="cal-grid"><div class="cal-row cal-headrow"><div class="cal-car head">Car</div><div class="cal-days">${dayHead}</div></div>${rowsHtml}</div></div>
     <p class="small muted">Tap a bar to open the booking, or a car to see its full history. Scroll sideways on a phone.</p>` : '<div class="empty"><h3>No cars yet</h3><p>Add cars under More, Cars and plates.</p></div>'}`;
   return { title: 'Car calendar', html, wide: true, mount: () => { const j = $('#cal-jump'); j && j.addEventListener('change', () => { if (j.value) { S.calStart = j.value; render(); } }); } };
@@ -1836,7 +1842,8 @@ function viewMore() {
     <a href="#/account">My account<span class="muted small">${esc(S.me.username || '')}</span></a>
     <a href="#/sublease">Sub-lease cars<span class="muted small">${S.cars.filter(c => isSub(c) && c.active !== false).length} active</span></a>
     <a href="#/calendar">Car calendar<span></span></a>
-    <a href="#/garage">Garage<span class="muted small">${S.garage.size ? S.garage.size + ' in garage' : ''}</span></a>
+    <a href="#/garage">Garage<span class="muted small">${moveCount('garage') ? moveCount('garage') + ' in garage' : ''}</span></a>
+    <a href="#/nrm">NRM, staff use<span class="muted small">${moveCount('nrm') ? moveCount('nrm') + ' out' : ''}</span></a>
     <a href="#/onrent">Cars on rent now<span></span></a>
   </div>
   ${a ? `<h2 class="cat-h">Admin settings</h2><div class="menu">
@@ -2569,7 +2576,7 @@ ACT['cat-del'] = async ({ i }) => {
 const REASONS = ['Repair', 'Oil change / service', 'Accident', 'Customer request', 'Other'];
 const PURPOSES = ['Repair', 'Oil change / service', 'Accident', 'Tyres', 'Registration / inspection', 'Other'];
 const needsGarage = r => /repair|oil|service|accident/i.test(r || '');
-const garageNames = () => [...new Set([...(S.garageAll || []), ...S.garage.values()].map(g => g.garage).filter(Boolean))].sort();
+const garageNames = () => [...new Set([...(S.garageAll || []), ...S.garage.values()].filter(g => !isNrm(g)).map(g => g.garage).filter(Boolean))].sort();
 const byPlateSort = (a, b) => (isSub(a) - isSub(b)) || String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true });
 const HO_FIELDS = (p, label) => `<h3 class="sub-h">${label}</h3><div class="grid2"><label class="f">KM reading<input id="${p}-km" inputmode="numeric" placeholder="45210"></label>
   <label class="f">Fuel<select id="${p}-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>`;
@@ -2714,7 +2721,7 @@ ACT.garagein = ({ car }) => {
   };
 };
 ACT.garageout = ({ car }) => {
-  const g = inGarage(car); if (!g) return;
+  const g = inGarage(car); if (!g) return; if (isNrm(g)) return ACT.nrmback({ car });
   const now = nowLocal();
   const o = openSheet(`<h2>Back from garage</h2>
     <p style="margin:4px 0 0"><span class="plate big">${esc(g.plate)}</span> ${esc(g.carName)}<br><span class="muted">${esc(g.no)}, ${esc(g.purpose)} at ${esc(g.garage)}, in since ${esc(fmtDT(g.inAt))}</span></p>
@@ -2749,11 +2756,11 @@ function viewGarage() {
   const tab = S.garTab || 'in', q = S.garQ || '';
   if (tab === 'hist' && !S.garageAll) loadGarageAll().then(render).catch(onErr);
   const match = g => !q.trim() || plateMatches(q).some(c => c.id === g.carId) || String(g.garage).toLowerCase().includes(q.toLowerCase()) || String(g.no).toLowerCase().includes(q.toLowerCase());
-  const open = [...S.garage.values()].filter(match).sort((a, b) => a.inAt.localeCompare(b.inAt));
-  const hist = (S.garageAll || []).filter(match);
+  const open = [...S.garage.values()].filter(g => !isNrm(g)).filter(match).sort((a, b) => a.inAt.localeCompare(b.inAt));
+  const hist = (S.garageAll || []).filter(g => !isNrm(g)).filter(match);
   const cost = hist.reduce((s, g) => s + (+g.actualCost || 0), 0);
   const html = `<div class="toolbar"><button class="btn primary" data-act="garagein">Send a car to garage</button></div>
-    <div class="seg left" role="group" aria-label="Show"><button class="${tab === 'in' ? 'on' : ''}" data-act="gartab" data-t="in">In garage ${S.garage.size}</button><button class="${tab === 'hist' ? 'on' : ''}" data-act="gartab" data-t="hist">History</button></div>
+    <div class="seg left" role="group" aria-label="Show"><button class="${tab === 'in' ? 'on' : ''}" data-act="gartab" data-t="in">In garage ${moveCount('garage')}</button><button class="${tab === 'hist' ? 'on' : ''}" data-act="gartab" data-t="hist">History</button></div>
     <label class="f">Search by plate, garage or GRG number<input id="gar-q" type="search" value="${esc(q)}" placeholder="9185"></label>
     ${tab === 'in' ? (open.length ? open.map(garageRow).join('') : `<div class="empty"><h3>${q ? 'No car in the garage matches' : 'No cars in the garage'}</h3><p>Cars you send for repair or service show here until they're back.</p></div>`)
       : !S.garageAll ? loading() : `<p class="small muted" style="margin:10px 0 0">${hist.length} garage visit${hist.length === 1 ? '' : 's'}${isStaff() ? `, actual cost AED ${money(cost)}` : ''}</p>${hist.map(garageRow).join('') || '<div class="empty"><h3>No garage history yet</h3></div>'}`}`;
@@ -2761,6 +2768,101 @@ function viewGarage() {
   return { title: 'Garage', back: '#/more', html, mount };
 }
 ACT.gartab = ({ t }) => { S.garTab = t; render(); };
+
+
+/* ---------- NRM: non-revenue movement (staff use, transfers) ---------- */
+const NRM_PURPOSES = ['Staff use', 'Office errand', 'Transfer / relocation', 'Car wash', 'Registration / test', 'Other'];
+const staffNames = () => [...new Set([...S.users.filter(u => u.active !== false).map(u => u.name), ...(S.nrmAll || []).map(g => g.staff)].filter(Boolean))].sort();
+function nrmRow(g) {
+  const late = g.status === 'open' && g.expectedOut && g.expectedOut < todayStr();
+  const days = Math.max(0, dayDiff(g.inAt.slice(0, 10), (g.outAt || nowLocal()).slice(0, 10)));
+  const km = g.endKm && g.startKm ? (+g.endKm - +g.startKm) : null;
+  return `<div class="list-row ${late ? 'late-row' : ''}"><div class="lr-top"><span><span class="plate big">${esc(g.plate)}</span> <strong>${esc(g.carName || '')}</strong></span><span class="chip ${g.status === 'open' ? (late ? 'late' : 'onrent') : 'done'}">${g.status === 'open' ? (late ? 'Overdue' : 'On NRM') : 'Back'}</span></div>
+    <div class="lr-sub">${esc(g.no)}, ${esc(g.purpose)}, with <strong>${esc(g.staff || '-')}</strong></div>
+    <div class="lr-when num">${esc(fmtDT(g.inAt))}${g.outAt ? ` to ${esc(fmtDT(g.outAt))}` : g.expectedOut ? `, expected back ${esc(fmtDate(g.expectedOut))}` : ''} <span class="muted small">(${days} day${days === 1 ? '' : 's'})</span></div>
+    <div class="lr-sub">KM out ${esc(g.startKm || '-')}${g.endKm ? `, KM back ${esc(g.endKm)}${km != null && km >= 0 ? ` (${km} km)` : ''}` : ''}${g.remarks ? `. ${esc(g.remarks)}` : ''}${g.outNotes ? `. ${esc(g.outNotes)}` : ''}</div>
+    <div class="t-actions"><a class="btn sm" href="#/car/${g.carId}">Car history</a>${g.status === 'open' ? `<button class="btn sm good" data-act="nrmback" data-car="${g.carId}">Back from NRM</button>` : ''}</div></div>`;
+}
+ACT.nrmstart = ({ car }) => {
+  const pre = car ? S.cars.find(c => c.id === car) : null, now = nowLocal();
+  const o = openSheet(`<h2>Start NRM, no revenue</h2><p class="small muted" style="margin:2px 0 0">The car is taken out of the available list until it's back.</p>
+    ${pre ? `<p style="margin:8px 0 0"><span class="plate big">${esc(pre.plate)}</span> ${esc(carTitle(pre))}</p>` : `<label class="f">Type plate<input id="n-pq" autocomplete="off" autocapitalize="characters" placeholder="9185"></label>
+      <label class="f">Car<select id="n-car"><option value="">Choose the car</option>${S.cars.filter(c => c.active !== false && !inGarage(c.id)).sort(byPlateSort).map(c => `<option value="${c.id}">${esc(c.plate)}, ${esc(carTitle(c))}</option>`).join('')}</select></label>`}
+    <div class="grid2"><label class="f">Purpose<select id="n-purpose">${NRM_PURPOSES.map(p => `<option>${p}</option>`).join('')}</select></label>
+    <label class="f">Staff member<input id="n-staff" list="n-staffs" placeholder="Ahmed"><datalist id="n-staffs">${staffNames().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label></div>
+    <div class="grid2"><label class="f">Date out<input type="date" id="n-date" value="${now.slice(0, 10)}"></label><label class="f">Time out<input type="time" id="n-time" value="${tOf(now)}"></label></div>
+    <div class="grid2"><label class="f">Expected back<input type="date" id="n-back"></label><label class="f">KM out<input id="n-km" inputmode="numeric" placeholder="45210"></label></div>
+    <label class="f">Remarks<input id="n-rem" placeholder="Using for office work in Sharjah"></label>
+    <div id="n-warn"></div><p class="err" id="n-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="n-save">Start NRM</button></div>`);
+  const carId = () => pre ? pre.id : $('#n-car').value;
+  const check = () => {
+    const id = carId(), w = $('#n-warn'); if (!id) { w.innerHTML = ''; return null; }
+    const onr = [...S.active.values()].find(b => b.carId === id && b.status === 'onrent');
+    if (onr) { w.innerHTML = `<div class="warn late-warn">This car is with <strong>${esc(onr.clientName)}</strong> (${esc(onr.ref)}).</div>`; return 'onrent'; }
+    const out = `${$('#n-date').value}T${$('#n-time').value || '00:00'}`, back = $('#n-back').value;
+    const cf = conflicts(id, out, (back || addDays(out.slice(0, 10), 7)) + 'T23:59');
+    w.innerHTML = cf.length ? `<div class="warn">Booked during this time: ${cf.map(c => `${esc(c.ref)}, ${esc(c.clientName)}, from ${esc(fmtDT(c.deliveryAt))}`).join('; ')}. Bring it back in time or arrange another car.</div>` : '';
+    return null;
+  };
+  if (!pre) {
+    o.querySelector('#n-car').onchange = check;
+    o.querySelector('#n-pq').addEventListener('input', e => { const hits = plateMatches(e.target.value), s = $('#n-car');
+      [...s.options].forEach(op => { if (op.value) op.hidden = !!e.target.value.trim() && !hits.some(h => h.id === op.value); });
+      const vis = [...s.options].filter(op => op.value && !op.hidden); if (vis.length === 1) { s.value = vis[0].value; check(); } });
+  }
+  ['#n-date', '#n-time', '#n-back'].forEach(s => o.querySelector(s).addEventListener('change', check)); check();
+  o.querySelector('#n-save').onclick = async ev => {
+    const id = carId(), c = S.cars.find(x => x.id === id), staff = $('#n-staff').value.trim();
+    if (!c) { $('#n-err').textContent = 'Choose the car.'; return; }
+    if (check() === 'onrent') { $('#n-err').textContent = 'This car is on rent.'; return; }
+    if (!staff) { $('#n-err').textContent = 'Enter who is using the car.'; return; }
+    ev.target.disabled = true;
+    try {
+      const out = `${$('#n-date').value}T${$('#n-time').value || '00:00'}`, no = await nextNo('NRM', true);
+      await db.collection('garage').add(garageDoc(c, { garage: '', expectedOut: $('#n-back').value, estCost: 0, remarks: $('#n-rem').value.trim() }, $('#n-purpose').value, out, no, { kind: 'nrm', staff, startKm: $('#n-km').value.trim() }));
+      closeSheet(); toast(`${c.plate} is on NRM with ${staff} (${no}).`); if (S.route === 'car') S.hist = null; if (['nrm', 'car'].includes(S.route)) render();
+    } catch (e) { ev.target.disabled = false; $('#n-err').textContent = friendlyError(e); }
+  };
+};
+ACT.nrmback = ({ car }) => {
+  const g = inGarage(car); if (!g || !isNrm(g)) return;
+  const now = nowLocal();
+  const o = openSheet(`<h2>Back from NRM</h2>
+    <p style="margin:4px 0 0"><span class="plate big">${esc(g.plate)}</span> ${esc(g.carName)}<br><span class="muted">${esc(g.no)}, ${esc(g.purpose)} with ${esc(g.staff || '-')}, out since ${esc(fmtDT(g.inAt))}${g.startKm ? `, KM out ${esc(g.startKm)}` : ''}</span></p>
+    <div class="grid2"><label class="f">Date back<input type="date" id="nb-date" value="${now.slice(0, 10)}"></label><label class="f">Time back<input type="time" id="nb-time" value="${tOf(now)}"></label></div>
+    <div class="grid2"><label class="f">KM back<input id="nb-km" inputmode="numeric" placeholder="45380"></label><label class="f">Fuel<select id="nb-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>
+    <label class="f">Notes<input id="nb-notes" placeholder="No damage"></label>
+    <p class="err" id="nb-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn good" id="nb-save">Car is back</button></div>`);
+  o.querySelector('#nb-save').onclick = async ev => {
+    const outAt = `${$('#nb-date').value}T${$('#nb-time').value || '00:00'}`, km = $('#nb-km').value.trim();
+    if (outAt < g.inAt) { $('#nb-err').textContent = 'The date back can\'t be before the date out.'; return; }
+    if (km && g.startKm && +km < +g.startKm) { $('#nb-err').textContent = `KM back is lower than KM out (${g.startKm}).`; return; }
+    ev.target.disabled = true;
+    try {
+      await db.doc('garage/' + g.id).update({ status: 'closed', outAt, outDate: outAt.slice(0, 10), endKm: km, endFuel: $('#nb-fuel').value, outNotes: $('#nb-notes').value.trim(), closedBy: S.me.name });
+      closeSheet(); toast(`${g.plate} is back and available.`); S.nrmAll = null; if (S.route === 'car') S.hist = null; if (['nrm', 'car'].includes(S.route)) render();
+    } catch (e) { ev.target.disabled = false; $('#nb-err').textContent = friendlyError(e); }
+  };
+};
+async function loadNrmAll() { const s = await db.collection('garage').where('kind', '==', 'nrm').get(); S.nrmAll = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(g => g.status === 'closed').sort((a, b) => b.outAt.localeCompare(a.outAt)); }
+function viewNrm() {
+  const tab = S.nrmTab || 'out', q = S.nrmQ || '';
+  if (tab === 'hist' && !S.nrmAll) loadNrmAll().then(render).catch(onErr);
+  const match = g => !q.trim() || plateMatches(q).some(c => c.id === g.carId) || String(g.staff).toLowerCase().includes(q.toLowerCase()) || String(g.no).toLowerCase().includes(q.toLowerCase());
+  const open = [...S.garage.values()].filter(isNrm).filter(match).sort((a, b) => a.inAt.localeCompare(b.inAt));
+  const hist = (S.nrmAll || []).filter(match);
+  const html = `<p class="small muted" style="margin:4px 0 10px">NRM (no revenue movement) is for cars used by staff, office errands or transfers. While out, the car doesn't show as available and can't be booked.</p>
+    <div class="toolbar"><button class="btn primary" data-act="nrmstart">Start NRM</button></div>
+    <div class="seg left" role="group" aria-label="Show"><button class="${tab === 'out' ? 'on' : ''}" data-act="nrmtab" data-t="out">Out now ${moveCount('nrm')}</button><button class="${tab === 'hist' ? 'on' : ''}" data-act="nrmtab" data-t="hist">History</button></div>
+    <label class="f">Search by plate, staff name or NRM number<input id="nrm-q" type="search" value="${esc(q)}" placeholder="9185"></label>
+    ${tab === 'out' ? (open.length ? open.map(nrmRow).join('') : `<div class="empty"><h3>${q ? 'No NRM car matches' : 'No cars on NRM'}</h3><p>Start an NRM when a staff member takes a car.</p></div>`)
+      : !S.nrmAll ? loading() : (hist.map(nrmRow).join('') || '<div class="empty"><h3>No NRM history yet</h3></div>')}`;
+  const mount = () => { let t; $('#nrm-q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { S.nrmQ = e.target.value; render(); const i = $('#nrm-q'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 350); }); };
+  return { title: 'NRM, staff use', back: '#/more', html, mount };
+}
+ACT.nrmtab = ({ t }) => { S.nrmTab = t; render(); };
 
 boot();
 
