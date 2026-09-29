@@ -489,6 +489,52 @@ label.check input{width:20px;height:20px}
 .t-note{font-size:13.5px;background:#FFFBEF;border:1px solid #F3E2B3;border-radius:8px;padding:6px 8px;margin-top:8px;color:#5A4300}
 .docs-check{background:#FFFBEF;border:1px solid #F3E2B3;border-radius:10px;padding:10px 12px;align-items:flex-start}
 .docs-check input{margin-top:3px;flex:none}
+.chip.needs{background:#FDE7C7;color:#7A4500}
+.needs-card{border-color:#EFC98A;background:#FFFBF2}
+.needs-card h2{color:#7A4500}
+.need-row{padding:4px 0;font-size:15px}
+.paste-card{border-style:dashed;border-color:var(--line-2);background:#FAFBFD}
+input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;background:#FFF8EC!important}
+.bell{position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line-2);background:#fff;color:var(--ink);cursor:pointer;flex:none}
+.bell.dark{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#fff}
+.bell svg{width:21px;height:21px}
+.bell b{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:999px;background:#E0352B;color:#fff;font-size:11px;line-height:20px;text-align:center;padding:0 5px;box-shadow:0 0 0 2px var(--navy)}
+.bell.has{animation:ring 2.4s ease-in-out infinite}
+@keyframes ring{0%,88%,100%{transform:rotate(0)}91%{transform:rotate(12deg)}94%{transform:rotate(-12deg)}97%{transform:rotate(6deg)}}
+@media (prefers-reduced-motion:reduce){.bell.has{animation:none}}
+.bell-m{margin-left:auto}
+@media(min-width:1000px) and (min-height:620px){body.dash .bell-m{display:none}}
+.hero-tools{align-items:center}
+.alert-row{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:10px;margin-top:8px;text-decoration:none;color:var(--ink);background:#F4F6FA;box-shadow:inset 4px 0 0 #D8912A}
+.alert-row.late{background:var(--late-bg);box-shadow:inset 4px 0 0 var(--late)}
+.alert-row.car{box-shadow:inset 4px 0 0 var(--deliv)}
+.alert-row span{font-size:13.5px;color:var(--muted)}
+.av-row.exp{box-shadow:inset 4px 0 0 #5B3FB0;opacity:.9}
+.t-card{padding:10px 12px}
+.t-top{gap:4px;margin-bottom:4px}
+.t-top .chip{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;padding:1px 7px}
+.t-car{font-size:15px;gap:8px}
+.t-car .car-ico{width:32px;height:15px}
+.t-meta{font-size:13px;margin-top:1px;overflow-wrap:anywhere}
+.t-client{color:var(--ink);font-weight:600}
+.t-note{font-size:12.5px;padding:4px 7px;margin-top:6px}
+.t-actions{gap:5px;margin-top:8px}
+.t-actions .btn.sm{min-height:32px;padding:4px 9px;font-size:13px;border-radius:7px}
+.task{padding:4px 0}
+.t-time{font-size:15px;padding-top:10px}
+.plate.big{font-size:13.5px}
+@media(min-width:1000px){
+  .board .t-card{padding:8px 10px}
+  .board .t-car{font-size:14px}
+  .board .t-car .car-ico{display:none}
+  .board .t-meta{font-size:12.5px}
+  .board .t-actions .btn.sm{min-height:30px;padding:3px 8px;font-size:12.5px}
+  .board .task{grid-template-columns:48px 1fr;column-gap:20px}
+  .board .timeline::before{left:59px}
+  .board .task::before{left:54px;top:16px;width:10px;height:10px}
+  .board .t-time{font-size:13.5px;padding-top:8px}
+  .board .plate.big{font-size:12.5px;padding:0 6px 0 9px}
+}
 /* print */
 #print{display:none}
 @media print{
@@ -547,7 +593,7 @@ label.check input{width:20px;height:20px}
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.2-2026';
+const APP_VERSION = '3.7-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
 const COMPANY = 'Thomson Rent A Car LLC';
 const EMAIL_DOMAIN = 'thomson-booking.app'; // internal only: usernames become username@this-domain
@@ -630,6 +676,13 @@ const paidSoFar = f => r2((+(f && f.advance) || 0) + ((f && f.payments) || []).r
 const bookingTotal = (b, f) => !f ? 0 : (f.settlement && f.settlement.totals ? f.settlement.totals.total : estimate(b, f).gross);
 
 const ACT = {};
+/* WhatsApp: phones open the app; computers open WhatsApp Web, because the Windows desktop app breaks emojis sent through a link */
+const onPhone = () => matchMedia('(pointer: coarse)').matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+function openWhatsApp(text, phone) {
+  const t = encodeURIComponent(text || '');
+  const url = onPhone() ? `https://wa.me/${phone || ''}?text=${t}` : `https://web.whatsapp.com/send?${phone ? 'phone=' + phone + '&' : ''}text=${t}`;
+  window.open(url, '_blank', 'noopener');
+}
 /* after saving, go back to the list the person came from */
 const LIST_ROUTES = ['home', 'bookings', 'onrent', 'calendar', 'cars', 'sublease', 'client', 'car', 'categories', 'users', 'sales', 'more', 'garage', 'nrm'];
 function go(h) { if (location.hash === h) { S.formOpen = false; render(); } else location.hash = h; }
@@ -806,7 +859,9 @@ function brand(cls = '') {
 const loading = () => `<div class="empty"><p>Loading…</p></div>`;
 const deny = () => ({ title: 'Not available', back: '#/home', html: `<div class="empty"><h3>This page isn't available for your role</h3><p><a href="#/home">Go to tasks</a></p></div>` });
 const statusChip = s => `<span class="chip ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
-const carLabel = b => `<span class="plate big">${esc(b.plate || '?')}</span> ${esc(b.carName || 'Car')}`;
+const carLabel = b => b && b.carTba ? `<span class="chip docs">Car to assign</span> ${esc(b.carName || 'Car')}` : `<span class="plate big">${esc(b.plate || '?')}</span> ${esc(b.carName || 'Car')}`;
+/* important details still missing on a booking */
+const missingInfo = b => !b || ['cancelled', 'closed'].includes(b.status) ? [] : [b.carTba && 'Car and plate', !b.oldRef && 'Agreement No', !b.clientPhone && 'Client phone', !b.location && 'Location', b.status === 'booked' && !b.deliveryDriverId && 'Driver'].filter(Boolean);
 /* car naming: Make, Model, Year (older cars saved with one name are split automatically) */
 function carParts(c) {
   if (!c) return { make: '', model: '', year: '' };
@@ -823,7 +878,7 @@ const ownershipOf = c => !c ? 'owned' : isSub(c) ? 'external' : c.ownership === 
 const ownChip = c => { const o = ownershipOf(c); return o === 'owned' ? '' : `<span class="chip ${o === 'external' ? 'sub' : 'inv'}">${o === 'external' ? 'External' : 'Investor'}</span>`; };
 /* garage: a car with an open garage movement is blocked until it is marked back */
 const inGarage = carId => S.garage.get(carId);
-const garageEnd = g => new Date(Math.max(g.expectedOut ? parseDT(g.expectedOut + 'T23:59').getTime() : 8.64e15, Date.now() + 60000));
+const garageEnd = g => new Date(8.64e15); // blocked until marked back, whatever the expected date
 function garageClash(carId, startAt, endAt) { const g = inGarage(carId); if (!g) return null; return parseDT(g.inAt) < parseDT(endAt) && garageEnd(g) > parseDT(startAt) ? g : null; }
 const isNrm = g => g && g.kind === 'nrm';
 const garageText = g => isNrm(g) ? `on NRM${g.staff ? ' with ' + g.staff : ''}${g.expectedOut ? ', back ' + fmtDate(g.expectedOut) : ''}` : `in garage${g.garage ? ' at ' + g.garage : ''}${g.expectedOut ? ', back ' + fmtDate(g.expectedOut) : ''}`;
@@ -878,7 +933,9 @@ function tick(silentRender) {
     S.notified.add(key);
     try { localStorage.setItem('tb-notified', JSON.stringify([...S.notified].slice(-300))); } catch (e) { }
     beep();
-    toast(`${t.type === 'delivery' ? 'Delivery' : 'Pickup'} ${stage === 'soon' ? 'in ' + durText(ms) : 'is late by ' + durText(ms)}: ${t.b.carName} ${t.b.plate}, ${t.b.clientName}, ${time12(tOf(t.at))}`, 'alert');
+    const msgTxt = `${t.type === 'delivery' ? 'Delivery' : 'Pickup'} ${stage === 'soon' ? 'in ' + durText(ms) : 'is late by ' + durText(ms)}: ${t.b.carName} ${t.b.plate || ''}, ${t.b.clientName}, ${time12(tOf(t.at))}`;
+    toast(msgTxt, 'alert');
+    if (typeof phoneNotify === 'function') phoneNotify(t.type === 'delivery' ? 'Delivery due' : 'Pickup due', msgTxt, key);
   });
   if (silentRender !== true && S.route === 'home') refresh();
 }
@@ -898,7 +955,7 @@ function render() {
   const v = (views[r] || viewHome)();
   S.route = r; S.formOpen = !!v.form;
   document.body.classList.toggle('dash', r === 'home');
-  const head = v.head != null ? v.head : `<header class="topbar">${v.back ? `<a class="back" href="${v.back}" aria-label="Back">${ico('left')}</a>` : ''}<h1>${esc(v.title || '')}</h1>${v.right || ''}<a class="homebtn" href="#/home" aria-label="Dashboard">${ico('home')}<span>Dashboard</span></a></header>`;
+  const head = v.head != null ? v.head : `<header class="topbar">${v.back ? `<a class="back" href="${v.back}" aria-label="Back">${ico('left')}</a>` : ''}<h1>${esc(v.title || '')}</h1>${v.right || ''}${bellHtml(true)}<a class="homebtn" href="#/home" aria-label="Dashboard">${ico('home')}<span>Dashboard</span></a></header>`;
   $('#app').innerHTML = `${head}<main class="main${v.wide ? ' wide' : ''}">${v.html}</main>${navBar(r)}`;
   if (v.mount) v.mount();
 }
@@ -965,15 +1022,16 @@ function taskCard(t) {
     acts.push(`<button class="btn sm" data-act="resched" data-id="${b.id}" data-type="${t.type}">Reschedule</button>`);
     if (t.type === 'pickup' && isStaff()) acts.push(`<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button>`);
     if (isStaff()) acts.push(`<button class="btn sm" data-act="assign" data-id="${b.id}">${drvName ? 'Driver' : 'Assign driver'}</button>`);
-    acts.push(`<button class="btn sm" data-act="ics" data-id="${b.id}" data-type="${t.type}">Add to calendar</button>`);
+    acts.push(`<button class="btn sm" data-act="ics" data-id="${b.id}" data-type="${t.type}" aria-label="Add to phone calendar">📅 Calendar</button>`);
+    if (b.carTba) acts.push(`<button class="btn sm primary" data-act="assigncar" data-id="${b.id}">Assign car</button>`);
     acts.push(`<button class="btn sm good" data-act="done" data-id="${b.id}" data-type="${t.type}">Mark done</button>`);
   }
   return `<li class="task ${t.type} ${st}">
     <div class="t-time num">${time12(tOf(t.at)).replace(' ', '<br>')}</div>
     <div class="t-card">
-      <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${agrTag(b)}${b.collectDocs && t.type === 'delivery' && !b.docsCollected ? '<span class="chip docs">📄 Collect documents</span>' : ''}${isStaff() ? subTag(b) : ''}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
+      <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${!t.done && missingInfo(b).length ? `<span class="chip needs" title="${esc(missingInfo(b).join(', '))}">Needs details: ${missingInfo(b).length}</span>` : ''}${agrTag(b)}${b.collectDocs && t.type === 'delivery' && !b.docsCollected ? '<span class="chip docs">📄 Collect documents</span>' : ''}${isStaff() ? subTag(b) : ''}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
       <div class="t-car">${CAR}<span>${carLabel(b)}</span></div>
-      <div class="t-meta">${esc(b.clientName)}${loc ? `<br>${esc(loc)}` : ''}</div>
+      <div class="t-meta"><strong class="t-client">${esc(b.clientName)}</strong>${loc ? ` · ${esc(loc)}` : ''}</div>
       <div class="t-meta">${t.type === 'delivery' ? `${b.days} day${b.days == 1 ? '' : 's'}, ` : ''}${t.done ? `Done by ${esc(((t.type === 'delivery' ? b.deliveryHandover : b.pickupHandover) || {}).by || drvName || '-')}` : drvName ? `Driver: ${esc(drvName)}` : '<strong>No driver assigned</strong>'}</div>
       ${b.notes && !t.done ? `<div class="t-note">📝 ${esc(b.notes.length > 140 ? b.notes.slice(0, 140) + '…' : b.notes)}</div>` : ''}
       <div class="t-actions">${acts.join('')}</div>
@@ -988,7 +1046,10 @@ function carDayStatus(carId, D) {
   const e = parseDT(addDays(D, 1) + 'T00:00');
   const s = D === todayStr() ? new Date() : parseDT(D + 'T00:00');
   const g = inGarage(carId); if (g && parseDT(g.inAt) < e && garageEnd(g) > s) return { state: 'busy', garage: g };
+  const out = [...S.active.values()].find(b => b.carId === carId && b.status === 'onrent' && !isOverdue(b) && parseDT(b.pickupAt) < e);
   const bs = [...S.active.values()].filter(b => b.carId === carId && (b.status === 'booked' || b.status === 'onrent') && parseDT(b.deliveryAt) < e && effEnd(b) > s);
+  if (bs.some(isOverdue)) return { state: 'busy', overdue: bs.find(isOverdue) };
+  if (out && !bs.some(b => b.status === 'booked' && parseDT(b.deliveryAt) < e && b.id !== out.id)) return { state: 'expected', at: out.pickupAt, b: out };
   if (!bs.length) return { state: 'free' };
   const od = bs.find(isOverdue); if (od) return { state: 'busy', overdue: od };
   const covers = bs.filter(b => parseDT(b.deliveryAt) <= s), later = bs.filter(b => parseDT(b.deliveryAt) > s);
@@ -998,7 +1059,11 @@ function carDayStatus(carId, D) {
 }
 function availableOn(D, mode) {
   return S.cars.filter(c => c.active !== false && forRent(c) && (mode === 'both' || (mode === 'sub' ? isSub(c) : !isSub(c))))
-    .map(c => ({ c, st: carDayStatus(c.id, D) })).filter(x => x.st.state !== 'busy');
+    .map(c => ({ c, st: carDayStatus(c.id, D) })).filter(x => x.st.state !== 'busy' && x.st.state !== 'expected');
+}
+function expectedBackOn(D, mode) {
+  return S.cars.filter(c => c.active !== false && forRent(c) && (mode === 'both' || (mode === 'sub' ? isSub(c) : !isSub(c))))
+    .map(c => ({ c, st: carDayStatus(c.id, D) })).filter(x => x.st.state === 'expected').sort((a, b) => a.st.at.localeCompare(b.st.at));
 }
 /* categories: defined once under More, Categories (kept in order) */
 function catList() {
@@ -1011,7 +1076,10 @@ function catList() {
 const catInfo = name => catList().find(c => c.name.toLowerCase() === String(name || '').trim().toLowerCase());
 const forRent = c => { const ci = catInfo(c.category); return !ci || ci.rent !== false; };
 function categoryRank(cat) {
-  const i = catList().findIndex(c => c.name.toLowerCase() === String(cat || '').trim().toLowerCase()); return i < 0 ? 999 : i;
+  const n = String(cat || '').trim().toLowerCase();
+  const kw = /luxury|premium|vip/.test(n) ? 0 : /economy|suv/.test(n) ? 1 : /small|compact|mini/.test(n) ? 2 : 3;
+  const i = catList().findIndex(c => c.name.toLowerCase() === n);
+  return kw * 1000 + (i < 0 ? 999 : i);
 }
 const sortCars = list => list.sort((a, b) => categoryRank(a.c.category) - categoryRank(b.c.category) || carTitle(a.c).localeCompare(carTitle(b.c)));
 function dayWordFor(D) { const t = todayStr(); return D === t ? 'Today' : D === addDays(t, 1) ? 'Tomorrow' : parseDT(D + 'T12:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }); }
@@ -1049,7 +1117,7 @@ function viewHome() {
   const dayWord = dayWordFor(D).toLowerCase().startsWith('to') ? dayWordFor(D).toLowerCase() : 'this day';
   const tab = S.homeTab;
   const head = `<section class="hero home">${SKYLINE}<div class="hero-in">
-    <div class="hero-top">${brand()}<div><div class="welcome">Welcome to Thomson Car Rental Booking Service</div><div class="who">Signed in as ${esc(S.me.name)}, ${esc(role())}</div></div></div>
+    <div class="hero-top">${brand()}<div style="flex:1"><div class="welcome">Welcome to Thomson Car Rental Booking Service</div><div class="who">Signed in as ${esc(S.me.name)}, ${esc(role())}</div></div><span class="bell-m">${bellHtml(true)}</span></div>
     <div class="hero-date">
       <button class="iconbtn dark" data-act="day" data-d="-1" aria-label="Previous day">${ico('left')}</button>
       <div>
@@ -1058,7 +1126,7 @@ function viewHome() {
       </div>
       <button class="iconbtn dark" data-act="day" data-d="1" aria-label="Next day">${ico('right')}</button>
     </div>
-    <div class="hero-tools"><button class="btn sm" data-act="findplate">Find plate</button><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm amber" href="#/new">New booking</a>' : ''}</div></div></section>
+    <div class="hero-tools">${bellHtml(true)}<button class="btn sm" data-act="findplate">Find plate</button><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm amber" href="#/new">New booking</a>' : ''}</div></div></section>
   <div class="stats wide">
     <button class="stat s-d" data-act="tab" data-t="d"><strong class="num">${dl.length}</strong><span>Deliveries ${dayWord}</span><em>${dl.filter(t => t.done).length} done</em></button>
     <button class="stat s-p" data-act="tab" data-t="p"><strong class="num">${pk.length}</strong><span>Pickups ${dayWord}</span><em>${pk.filter(t => t.done).length} done</em></button>
@@ -1087,6 +1155,7 @@ function viewHome() {
       ${(() => { const od = overdueContracts(); return od.length ? `<div class="action-box"><h3>Action required (${od.length})</h3><p class="small" style="margin:0 0 6px">Return time passed but the contract is still open. These cars are kept out of the available list until you close, extend or update them.</p>${od.map(b => `<div class="act-row"><a href="#/booking/${b.id}" class="act-main"><span class="plate big">${esc(b.plate)}</span> <strong>${esc(b.carName)}</strong><br><span class="small">${esc(b.clientName)}${b.oldRef ? ', Agr ' + esc(b.oldRef) : ''}, due back ${esc(fmtDT(b.pickupAt))} <strong>(${durText(Date.now() - parseDT(b.pickupAt))} ago)</strong></span></a>
         <div class="t-actions">${isStaff() ? `<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button>` : ''}<button class="btn sm good" data-act="done" data-id="${b.id}" data-type="pickup">Mark picked up</button><a class="btn sm" href="#/booking/${b.id}">Open</a></div></div>`).join('')}</div>` : ''; })()}
       <div class="av-list">${avAll.length ? avAll.map(availRow).join('') : `<p class="col-empty">${mode === 'sub' ? 'No sub-lease cars free. Add them under More, Sub-lease cars.' : 'Every car is booked or on rent ' + dayWord + '.'}</p>`}</div>
+      ${(() => { const ex = expectedBackOn(D, mode); return ex.length ? `<h3 class="sub-h" style="margin:14px 10px 6px">Expected back, not picked up yet (${ex.length})</h3><div class="av-list" style="margin-top:0">${ex.map(x => `<a class="av-row exp" href="#/booking/${x.st.b.id}"><span class="av-main"><span class="plate big">${esc(x.c.plate)}</span> <strong>${esc(carTitle(x.c))}</strong></span><span class="av-sub">With ${esc(x.st.b.clientName)}, due back ${esc(fmtDT(x.st.at))}</span></a>`).join('')}</div>` : ''; })()}
       ${['garage', 'nrm'].map(kind => { const list = [...S.garage.values()].filter(g => (kind === 'nrm') === isNrm(g)).sort((a, b) => a.inAt.localeCompare(b.inAt)); return list.length ? `<h3 class="sub-h" style="margin:14px 10px 6px">${kind === 'nrm' ? 'On NRM, staff use' : 'In garage'} (${list.length})</h3><div class="av-list" style="margin-top:0">${list.map(g => `<a class="av-row gar" href="#/${kind === 'nrm' ? 'nrm' : 'garage'}"><span class="av-main"><span class="plate big">${esc(g.plate)}</span> <strong>${esc(g.carName)}</strong></span><span class="av-sub">${kind === 'nrm' ? `${esc(g.purpose)}${g.staff ? ', ' + esc(g.staff) : ''}` : `${esc(g.purpose)} at ${esc(g.garage)}`}${g.expectedOut ? `, back ${esc(fmtDate(g.expectedOut))}` : ''}</span></a>`).join('')}</div>` : ''; }).join('')}
     </section>
   </div>`;
@@ -1112,7 +1181,7 @@ function availMessage(D, mode) {
 ACT.shareavail = () => {
   const o = openSheet(`<h2>Share available cars</h2>
     <div class="grid2"><label class="f">Date<input type="date" id="sh-date" value="${S.viewDate}"></label>
-    <label class="f">Cars<select id="sh-mode"><option value="both">Own and sub-lease</option><option value="own">Own cars only</option><option value="sub">Sub-lease only</option></select></label></div>
+    <label class="f">Cars<select id="sh-mode"><option value="own" selected>Own and investor cars</option><option value="both">All, including external</option><option value="sub">External only</option></select></label></div>
     <label class="f">Message (you can edit it before sending)<textarea id="sh-text" rows="12" style="font-size:15px"></textarea></label>
     <p class="small muted" id="sh-count" style="margin:6px 0 0"></p>
     ${contactNumbers().length ? '' : `<p class="warn">No contact numbers yet. ${isAdmin() ? 'Add company numbers under More, Company and VAT settings, or personal numbers under Users and roles.' : 'Ask the admin to add them.'}</p>`}
@@ -1124,7 +1193,7 @@ ACT.shareavail = () => {
     try { await navigator.clipboard.writeText(t); } catch (e) { const ta = $('#sh-text'); ta.select(); document.execCommand('copy'); }
     toast('Copied. Paste it in WhatsApp or anywhere.');
   };
-  o.querySelector('#sh-send').onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent($('#sh-text').value), '_blank');
+  o.querySelector('#sh-send').onclick = () => openWhatsApp($('#sh-text').value);
 };
 
 /* ========================================================= actions */
@@ -1161,6 +1230,7 @@ function pickupCalc(b, f, pc) {
 }
 ACT.done = ({ id, type }) => {
   const b = getB(id); if (!b) return;
+  if (b.carTba) { openSheet(`<h2>Assign the car first</h2><p class="muted">This booking only has the model <strong>${esc(b.carName)}</strong>. Choose the actual car and plate before delivery.</p><div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" data-act="assigncar" data-id="${id}">Assign car</button></div>`); return; }
   const del = type === 'delivery';
   const o = openSheet(`<h2>${del ? 'Mark delivered' : 'Mark picked up'}</h2>
     <p class="muted">${carLabel(b)}, ${esc(b.clientName)}</p>
@@ -1335,8 +1405,12 @@ function waText(b, f) {
   return lines.join('\n');
 }
 const waNum = p => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '971' + d.slice(1); return d; };
-ACT.wa = ({ id }) => { const b = getB(id); window.open('https://wa.me/?text=' + encodeURIComponent(waText(b, S.fin.get(id))), '_blank'); };
-ACT.waclient = ({ id }) => { const b = getB(id); window.open(`https://wa.me/${waNum(b.clientPhone)}?text=` + encodeURIComponent(waText(b, S.fin.get(id))), '_blank'); };
+ACT.wa = args => ACT.bkmsg(args);
+ACT.waclient = async ({ id }) => {
+  const b = getB(id); if (!b) return;
+  let f = S.fin.get(id); if (!f) { try { const d = await db.doc('finance/' + id).get(); f = d.exists ? d.data() : null; } catch (e) { f = null; } }
+  openBookedMsg(b, f, false, false, waNum(b.clientPhone));
+};
 
 
 ACT.extend = async ({ id }) => {
@@ -1450,9 +1524,9 @@ ACT.undodeliver = async ({ id }) => {
 /* uniform "BOOKED" message for the team WhatsApp group */
 const amt = n => { const v = r2(n); return Number.isInteger(v) ? v.toLocaleString('en-US') : money(v); };
 const dmy = s => { if (!s) return ''; const d = parseDT(s); return `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}, ${time12(tOf(s))}`; };
-function bookedMsg(b, f) {
+function bookedMsg(b, f, updated) {
   const phone = b.clientPhone ? '+' + waNum(b.clientPhone) : '';
-  const lines = ['🚘 BOOKED ✅ 🚘', b.ref, '',
+  const lines = ['🚘 BOOKED ✅ 🚘', updated ? `${b.ref} (updated)` : b.ref, '',
     `• Vehicle: ${b.carName}`,
     f ? `• Rate: AED ${amt(f.rate)} per ${f.rateType === 'month' ? 'month' : 'day'}, ${f.vatMode === 'incl' ? 'VAT included' : '+VAT'}` : '',
     `• Days: ${b.days}`,
@@ -1466,18 +1540,60 @@ function bookedMsg(b, f) {
     b.notes ? `📝 ${b.notes}` : ''];
   return lines.filter((l, i) => l !== '' || i === 2).join('\n');
 }
-function openBookedMsg(b, f, fresh) {
-  const o = openSheet(`<h2>${fresh ? `Booking ${esc(b.ref)} saved` : 'Booking message'}</h2><p class="muted" style="margin:4px 0 0">${fresh ? 'Share it to the team group?' : 'Send it to the team group.'} You can edit it first.</p>
-    <label class="f">Message<textarea id="bm-text" rows="14" style="font-size:15px">${esc(bookedMsg(b, f))}</textarea></label>
+function openBookedMsg(b, f, fresh, updated, toPhone) {
+  const o = openSheet(`<h2>${fresh ? `Booking ${esc(b.ref)} ${updated ? 'updated' : 'saved'}` : toPhone ? `Send to ${esc(b.clientName)}` : 'Booking message'}</h2><p class="muted" style="margin:4px 0 0">${fresh ? (updated ? 'Share the updated booking with the team group?' : 'Share it to the team group?') : toPhone ? `Opens WhatsApp with +${esc(toPhone)}.` : 'Send it to the team group.'} You can edit it first.</p>
+    <label class="f">Message<textarea id="bm-text" rows="14" style="font-size:15px">${esc(bookedMsg(b, f, updated))}</textarea></label>
     <div class="btnrow"><button class="btn" id="bm-copy">Copy</button><button class="btn wa" id="bm-send">Send on WhatsApp</button></div>
     <div class="btnrow"><button class="btn" data-act="close">${fresh ? 'Not now' : 'Close'}</button></div>`);
   o.querySelector('#bm-copy').onclick = async () => { const t = $('#bm-text').value; try { await navigator.clipboard.writeText(t); } catch (e) { const ta = $('#bm-text'); ta.select(); document.execCommand('copy'); } toast('Copied. Paste it in the group.'); };
-  o.querySelector('#bm-send').onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent($('#bm-text').value), '_blank');
+  o.querySelector('#bm-send').onclick = () => openWhatsApp($('#bm-text').value, toPhone || '');
 }
 ACT.bkmsg = async ({ id }) => {
   const b = getB(id); if (!b) return;
   let f = S.fin.get(id); if (!f) { try { const d = await db.doc('finance/' + id).get(); f = d.exists ? d.data() : null; } catch (e) { f = null; } }
   openBookedMsg(b, f, false);
+};
+
+
+ACT.assigncar = ({ id }) => {
+  const b = getB(id); if (!b) return;
+  const opts = () => carOptions(b.deliveryAt, b.pickupAt, '', b.id).replace(/<option value="__tba"[^>]*>[^<]*<\/option>/, '');
+  const o = openSheet(`<h2>Assign car</h2><p class="muted" style="margin:4px 0 0">${esc(b.carName)} for ${esc(b.clientName)}<br><strong>${esc(fmtDT(b.deliveryAt))}</strong> to <strong>${esc(fmtDT(b.pickupAt))}</strong></p>
+    <label class="f">Type plate to find the car<input id="ac-pq" autocomplete="off" autocapitalize="characters" placeholder="9182"></label>
+    <label class="f">Car<select id="ac-car">${opts()}</select></label>
+    <div id="ac-hire" class="hire hidden"><h3>New external car (sub-lease hire)</h3>
+      <label class="f">Supplier<input id="ach-sup" list="ach-sups" placeholder="Al Futtaim Rent A Car"><datalist id="ach-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label>
+      <div class="grid3"><label class="f">Make<input id="ach-make" value="${esc(carParts({ name: b.carName }).make)}"></label><label class="f">Model<input id="ach-model" value="${esc(carParts({ name: b.carName }).model)}"></label><label class="f">Year<input id="ach-year" inputmode="numeric"></label></div>
+      <div class="grid2"><label class="f">Color<input id="ach-color"></label><label class="f">Plate (if known)<input id="ach-plate" autocapitalize="characters" placeholder="TBC"></label></div></div>
+    <p class="err" id="ac-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="ac-save">Assign car</button></div>`);
+  const sel = o.querySelector('#ac-car');
+  const want = String(b.carName || '').toLowerCase();
+  const match = [...sel.options].filter(op => op.value && !op.value.startsWith('__') && !op.disabled && op.textContent.toLowerCase().includes(want));
+  if (match.length === 1) sel.value = match[0].value;
+  const sync = () => o.querySelector('#ac-hire').classList.toggle('hidden', sel.value !== '__hire');
+  sel.onchange = sync; sync();
+  o.querySelector('#ac-pq').addEventListener('input', e => { const hits = plateMatches(e.target.value);
+    [...sel.options].forEach(op => { if (!op.value || op.value.startsWith('__')) return; op.hidden = !!e.target.value.trim() && !hits.some(h => h.id === op.value); });
+    const ok = hits.filter(h => { const op = [...sel.options].find(x => x.value === h.id); return op && !op.disabled; }); if (ok.length === 1) { sel.value = ok[0].id; sync(); } });
+  o.querySelector('#ac-save').onclick = async ev => {
+    const v = sel.value; if (!v) { $('#ac-err').textContent = 'Choose the car.'; return; }
+    ev.target.disabled = true;
+    try {
+      const batch = db.batch(); let car;
+      if (v === '__hire') {
+        const h = { supplier: $('#ach-sup').value.trim(), make: $('#ach-make').value.trim(), model: $('#ach-model').value.trim(), year: $('#ach-year').value.trim(), color: $('#ach-color').value.trim(), plate: $('#ach-plate').value.trim().toUpperCase() || 'TBC' };
+        if (!h.supplier || !h.make || !h.model) { ev.target.disabled = false; $('#ac-err').textContent = 'Enter the supplier, make and model.'; return; }
+        const ex = h.plate !== 'TBC' ? S.cars.find(c => plateKey(c.plate) === plateKey(h.plate)) : null;
+        if (ex && !isSub(ex)) { ev.target.disabled = false; $('#ac-err').textContent = `Plate ${h.plate} is your own car. Choose it from the list.`; return; }
+        const d = { ...h, type: 'sublease', ownership: 'sublease', active: true, category: ex ? ex.category || '' : '' }; d.name = carTitle(d);
+        if (ex) { batch.update(db.doc('cars/' + ex.id), d); car = { id: ex.id, ...d }; } else { const r = db.collection('cars').doc(); batch.set(r, d); car = { id: r.id, ...d }; }
+      } else car = S.cars.find(c => c.id === v);
+      batch.update(db.doc('bookings/' + id), { carId: car.id, carName: carTitle(car), plate: car.plate, carType: isSub(car) ? 'sublease' : 'own', supplier: isSub(car) ? car.supplier || '' : '', carTba: false, carIds: [car.id],
+        updatedAt: FV.serverTimestamp(), updatedBy: S.me.name, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Car assigned: ${car.plate}, ${carTitle(car)}` }) });
+      await batch.commit(); closeSheet(); toast(`${car.plate} assigned to ${b.ref}.`); if (S.route === 'booking') render();
+    } catch (e) { ev.target.disabled = false; $('#ac-err').textContent = friendlyError(e); }
+  };
 };
 
 /* ========================================================= booking detail */
@@ -1516,10 +1632,13 @@ function viewDetail(id) {
   acts.push(`<button class="btn" data-act="slip" data-id="${id}">Booking slip PDF</button>`);
   if (f && f.settlement && f.settlement.totals) acts.push(`<button class="btn" data-act="bill" data-id="${id}">Final bill PDF</button>`);
   if (b.status !== 'cancelled') acts.push(`<button class="btn wa" data-act="bkmsg" data-id="${id}">Booking message</button>`);
-  acts.push(`<button class="btn wa" data-act="wa" data-id="${id}">Share on WhatsApp</button>`);
-  if (b.clientPhone) acts.push(`<button class="btn" data-act="waclient" data-id="${id}">Send to client</button>`);
+  if (b.clientPhone) acts.push(`<button class="btn" data-act="waclient" data-id="${id}">Send confirmation to client</button>`);
   if (staff && b.status === 'booked') acts.push(`<button class="btn danger" data-act="cancelbk" data-id="${id}">Cancel booking</button>`);
   if (isAdmin()) acts.push(`<button class="btn danger" data-act="deletebk" data-id="${id}">Delete</button>`);
+  if (b.carTba && b.status === 'booked') acts.unshift(`<button class="btn primary" data-act="assigncar" data-id="${id}">Assign car</button>`);
+  const miss = missingInfo(b);
+  const needs = miss.length ? `<section class="card needs-card"><h2>Needs details (${miss.length})</h2>${miss.map(m => `<div class="need-row">☐ ${esc(m)}</div>`).join('')}
+    <div class="btnrow">${b.carTba ? `<button class="btn sm primary" data-act="assigncar" data-id="${id}">Assign car</button>` : ''}${miss.includes('Driver') ? `<button class="btn sm" data-act="assign" data-id="${id}">Assign driver</button>` : ''}${miss.some(m => /Agreement|phone|Location/.test(m)) ? `<a class="btn sm" href="#/edit/${id}">Add details</a>` : ''}</div></section>` : '';
   const log = (b.log || []).slice().reverse();
   const html = `
   <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2><span>${f ? (f.rateType === 'month' ? '<span class="chip onrent">Monthly</span> ' : '<span class="chip">Daily</span> ') : ''}${statusChip(b.status)}</span></div>
@@ -1539,6 +1658,7 @@ function viewDetail(id) {
       ${b.collectDocs ? `<dt>Documents</dt><dd>${b.docsCollected ? `<span class="chip done">Collected</span> <span class="muted small">${esc(b.docsCollectedBy || '')}</span>` : '<span class="chip docs">📄 To collect at delivery</span>'}</dd>` : ''}
       ${b.notes ? `<dt>Notes</dt><dd>${esc(b.notes)}</dd>` : ''}
     </dl></section>
+  ${needs}
   ${price}
   ${(b.legs || []).length ? `<section class="card"><h2>Cars used in this rental</h2>${[...b.legs, { plate: b.plate, carName: b.carName, from: b.legStart, to: null, current: true }].map(l => `<div class="leg"><span class="plate big">${esc(l.plate)}</span> ${esc(l.carName)}<br><span class="small">${esc(fmtDT(l.from))} to ${l.to ? esc(fmtDT(l.to)) : (b.pickedUpAt ? esc(fmtDT(b.pickedUpAt)) : 'now')}${l.reason ? `, replaced: <strong>${esc(l.reason)}</strong>` : l.current ? ', <strong>current car</strong>' : ''}</span>${l.inHo ? `<br><span class="muted small">Came back KM ${esc(l.inHo.km || '-')}, fuel ${esc(l.inHo.fuel || '-')}${l.inHo.notes ? ', ' + esc(l.inHo.notes) : ''}</span>` : ''}</div>`).join('')}</section>` : ''}
   ${b.deliveryHandover || b.pickupHandover ? `<section class="card"><h2>Handover</h2><dl class="kv">${ho(b.deliveryHandover, 'At delivery')}${ho(b.pickupHandover, 'At pickup')}</dl></section>` : ''}
@@ -1581,9 +1701,70 @@ function carOptions(startAt, endAt, selected, excludeId) {
   const byPlate = (a, b) => String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true });
   const own = S.cars.filter(c => !isSub(c) && (c.active !== false || c.id === selected)).sort(byPlate);
   const sub = S.cars.filter(c => isSub(c) && (c.active !== false || c.id === selected)).sort(byPlate);
-  return `<option value="">Choose a car</option>${own.length ? `<optgroup label="Own and investor cars">${own.map(opt).join('')}</optgroup>` : ''}${sub.length ? `<optgroup label="External cars (sub-lease)">${sub.map(opt).join('')}</optgroup>` : ''}<option value="__hire" ${selected === '__hire' ? 'selected' : ''}>+ New external car (sub-lease hire)</option>`;
+  return `<option value="">Choose a car</option>${own.length ? `<optgroup label="Own and investor cars">${own.map(opt).join('')}</optgroup>` : ''}${sub.length ? `<optgroup label="External cars (sub-lease)">${sub.map(opt).join('')}</optgroup>` : ''}<option value="__tba" ${selected === '__tba' ? 'selected' : ''}>Car model only, plate to assign later</option><option value="__hire" ${selected === '__hire' ? 'selected' : ''}>+ New external car (sub-lease hire)</option>`;
 }
 const suppliers = () => [...new Set(S.cars.filter(isSub).map(c => c.supplier).filter(Boolean))].sort();
+
+
+/* read a WhatsApp booking message into the form */
+function parseBookingMsg(text) {
+  const raw = String(text || '').replace(/\r/g, '');
+  const lines = raw.split('\n').map(l => l.replace(/^[\s•*\-–]+/, '').trim()).filter(Boolean);
+  const kv = re => { for (const l of lines) { const m = l.match(re); if (m) return (m[1] || '').trim(); } return null; };
+  const out = { found: [], lines };
+  const yr0 = new Date().getFullYear();
+  const mkDate = (d, mo, y) => { let yy = y ? (y.length === 2 ? '20' + y : y) : String(yr0); let s = `${yy}-${pad(+mo)}-${pad(+d)}`; if (!y && s < addDays(todayStr(), -60)) s = `${+yy + 1}-${pad(+mo)}-${pad(+d)}`; return +mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31 ? s : null; };
+  // car: best match against the fleet
+  let best = null;
+  for (const l of lines) {
+    const low = ' ' + l.toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ';
+    const hits = S.cars.filter(c => c.active !== false).filter(c => { const p = carParts(c); const toks = [p.make, p.model].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ').filter(Boolean); return toks.length && toks.every(t => low.includes(' ' + t + ' ')); });
+    if (hits.length) { const p = carParts(hits[0]); best = { model: [p.make, p.model].filter(Boolean).join(' '), cars: S.cars.filter(c => { const q = carParts(c); return q.make === p.make && q.model === p.model && c.active !== false; }), line: l }; break; }
+  }
+  if (!best) { const v = kv(/^(?:vehicle|car)\s*[:\-]\s*(.+)$/i); if (v) best = { model: v, cars: [], line: v }; }
+  if (best) { out.car = best; out.found.push('car'); }
+  // rate
+  const rl = lines.find(l => /rate|@/i.test(l));
+  if (rl) { const m = rl.replace(/,/g, '').match(/(?:rate\s*[:\-]?\s*(?:aed)?\s*|@\s*(?:aed)?\s*)([\d.]+)/i); if (m) { out.rate = +m[1]; out.found.push('rate'); if (/incl|inclusive|incld|with\s*(vat|tax)/i.test(rl)) out.vat = 'incl'; else if (/\+\s*(vat|tax)|plus\s*vat|excl/i.test(rl)) out.vat = 'plus'; if (/month/i.test(rl)) out.rateType = 'month'; } }
+  // dates
+  const rng = raw.match(/(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?\s*(?:to|till|until|–|-)\s*(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?/i);
+  if (rng) { out.from = mkDate(rng[1], rng[2], rng[3]); out.to = mkDate(rng[4], rng[5], rng[6] || rng[3]); }
+  if (!out.from) { const d = kv(/^date\s*[:\-]\s*(.+)$/i) || ''; const m = d.match(/(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?/); if (m) out.from = mkDate(m[1], m[2], m[3]); }
+  const dd = kv(/^days?\s*[:\-]\s*(\d+)/i); if (dd) out.days = +dd;
+  if (out.from && out.to && !out.days) out.days = Math.max(1, dayDiff(out.from, out.to));
+  if (out.from) out.found.push('date'); if (out.days) out.found.push('days');
+  // time
+  const tl = lines.find(l => /time|delivery|deliver|at\s+\d/i.test(l) && /\d/.test(l)) || '';
+  const tm = (kv(/^time\s*[:\-]\s*(.+)$/i) || tl).match(/(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?/i);
+  if (tm && (tm[3] || tm[2] || /time/i.test(tl))) { let h = +tm[1] % 24; const mi = tm[2] ? +tm[2] : 0; if (tm[3]) { const pm = /pm/i.test(tm[3]); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; } if (h < 24 && mi < 60) { out.time = `${pad(h)}:${pad(mi)}`; out.found.push('time'); } }
+  // location, client, phone
+  const loc = kv(/^location\s*[:\-]\s*(.*)$/i); if (loc) { out.location = loc; out.found.push('location'); }
+  let cl = kv(/^(?:client(?:\s*name)?|customer|name)\s*[:\-]\s*(.+)$/i);
+  if (!cl) cl = lines.filter(l => !/\d/.test(l) && !/book|confirm|delivery|return|location|rate|vehicle|days?\b|time/i.test(l) && (!best || l !== best.line) && /[a-z]/i.test(l)).pop() || null;
+  if (cl) { out.client = cl.replace(/[✅🚘!]+/g, '').trim(); out.found.push('client'); }
+  const pl = kv(/^(?:contact|phone|mobile|tel|whatsapp)\s*[:\-]\s*(.+)$/i) || (raw.match(/(\+\d[\d\s\-]{7,}\d)/) || [])[1];
+  if (pl) { out.phone = pl.replace(/[^\d+\s\-]/g, '').trim(); out.found.push('phone'); }
+  return out;
+}
+function fillFromMessage(upd) {
+  const p = parseBookingMsg($('#b-paste').value), msg = [];
+  if (!p.found.length) { $('#b-fillmsg').innerHTML = '<div class="warn">Nothing recognised. Check the message, or fill the form by hand.</div>'; return; }
+  const set = (sel, v) => { const el = $(sel); if (el && v != null && v !== '') { el.value = v; el.classList.remove('missing'); } };
+  set('#b-name', p.client); set('#b-phone', p.phone); set('#b-loc', p.location); set('#b-date', p.from); set('#b-time', p.time); set('#b-days', p.days); set('#b-rate', p.rate);
+  if (p.vat) { const r = $(`input[name=b-vat][value=${p.vat}]`); if (r) r.checked = true; }
+  if (p.rateType) set('#b-rt', p.rateType);
+  upd();
+  if (p.car) {
+    const sel = $('#b-car'), free = p.car.cars.filter(c => { const o = [...sel.options].find(x => x.value === c.id); return o && !o.disabled; });
+    if (free.length === 1) { sel.value = free[0].id; msg.push(`Car: <strong>${esc(free[0].plate)}</strong>, the only free ${esc(p.car.model)}`); }
+    else { sel.value = '__tba'; upd(); set('#b-model', p.car.model); msg.push(free.length ? `${free.length} ${esc(p.car.model)} are free (${free.map(c => esc(c.plate)).join(', ')}). Saved as <strong>model only</strong>, or pick the plate now.` : `No ${esc(p.car.model)} is free on these dates. Saved as <strong>model only</strong>, assign an own or sub-lease car later.`); }
+  }
+  upd();
+  const want = [['client', '#b-name', 'client name'], ['phone', '#b-phone', 'phone'], ['location', '#b-loc', 'location'], ['date', '#b-date', 'date'], ['time', '#b-time', 'time'], ['days', '#b-days', 'days'], ['rate', '#b-rate', 'rate'], ['car', '#b-car', 'car']];
+  const miss = want.filter(([k]) => !p.found.includes(k));
+  miss.forEach(([, s]) => { const el = $(s); if (el) el.classList.add('missing'); });
+  $('#b-fillmsg').innerHTML = `<div class="calc small" style="margin-top:10px"><strong>Filled:</strong> ${want.filter(([k]) => p.found.includes(k)).map(w => w[2]).join(', ') || 'nothing'}${miss.length ? `<br><strong style="color:var(--late)">Not in the message:</strong> ${miss.map(w => w[2]).join(', ')} (highlighted, fill in or leave for later)` : ''}${msg.length ? '<br>' + msg.join('<br>') : ''}</div>`;
+}
 
 function viewForm(id) {
   if (!isStaff()) return deny();
@@ -1599,12 +1780,15 @@ function viewForm(id) {
   const mySp = S.sales.find(s => s.uid === S.me.id);
   const v = {
     agr: b ? b.oldRef || '' : '', clientName: b ? b.clientName : '', clientPhone: b ? b.clientPhone || '' : '', location: b ? b.location || '' : '', pickupLocation: b ? b.pickupLocation || '' : '',
-    carId: b ? b.carId : pre, date: b ? b.deliveryDate : S.viewDate, time: b ? tOf(b.deliveryAt) : '10:00', days: b ? b.days : 1,
+    carId: b ? (b.carTba ? '__tba' : b.carId) : pre, tbaModel: b && b.carTba ? b.carName : '', date: b ? b.deliveryDate : S.viewDate, time: b ? tOf(b.deliveryAt) : '10:00', days: b ? b.days : 1,
     rate: f ? f.rate : '', rateType: f ? f.rateType || 'day' : 'day', vatMode: f ? f.vatMode : (S.settings.defaultVatMode || 'plus'), sp: b ? b.salespersonId : (mySp ? mySp.id : ''),
     drv: b ? b.deliveryDriverId || '' : '', docs: b ? !!b.collectDocs : false, advance: f ? f.advance || '' : '', advMethod: f ? f.advanceMethod || 'cash' : 'cash', notes: b ? b.notes || '' : ''
   };
   const html = `
   ${!cars.length ? `<p class="warn">Add your cars first. ${isAdmin() ? '<a href="#/cars">Go to cars</a>' : 'Ask an admin to add them.'}</p>` : ''}
+  ${id ? '' : `<section class="card paste-card"><h2>Paste booking message</h2><p class="small muted" style="margin:0">Paste the WhatsApp booking message and the form fills itself. Check it and tap Create booking.</p>
+    <label class="f"><textarea id="b-paste" rows="4" placeholder="Vehicle: Nissan Patrol&#10;Rate: 450&#10;Days: 04&#10;Date: 26/09/26&#10;Time: 23:45&#10;Client Name: Hussam Hassan&#10;Contact: +966 59 485 9991"></textarea></label>
+    <div class="btnrow"><button class="btn primary" type="button" id="b-fill">Fill the form</button></div><div id="b-fillmsg"></div></section>`}
   <section class="card"><h2>Client</h2>
     <label class="f">Agreement No (if already opened)<input id="b-agr" inputmode="numeric" value="${esc(v.agr)}" placeholder="15797"></label>
     <label class="f">Client name<input id="b-name" value="${esc(v.clientName)}" autocomplete="off" placeholder="Mohammed Khan"></label>
@@ -1615,7 +1799,9 @@ function viewForm(id) {
   <section class="card"><h2>Car and dates</h2>
     <label class="f">Type plate to find the car<input id="b-pq" autocomplete="off" autocapitalize="characters" placeholder="9185"></label>
     <label class="f">Car<select id="b-car">${carOptions(b ? b.deliveryAt : '', b ? b.pickupAt : '', v.carId, id)}</select></label>
-    <p class="small muted" style="margin:6px 0 0">Cars already booked for these dates are greyed out. Pick a sub-lease car or choose Sub-lease hire instead.</p>
+    <p class="small muted" style="margin:6px 0 0">Cars already booked for these dates are greyed out. Not sure of the plate yet? Choose <strong>Car model only</strong> and assign the plate later.</p>
+    <div id="b-tba" class="hire hidden"><h3>Car model, plate later</h3><label class="f">Car model<input id="b-model" list="b-models" value="${esc(v.tbaModel)}" placeholder="Nissan Patrol"><datalist id="b-models">${[...new Set(S.cars.map(c => { const p = carParts(c); return [p.make, p.model].filter(Boolean).join(' '); }))].sort().map(x => `<option>${esc(x)}</option>`).join('')}</datalist></label>
+      <p class="small muted" style="margin:6px 0 0">The booking shows "Car to assign" until someone picks the actual car, own or sub-lease.</p></div>
     <div id="b-hire" class="hire hidden"><h3>New external car (sub-lease hire)</h3>
       <label class="f">Supplier<input id="h-sup" list="h-sups" placeholder="Al Futtaim Rent A Car"><datalist id="h-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label>
       <div class="grid3"><label class="f">Make<input id="h-make" placeholder="GMC"></label><label class="f">Model<input id="h-model" placeholder="Yukon"></label><label class="f">Year<input id="h-year" inputmode="numeric" placeholder="2026"></label></div>
@@ -1635,7 +1821,7 @@ function viewForm(id) {
     <div class="calc num" id="b-calc"></div>
   </section>
   <section class="card"><h2>Team and notes</h2>
-    <label class="f">Salesperson<select id="b-sp"><option value="">Choose salesperson</option>${sps.map(s => `<option value="${s.id}" ${s.id === v.sp ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
+    <label class="f">Salesperson<select id="b-sp"><option value="">${b && !b.salespersonId && b.salespersonName ? esc(b.salespersonName) : `Me (${esc(S.me.name)})`}</option>${sps.map(s => `<option value="${s.id}" ${s.id === v.sp ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
     <label class="f">Delivery driver (optional)<select id="b-drv"><option value="">Assign later</option>${drivers().map(u => `<option value="${u.id}" ${u.id === v.drv ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}</select></label>
     <label class="check docs-check"><input type="checkbox" id="b-docs" ${v.docs ? 'checked' : ''}> <span><strong>Collect client documents</strong><br><span class="small muted">The driver sees a reminder and ticks it at delivery</span></span></label>
     <label class="f">Notes for the driver and team<textarea id="b-notes" placeholder="Child seat needed. Call the client 15 minutes before arriving.">${esc(v.notes)}</textarea></label>
@@ -1662,13 +1848,16 @@ function viewForm(id) {
       const st = x.date && x.time ? `${x.date}T${x.time}` : '';
       if (st && pu && sel.dataset.k !== st + pu) { sel.dataset.k = st + pu; sel.innerHTML = carOptions(st, pu, keep, id); sel.value = keep; }
       $('#b-hire').classList.toggle('hidden', x.carId !== '__hire');
-      const cf = x.carId && x.carId !== '__hire' && pu ? conflicts(x.carId, st, pu, id) : [];
-      const gc = x.carId && x.carId !== '__hire' && pu ? garageClash(x.carId, st, pu) : null;
+      $('#b-tba').classList.toggle('hidden', x.carId !== '__tba');
+      const real = x.carId && x.carId !== '__hire' && x.carId !== '__tba';
+      const cf = real && pu ? conflicts(x.carId, st, pu, id) : [];
+      const gc = real && pu ? garageClash(x.carId, st, pu) : null;
       $('#b-conf').innerHTML = cf.length ? `<div class="warn late-warn"><strong>This car is booked for these dates, so it can't be used:</strong>${cf.map(c => `<br>${esc(c.ref)}, ${esc(c.clientName)}, ${esc(fmtDT(c.deliveryAt))} to ${esc(fmtDT(c.pickupAt))}`).join('')}<br>Choose another car, a sub-lease car, or Sub-lease hire.</div>` : gc ? `<div class="warn late-warn"><strong>This car is ${esc(garageText(gc))} (${esc(gc.no)}).</strong> Choose another car, or mark it back from the garage first.</div>` : '';
       return { x, pu, cf, gc };
     };
     $$('#app input, #app select, #app textarea').forEach(el => el.addEventListener('input', upd));
     upd();
+    const fb = $('#b-fill'); if (fb) fb.onclick = () => fillFromMessage(upd);
     $('#b-pq').addEventListener('input', e => {
       const hits = plateMatches(e.target.value).filter(c => c.active !== false), sel = $('#b-car');
       [...sel.options].forEach(o => { if (!o.value || o.value === '__hire') return; o.hidden = !!e.target.value.trim() && !hits.some(h => h.id === o.value); });
@@ -1678,9 +1867,10 @@ function viewForm(id) {
     $('#b-save').onclick = async ev => {
       const { x, pu, cf, gc } = upd();
       const h = x.hire, hiring = x.carId === '__hire';
-      const err = !x.name ? 'Enter the client name.' : !x.loc ? 'Enter the delivery location.' : !x.carId ? 'Choose a car.'
+      const tba = x.carId === '__tba', tbaModel = ($('#b-model') || {}).value ? $('#b-model').value.trim() : '';
+      const err = !x.name ? 'Enter the client name.' : !x.carId ? 'Choose a car, or Car model only.' : tba && !tbaModel ? 'Type the car model, for example Nissan Patrol.'
         : hiring && (!h.supplier || !h.make || !h.model) ? 'For a sub-lease hire, enter the supplier, make and model.'
-        : !x.date || !x.time ? 'Enter the delivery date and time.' : x.days < 1 ? 'Days must be at least 1.' : !x.rate ? 'Enter the rate.' : !x.sp ? 'Choose the salesperson.'
+        : !x.date || !x.time ? 'Enter the delivery date and time.' : x.days < 1 ? 'Days must be at least 1.' : !x.rate ? 'Enter the rate.'
         : cf.length ? 'This car is already booked for these dates. Choose another car or Sub-lease hire.' : gc ? 'This car is in the garage for these dates. Choose another car.' : '';
       $('#b-err').textContent = err; if (err) return;
       if (x.agr && x.agr !== ((b && b.oldRef) || '')) { const t = await agreementTaken(x.agr, id); if (t) { $('#b-err').textContent = `Agreement ${x.agr} is already on ${t.ref} (${t.clientName}).`; return; } }
@@ -1695,15 +1885,16 @@ function viewForm(id) {
         data.name = carTitle(data);
         if (ex) { batch0.update(db.doc('cars/' + ex.id), data); car = { id: ex.id, ...data }; }
         else { const r = db.collection('cars').doc(); batch0.set(r, data); car = { id: r.id, ...data }; }
-      } else car = S.cars.find(c => c.id === x.carId) || {};
+      } else if (tba) car = { id: '', plate: '', name: tbaModel, make: tbaModel, type: 'tba' };
+      else car = S.cars.find(c => c.id === x.carId) || {};
       ev.target.disabled = true;
       const sp = S.sales.find(s => s.id === x.sp) || {}, dr = S.users.find(u => u.id === x.drv) || {};
       const data = {
-        oldRef: x.agr, clientName: x.name, clientPhone: x.phone, clientPhoneKey: phoneKey(x.phone), location: x.loc, pickupLocation: x.ploc, carId: car.id, carName: carTitle(car), plate: car.plate || '',
-        carType: isSub(car) ? 'sublease' : 'own', supplier: isSub(car) ? car.supplier || '' : '',
-        carIds: [...new Set([...((b && b.legs) || []).map(l => l.carId), car.id])],
+        oldRef: x.agr, clientName: x.name, clientPhone: x.phone, clientPhoneKey: phoneKey(x.phone), location: x.loc, pickupLocation: x.ploc, carId: car.id, carName: tba ? tbaModel : carTitle(car), plate: car.plate || '',
+        carType: tba ? 'tba' : isSub(car) ? 'sublease' : 'own', supplier: isSub(car) ? car.supplier || '' : '', carTba: tba,
+        carIds: [...new Set([...((b && b.legs) || []).map(l => l.carId), car.id].filter(Boolean))],
         deliveryAt: `${x.date}T${x.time}`, deliveryDate: x.date, pickupAt: pu, pickupDate: pu.slice(0, 10), days: x.days,
-        salespersonId: x.sp, salespersonName: sp.name || '', salespersonUid: sp.uid || '', deliveryDriverId: x.drv, deliveryDriverName: dr.name || '',
+        salespersonId: x.sp, salespersonName: sp.name || (b && !x.sp && b.salespersonName ? b.salespersonName : S.me.name), salespersonUid: sp.uid || (b && !x.sp ? b.salespersonUid || '' : (x.sp ? '' : S.me.id)), deliveryDriverId: x.drv, deliveryDriverName: dr.name || '',
         notes: x.notes, collectDocs: x.docs, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name
       };
       const fin = { rate: x.rate, rateType: x.rt, vatMode: x.vat, advance: x.adv, advanceMethod: x.advm };
@@ -1720,6 +1911,7 @@ function viewForm(id) {
           batch.update(db.doc('bookings/' + id), { ...data, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: 'Booking edited' }) });
           batch.set(db.doc('finance/' + id), fin, { merge: true });
           await batch.commit(); S.formOpen = false; toast('Changes saved.'); goHomeOn(x.date);
+          setTimeout(() => openBookedMsg({ ...b, ...data, id }, { ...f, ...fin }, true, true), 120);
         }
       } catch (e) { ev.target.disabled = false; $('#b-err').textContent = friendlyError(e); }
     };
@@ -1988,7 +2180,7 @@ function viewCalendar() {
   const segs = [];
   bks.forEach(b => { (b.legs || []).forEach(l => segs.push({ b, carId: l.carId, from: l.from, to: parseDT(l.to), leg: true })); segs.push({ b, carId: b.carId, from: b.legStart || b.deliveryAt, to: effEnd(b) }); });
   const gmap = new Map((S.calGarage || []).map(g => [g.id, g])); S.garage.forEach(g => gmap.set(g.id, g));
-  const gsegs = [...gmap.values()].map(g => ({ g, carId: g.carId, from: g.inAt, to: g.outAt ? parseDT(g.outAt) : garageEnd(g) < new Date(8e15) ? garageEnd(g) : new Date(Math.max(Date.now(), e0.getTime())) })).filter(x => parseDT(x.from) < e0 && x.to > s0);
+  const gsegs = [...gmap.values()].map(g => ({ g, carId: g.carId, from: g.inAt, to: g.outAt ? parseDT(g.outAt) : new Date(e0.getTime()) })).filter(x => parseDT(x.from) < e0 && x.to > s0);
   const ids = new Set([...segs.map(x => x.carId), ...gsegs.map(x => x.carId)]);
   const cars = S.cars.filter(c => c.active !== false || ids.has(c.id)).sort((a, b) => (isSub(a) - isSub(b)) || categoryRank(a.category) - categoryRank(b.category) || String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true }));
   const t = todayStr();
@@ -2011,6 +2203,7 @@ function viewCalendar() {
     <div class="cal-range"><strong>${esc(fmtDate(start))} to ${esc(fmtDate(addDays(end, -1)))}</strong><span><button class="btn sm" data-act="calmove" data-n="0">Today</button> <input type="date" id="cal-jump" class="f-in" style="display:inline-block;width:auto;min-height:36px;padding:4px 8px;margin:0" value="${start}" aria-label="Jump to date"></span></div>
     <button class="iconbtn" data-act="calmove" data-n="7" aria-label="Next week">${ico('right')}</button></div>
   <div class="cal-legend small"><span><i class="bk"></i>Booked</span><span><i class="or"></i>On rent</span><span><i class="od"></i>Overdue, not closed</span><span><i class="dn"></i>Returned or replaced</span><span><i class="gr"></i>Garage</span><span><i class="nrm"></i>NRM</span></div>
+  ${(() => { const t = [...S.active.values()].filter(b => b.carTba && b.status === 'booked').sort((a, c) => a.deliveryAt.localeCompare(c.deliveryAt)); return t.length ? `<div class="strip info"><h3>Car to assign (${t.length})</h3>${t.map(b => `<a class="row" href="#/booking/${b.id}"><span>${esc(b.carName)}, ${esc(b.clientName)}</span><strong>${esc(fmtDT(b.deliveryAt))}</strong></a>`).join('')}</div>` : ''; })()}
   ${!S.calRows ? loading() : cars.length ? `<div class="cal-wrap"><div class="cal-grid"><div class="cal-row cal-headrow"><div class="cal-car head">Car</div><div class="cal-days">${dayHead}</div></div>${rowsHtml}</div></div>
     <p class="small muted">Tap a bar to open the booking, or a car to see its full history. Scroll sideways on a phone.</p>` : '<div class="empty"><h3>No cars yet</h3><p>Add cars under More, Cars and plates.</p></div>'}`;
   return { title: 'Car calendar', html, wide: true, mount: () => { const j = $('#cal-jump'); j && j.addEventListener('change', () => { if (j.value) { S.calStart = j.value; render(); } }); } };
@@ -2361,7 +2554,7 @@ function viewUsers() {
   ${S.users.map(u => `<div class="list-row"><div class="lr-top"><strong>${esc(u.name)}</strong><span class="chip ${u.active === false ? 'cancelled' : 'booked'}">${u.active === false ? 'Inactive' : RL[u.role] || u.role}</span></div>
     <div class="lr-sub">Username: ${esc(u.username)}</div>
     ${u.id !== S.me.id ? `<div class="t-actions"><select class="f-in" style="width:auto;min-height:36px;margin:0;padding:4px 8px" data-role="${u.id}" aria-label="Role">${Object.entries(RL).map(([k, l]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
-    <button class="btn sm" data-act="user-toggle" data-id="${u.id}">${u.active === false ? 'Activate' : 'Deactivate'}</button></div>` : '<div class="lr-sub">This is you</div>'}
+    <button class="btn sm" data-act="user-toggle" data-id="${u.id}">${u.active === false ? 'Activate' : 'Deactivate'}</button><button class="btn sm danger" data-act="user-del" data-id="${u.id}">Delete</button></div>` : '<div class="lr-sub">This is you</div>'}
     ${u.role !== 'driver' ? `<div class="lr-sub">WhatsApp numbers: ${splitNums(u.waNumbers).length ? esc(splitNums(u.waNumbers).join(', ')) : '<span class="muted">none, uses company numbers</span>'} <button class="btn sm" data-act="user-nums" data-id="${u.id}">Edit numbers</button></div>` : '<div class="lr-sub muted">WhatsApp list uses the company numbers</div>'}</div>`).join('')}
   <p class="small muted">Forgotten password: deactivate the old login and create a new one. People can change their own password under More, My account.</p>`;
   const mount = () => $$('[data-role]').forEach(s => s.addEventListener('change', async () => {
@@ -2397,6 +2590,22 @@ ACT['user-new'] = () => {
   };
 };
 
+
+ACT['user-del'] = async ({ id }) => {
+  if (!isAdmin() || id === S.me.id) return;
+  const u = S.users.find(x => x.id === id); if (!u) return;
+  let pin = ''; try { const s = await db.doc('meta/secure').get(); pin = s.exists ? String(s.data().pin || '') : ''; } catch (e) { }
+  const v = await ask({ title: `Delete ${u.name}?`, danger: true, ok: 'Delete user',
+    text: `<strong>${esc(u.username)}</strong> can no longer sign in, on any phone. Their name stays on past bookings and history. To reuse the same username later, also remove it in Firebase, Authentication.`,
+    input: pin ? { label: 'Delete PIN', type: 'password', mode: 'numeric', required: 'Enter the PIN.' } : { label: 'Type DELETE to confirm', required: 'Type DELETE.' } });
+  if (!v) return;
+  if (pin ? v !== pin : v !== 'DELETE') { toast(pin ? 'Wrong PIN. Nothing was deleted.' : 'Not confirmed. Nothing was deleted.'); return; }
+  try {
+    const b = db.batch(); b.delete(db.doc('users/' + id));
+    S.sales.filter(s => s.uid === id).forEach(s => b.update(db.doc('salespeople/' + s.id), { uid: '', active: false }));
+    await b.commit(); toast(`${u.name} deleted.`);
+  } catch (e) { toast(friendlyError(e)); }
+};
 ACT['user-nums'] = ({ id }) => {
   if (!isAdmin()) return;
   const u = S.users.find(x => x.id === id); if (!u) return;
@@ -2572,7 +2781,7 @@ ACT.daysheet = async () => {
     if (t.type === 'delivery' && e) total += e.gross;
     const loc = t.type === 'pickup' ? (b.pickupLocation || b.location) : b.location;
     return `<tr><td>${i + 1}</td><td><strong>${time12(tOf(t.at))}</strong></td><td class="${t.type === 'delivery' ? 'p-type-d' : 'p-type-p'}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}${t.done ? ' (done)' : ''}${t.type === 'delivery' && b.collectDocs && !b.docsCollected ? '<br><span style="color:#7A4500">+ collect documents</span>' : ''}${b.notes ? `<br><span style="color:#444;font-weight:400">Note: ${esc(b.notes.slice(0, 80))}</span>` : ''}</td>
-      <td>${esc(b.oldRef || '')}</td><td><strong style="font-size:12.5px">${esc(b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? `<br><em style="color:#7A4500">Sub-lease: ${esc(b.supplier || '')}</em>` : ''}</td><td>${esc(b.clientName)}</td><td>${esc(b.clientPhone || '')}</td><td>${esc(loc || '')}</td><td class="r">${b.days}</td>
+      <td>${esc(b.oldRef || '')}</td><td><strong style="font-size:12.5px">${esc(b.carTba ? 'TO ASSIGN' : b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? `<br><em style="color:#7A4500">Sub-lease: ${esc(b.supplier || '')}</em>` : ''}</td><td>${esc(b.clientName)}</td><td>${esc(b.clientPhone || '')}</td><td>${esc(loc || '')}</td><td class="r">${b.days}</td>
       ${staff ? `<td class="r">${f ? money(f.rate) + (f.rateType === 'month' ? '/mo' : '') : ''}</td><td class="r">${e ? money(e.gross) : ''}</td>` : ''}<td>${esc(b.salespersonName || '')}</td><td>${esc((t.type === 'delivery' ? b.deliveryDriverName : b.pickupDriverName) || '')}</td></tr>`;
   }).join('');
   const nd = tasks.filter(t => t.type === 'delivery').length;
@@ -3261,6 +3470,40 @@ function viewReset() {
     };
   };
   return { title: 'Reset data', back: '#/settings', html, mount, form: true };
+}
+
+
+/* ---------- alerts: bell with count, sound, and phone notifications ---------- */
+function alertItems() {
+  const now = Date.now(), t = todayStr(), items = [];
+  for (const b of S.active.values()) {
+    if (b.status === 'booked') { const ms = parseDT(b.deliveryAt) - now; if (ms < 0) items.push({ k: 'late', b, type: 'delivery', text: `Delivery late by ${durText(ms)}`, at: b.deliveryAt }); else if (ms <= 30 * 60000) items.push({ k: 'soon', b, type: 'delivery', text: `Delivery in ${durText(ms)}`, at: b.deliveryAt }); if (b.carTba && b.deliveryDate <= addDays(t, 1)) items.push({ k: 'car', b, text: 'Car not assigned yet', at: b.deliveryAt }); }
+    if (b.status === 'onrent') { const ms = parseDT(b.pickupAt) - now; if (ms < 0) items.push({ k: 'late', b, type: 'pickup', text: `Pickup overdue ${durText(ms)}`, at: b.pickupAt }); else if (ms <= 30 * 60000) items.push({ k: 'soon', b, type: 'pickup', text: `Pickup in ${durText(ms)}`, at: b.pickupAt }); }
+  }
+  for (const g of S.garage.values()) if (g.expectedOut && g.expectedOut < t) items.push({ k: 'late', g, text: `${isNrm(g) ? 'NRM' : 'Garage'} overdue since ${fmtDate(g.expectedOut)}`, at: g.expectedOut + 'T23:59' });
+  return items.sort((a, c) => (a.k === 'late' ? 0 : 1) - (c.k === 'late' ? 0 : 1) || a.at.localeCompare(c.at));
+}
+function bellHtml(dark) { const n = alertItems().length; return `<button class="bell ${dark ? 'dark' : ''} ${n ? 'has' : ''}" data-act="bell" aria-label="Alerts: ${n}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15z M10 21h4"/></svg>${n ? `<b>${n > 99 ? '99+' : n}</b>` : ''}</button>`; }
+ACT.bell = () => {
+  const items = alertItems();
+  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+  openSheet(`<h2>Alerts</h2>
+    ${perm === 'default' ? `<div class="strip info"><h3>Get phone notifications</h3><p class="small" style="margin:0 0 8px">Pop-up alerts for tasks due in 30 minutes and overdue items, while the app is open or in the background.</p><button class="btn sm primary" data-act="notifon">Turn on notifications</button></div>` : perm === 'denied' ? '<p class="small muted">Phone notifications are blocked. Allow them in your phone\'s settings for this app.</p>' : ''}
+    ${items.length ? items.map(x => `<a class="alert-row ${x.k}" href="${x.b ? '#/booking/' + x.b.id : '#/' + (isNrm(x.g) ? 'nrm' : 'garage')}"><strong>${esc(x.text)}</strong><span>${x.b ? `${x.b.carTba ? esc(x.b.carName) : `${esc(x.b.plate)} ${esc(x.b.carName)}`}, ${esc(x.b.clientName)}` : `${esc(x.g.plate)} ${esc(x.g.carName)}`}</span></a>`).join('') : '<div class="empty"><h3>No alerts right now</h3><p>Tasks due in the next 30 minutes and anything overdue show here.</p></div>'}
+    <div class="btnrow"><button class="btn" data-act="close">Close</button></div>`);
+};
+let swReg = null;
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => { });
+ACT.notifon = async () => {
+  try { const p = await Notification.requestPermission(); if (p === 'granted') { toast('Notifications are on.'); phoneNotify('Thomson Booking', 'Notifications are working.', 'test'); } else toast('Notifications were not allowed.'); } catch (e) { toast('This phone does not support notifications here.'); }
+  ACT.bell();
+};
+function phoneNotify(title, body, tag) {
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const opt = { body, tag, icon: 'icon-192.png', badge: 'icon-192.png', renotify: true };
+    if (swReg && swReg.showNotification) swReg.showNotification(title, opt); else new Notification(title, opt);
+  } catch (e) { }
 }
 
 boot();
