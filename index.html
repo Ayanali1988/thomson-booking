@@ -438,6 +438,44 @@ label.check input{width:20px;height:20px}
 .chip.agr{background:#FFF3D6;color:#6B4A00}
 .nrm,.cal-legend i.nrm{background:repeating-linear-gradient(135deg,#8A5A9E 0 6px,#A474B8 6px 12px)}
 .cal-legend i.nrm{background:#8A5A9E}
+.linkbtn{background:none;border:0;color:var(--deliv);text-decoration:underline;font:inherit;cursor:pointer;padding:6px}
+.verbar{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top));z-index:70;display:flex;align-items:center;gap:12px;background:var(--night);color:#fff;border-radius:12px;padding:10px 12px 10px 16px;box-shadow:0 8px 24px rgba(0,0,0,.3);width:max-content;max-width:94vw;font-size:14.5px}
+.action-box{margin:10px 10px 4px;border:1px solid #E9A39C;background:var(--late-bg);border-radius:12px;padding:10px 12px;color:#6E1B15}
+.action-box h3{font-size:15px;margin:0 0 4px}
+.act-row{background:#fff;border-radius:10px;padding:8px 10px;margin-top:8px;box-shadow:inset 4px 0 0 var(--late)}
+.act-main{color:var(--ink);text-decoration:none;display:block}
+.od,.cal-legend i.od{background:repeating-linear-gradient(135deg,#B92F26 0 6px,#D1453B 6px 12px)}
+.cal-legend i.od{background:#B92F26}
+.pdf-stage{position:fixed;left:-20000px;top:0;background:#fff;z-index:-1}
+.pdf-doc{font:11px/1.4 var(--body);color:#000;background:#fff}
+.pdf-spin{width:34px;height:34px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--navy);margin:14px auto 6px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.pdf-spin{animation:none}}
+.credit{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:13px;color:var(--muted);margin:18px 0 8px}
+.credit strong{color:var(--ink);font-size:14px}
+#splash{position:fixed;inset:0;z-index:100;background:var(--navy);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;transition:opacity .5s ease}
+#splash.hide{opacity:0;pointer-events:none}
+.sp-in{display:flex;flex-direction:column;align-items:center;gap:10px;animation:spIn .7s ease both}
+.sp-logo .wordmark{padding:12px 16px;border-radius:12px}
+.sp-logo .wm-1{font-size:32px}.sp-logo .wm-2{font-size:14px}
+.sp-logo img{max-width:220px;max-height:110px;background:#fff;border-radius:12px;padding:8px}
+.sp-title .nw{white-space:nowrap}
+.sp-title{font-family:var(--head);font-stretch:108%;font-weight:800;font-size:clamp(24px,7vw,44px);line-height:1.1;margin:18px 0 0;color:#fff}
+.sp-sub{margin:0;color:#C9D6E6;font-size:16px}
+.sp-road{width:min(260px,70vw);height:4px;margin-top:26px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
+.sp-road span{display:block;height:100%;width:40%;background:repeating-linear-gradient(90deg,var(--amber) 0 18px,transparent 18px 30px);animation:spRoad 1.2s linear infinite}
+.sp-foot{position:absolute;bottom:calc(20px + env(safe-area-inset-bottom));margin:0;font-size:12.5px;color:#9FB1C8;line-height:1.5}
+@keyframes spIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes spRoad{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+@media (prefers-reduced-motion:reduce){.sp-in,.sp-road span{animation:none}#splash{transition:none}}
+@media print{#splash{display:none}}
+.chip.inv{background:#E3F4F4;color:#0F5E5E}
+.pill-choice input:disabled+span{opacity:.45}
+.danger-zone{border-color:#E9A39C;background:#FFF8F7}
+.danger-zone h2{color:var(--late)}
+.rs-opt{align-items:flex-start;padding:8px 0;border-top:1px solid var(--line);margin-top:0}
+.rs-opt:first-of-type{border-top:0}
+.rs-opt input{margin-top:3px;flex:none}
 /* print */
 #print{display:none}
 @media print{
@@ -475,6 +513,15 @@ label.check input{width:20px;height:20px}
 </style>
 </head>
 <body>
+<div id="splash" role="status" aria-label="Loading">
+  <div class="sp-in">
+    <div class="sp-logo" id="sp-logo"><div class="wordmark"><span class="wm-1">Thomson</span><span class="wm-2">Rent A Car</span></div></div>
+    <h1 class="sp-title">Welcome to<br><span class="nw">Thomson Rent A Car</span></h1>
+    <p class="sp-sub">Car Rental Booking Service</p>
+    <div class="sp-road" aria-hidden="true"><span></span></div>
+  </div>
+  <p class="sp-foot" id="sp-foot"></p>
+</div>
 <div id="app"></div>
 <div id="toast" aria-live="polite"></div>
 <div id="print"></div>
@@ -487,6 +534,8 @@ label.check input{width:20px;height:20px}
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
+const APP_VERSION = '2.7-2026';
+const APP_CREDIT = 'Designed and developed by Sajid';
 const COMPANY = 'Thomson Rent A Car LLC';
 const EMAIL_DOMAIN = 'thomson-booking.app'; // internal only: usernames become username@this-domain
 
@@ -583,7 +632,7 @@ try { S.homeTab = localStorage.getItem('tb-tab') || 'all'; } catch (e) { S.homeT
 try { S.notified = new Set(JSON.parse(localStorage.getItem('tb-notified') || '[]')); } catch (e) { S.notified = new Set(); }
 const role = () => S.me && S.me.role;
 const isAdmin = () => role() === 'admin';
-const isStaff = () => role() === 'admin' || role() === 'sales';
+const isStaff = () => ['admin', 'sales', 'driver'].includes(role()); // all roles work the same day to day; admin-only: own cars, deletes, settings
 const getB = id => S.active.get(id) || S.day.get(id) || S.cache.get(id);
 const drivers = () => S.users.filter(u => u.role === 'driver' && u.active !== false);
 
@@ -607,8 +656,20 @@ function friendlyError(e) {
   return (e && e.message) || 'Something went wrong. Try again.';
 }
 
+/* start-up screen: shown while the app signs in, at least 1.5 seconds */
+const SPLASH_T0 = Date.now();
+function hideSplash() {
+  const el = document.getElementById('splash'); if (!el || el.dataset.hiding) return;
+  el.dataset.hiding = '1';
+  setTimeout(() => { el.classList.add('hide'); setTimeout(() => el.remove(), 600); }, Math.max(0, 1500 - (Date.now() - SPLASH_T0)));
+}
+(function initSplash() {
+  const f = document.getElementById('sp-foot'); if (f) f.innerHTML = `Version ${APP_VERSION}<br>${APP_CREDIT}`;
+  const l = document.getElementById('sp-logo'); if (l && LOGO_URL) l.innerHTML = `<img src="${LOGO_URL}" alt="Thomson Rent A Car">`;
+  setTimeout(hideSplash, 7000);
+})();
 function boot() {
-  if (!configured) { document.body.classList.add('no-nav'); $('#app').innerHTML = viewNotConfigured(); return; }
+  if (!configured) { document.body.classList.add('no-nav'); $('#app').innerHTML = viewNotConfigured(); hideSplash(); return; }
   auth.onAuthStateChanged(u => { if (!S.settingUp) handleAuth(u); });
   S.curHash = location.hash || '#/home';
   { const r0 = S.curHash.replace(/^#\/?/, '').split('/')[0] || 'home'; if (LIST_ROUTES.includes(r0)) S.listHash = S.curHash; }
@@ -632,6 +693,7 @@ async function handleAuth(u) {
     try { const s = await db.doc('meta/setup').get(); setupDone = s.exists; } catch (e) { setupDone = true; }
     $('#app').innerHTML = setupDone ? viewLogin() : viewSetup();
     setupDone ? mountLogin() : mountSetup();
+    hideSplash();
     return;
   }
   let snap;
@@ -639,6 +701,7 @@ async function handleAuth(u) {
   if (!snap || !snap.exists || snap.data().active === false) {
     document.body.classList.add('no-nav');
     $('#app').innerHTML = `<div class="auth"><div class="auth-card">${brand()}<h1>Account not active</h1><p class="muted">Ask your admin to activate your account.</p><button class="btn primary block" data-act="signout">Sign out</button></div></div>`;
+    hideSplash();
     return;
   }
   S.me = { id: u.uid, ...snap.data() };
@@ -646,6 +709,7 @@ async function handleAuth(u) {
   startListeners();
   if (!location.hash || location.hash === '#') location.hash = '#/home';
   render();
+  hideSplash();
 }
 function stopAll() {
   S.unsub.forEach(f => f()); S.unsub = [];
@@ -740,6 +804,10 @@ function carParts(c) {
 }
 const carTitle = c => { const p = carParts(c); return [p.make, p.model, p.year].filter(Boolean).join(' ') || c.name || 'Car'; };
 const isSub = c => c && c.type === 'sublease';
+/* ownership: Owned, Investor, or External (sub-lease from another company) */
+const OWN_LABEL = { owned: 'Owned', investor: 'Investor', external: 'External (sub-lease)' };
+const ownershipOf = c => !c ? 'owned' : isSub(c) ? 'external' : c.ownership === 'investor' ? 'investor' : 'owned';
+const ownChip = c => { const o = ownershipOf(c); return o === 'owned' ? '' : `<span class="chip ${o === 'external' ? 'sub' : 'inv'}">${o === 'external' ? 'External' : 'Investor'}</span>`; };
 /* garage: a car with an open garage movement is blocked until it is marked back */
 const inGarage = carId => S.garage.get(carId);
 const garageEnd = g => new Date(Math.max(g.expectedOut ? parseDT(g.expectedOut + 'T23:59').getTime() : 8.64e15, Date.now() + 60000));
@@ -756,7 +824,7 @@ const plateKey = p => String(p || '').replace(/\s/g, '').toUpperCase();
 const phoneKey = p => { const d = String(p || '').replace(/\D/g, ''); return d.length >= 9 ? d.slice(-9) : d; };
 const agrTag = b => b && b.oldRef ? `<span class="chip agr">Agr ${esc(b.oldRef)}</span>` : '';
 async function agreementTaken(no, exceptId) { if (!no) return null; const s = await db.collection('bookings').where('oldRef', '==', no).get(); const d = s.docs.find(x => x.id !== exceptId && x.data().status !== 'cancelled'); return d ? d.data() : null; }
-const subTag = b => b && b.carType === 'sublease' ? `<span class="chip sub">Sub-lease${b.supplier ? ': ' + esc(b.supplier) : ''}</span>` : '';
+const subTag = b => b && b.carType === 'sublease' ? `<span class="chip sub">External${b.supplier ? ': ' + esc(b.supplier) : ''}</span>` : '';
 
 /* ========================================================= audio reminder */
 let audioCtx = null;
@@ -810,7 +878,7 @@ function render() {
     home: viewHome, bookings: viewBookings, new: () => viewForm(null), edit: () => viewForm(id), booking: () => viewDetail(id),
     settle: () => viewSettle(id), onrent: viewOnRent, more: viewMore, cars: viewCars, sales: viewSales, users: viewUsers,
     settings: viewSettings, account: viewAccount, calendar: viewCalendar, sublease: viewSublease,
-    client: () => viewClient(id), car: () => viewCarHistory(id), import: viewImport, categories: viewCategories, garage: viewGarage, nrm: viewNrm
+    client: () => viewClient(id), car: () => viewCarHistory(id), import: viewImport, categories: viewCategories, garage: viewGarage, nrm: viewNrm, reset: viewReset
   };
   if (r !== 'cars') S.carSel = null;
   if (!['booking', 'edit', 'settle'].includes(r) && S.detailId) { S.detailUnsub.forEach(f => f()); S.detailUnsub = []; S.detailId = null; }
@@ -825,7 +893,7 @@ function navBar(r) {
   const staff = isStaff();
   const items = staff ? [['home', 'Tasks', 'home'], ['bookings', 'Bookings', 'list'], ['new', 'New', 'plus'], ['calendar', 'Calendar', 'cal'], ['more', 'More', 'more']]
     : [['home', 'Tasks', 'home'], ['calendar', 'Calendar', 'cal'], ['onrent', 'On rent', 'car'], ['more', 'More', 'more']];
-  const map = { booking: staff ? 'bookings' : 'home', edit: 'bookings', settle: 'bookings', client: 'bookings', car: staff ? 'more' : 'calendar', cars: 'more', sublease: 'more', import: 'more', categories: 'more', garage: 'more', nrm: 'more', sales: 'more', users: 'more', settings: 'more', account: 'more', onrent: staff ? 'more' : 'onrent' };
+  const map = { booking: staff ? 'bookings' : 'home', edit: 'bookings', settle: 'bookings', client: 'bookings', car: staff ? 'more' : 'calendar', cars: 'more', sublease: 'more', import: 'more', categories: 'more', garage: 'more', nrm: 'more', reset: 'more', sales: 'more', users: 'more', settings: 'more', account: 'more', onrent: staff ? 'more' : 'onrent' };
   const cur = map[r] || r;
   return `<nav class="nav" aria-label="Main">${items.map(([k, label, ic]) => k === 'new'
     ? `<a href="#/new" class="add ${cur === k ? 'on' : ''}"><span class="plus">${ico(ic)}</span>${label}</a>`
@@ -886,13 +954,17 @@ function taskCard(t) {
     </div></li>`;
 }
 /* availability of one car on one day */
-const effEnd = b => b.status === 'onrent' ? new Date(Math.max(parseDT(b.pickupAt).getTime(), Date.now() + 60000)) : parseDT(b.pickupAt);
+/* an open contract whose return time has passed keeps the car blocked until it is closed, extended or picked up */
+const isOverdue = b => b && b.status === 'onrent' && parseDT(b.pickupAt) < new Date();
+const effEnd = b => isOverdue(b) ? new Date(8.64e15) : parseDT(b.pickupAt);
+const overdueContracts = () => [...S.active.values()].filter(isOverdue).sort((a, c) => a.pickupAt.localeCompare(c.pickupAt));
 function carDayStatus(carId, D) {
   const e = parseDT(addDays(D, 1) + 'T00:00');
   const s = D === todayStr() ? new Date() : parseDT(D + 'T00:00');
   const g = inGarage(carId); if (g && parseDT(g.inAt) < e && garageEnd(g) > s) return { state: 'busy', garage: g };
   const bs = [...S.active.values()].filter(b => b.carId === carId && (b.status === 'booked' || b.status === 'onrent') && parseDT(b.deliveryAt) < e && effEnd(b) > s);
   if (!bs.length) return { state: 'free' };
+  const od = bs.find(isOverdue); if (od) return { state: 'busy', overdue: od };
   const covers = bs.filter(b => parseDT(b.deliveryAt) <= s), later = bs.filter(b => parseDT(b.deliveryAt) > s);
   if (!covers.length) { const f = later.sort((a, c) => a.deliveryAt.localeCompare(c.deliveryAt))[0]; return { state: 'until', at: f.deliveryAt, b: f }; }
   if (!later.length && covers.every(b => effEnd(b) < e)) { const last = covers.map(b => localStr(effEnd(b))).sort().pop(); return { state: 'from', at: last, b: covers[0] }; }
@@ -921,7 +993,7 @@ function availRow(x) {
   const c = x.c, p = carParts(c);
   const note = x.st.state === 'from' ? `<span class="chip pickup">Back at ${time12(tOf(x.st.at))}</span>` : x.st.state === 'until' ? `<span class="chip delivery">Free until ${time12(tOf(x.st.at))}</span>` : '';
   return `<a class="av-row" href="#/car/${c.id}"><span class="av-main"><span class="plate big">${esc(c.plate)}</span> <strong>${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</strong></span>
-    <span class="av-sub">${esc([c.color, isSub(c) ? 'Sub-lease: ' + (c.supplier || '') : c.category].filter(Boolean).join(', '))} ${note}</span></a>`;
+    <span class="av-sub">${esc([c.color, isSub(c) ? 'External: ' + (c.supplier || '') : c.category].filter(Boolean).join(', '))} ${ownChip(c)} ${note}</span></a>`;
 }
 
 const SKYLINE = `<svg class="skyline" viewBox="0 0 800 170" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
@@ -964,7 +1036,7 @@ function viewHome() {
   <div class="stats wide">
     <button class="stat s-d" data-act="tab" data-t="d"><strong class="num">${dl.length}</strong><span>Deliveries ${dayWord}</span><em>${dl.filter(t => t.done).length} done</em></button>
     <button class="stat s-p" data-act="tab" data-t="p"><strong class="num">${pk.length}</strong><span>Pickups ${dayWord}</span><em>${pk.filter(t => t.done).length} done</em></button>
-    <button class="stat s-f" data-act="tab" data-t="a"><strong class="num">${ownCount}${subCount ? `<small>+${subCount}</small>` : ''}</strong><span>Cars available</span><em>${subCount ? `${ownCount} own, ${subCount} sub-lease` : 'Own cars'}${moveCount('garage') ? `, ${moveCount('garage')} in garage` : ''}${moveCount('nrm') ? `, ${moveCount('nrm')} on NRM` : ''}</em></button>
+    <button class="stat s-f" data-act="tab" data-t="a"><strong class="num">${ownCount}${subCount ? `<small>+${subCount}</small>` : ''}</strong><span>Cars available</span><em>${subCount ? `${ownCount} own, ${subCount} external` : 'Own cars'}${moveCount('garage') ? `, ${moveCount('garage')} in garage` : ''}${moveCount('nrm') ? `, ${moveCount('nrm')} on NRM` : ''}${overdueContracts().length ? `<br><b style="color:var(--late)">${overdueContracts().length} need action</b>` : ''}</em></button>
     <a class="stat s-r" href="#/onrent"><strong class="num">${onrent}</strong><span>Cars on rent now</span><em>View list</em></a>
   </div>`;
   const col = (key, title, list, cls) => `<section class="col col-${key}" aria-label="${title}"><header class="col-h ${cls}"><h2>${title}</h2><span class="num">${list.length}</span></header>
@@ -984,8 +1056,10 @@ function viewHome() {
     ${col('d', 'Deliveries', dl, 'h-d')}
     ${col('p', 'Pickups', pk, 'h-p')}
     <section class="col col-a" aria-label="Available cars"><header class="col-h h-a"><h2>Available cars</h2><span class="num">${avCount}</span></header>
-      <div class="seg left" role="group" aria-label="Car type">${[['own', `Own cars ${ownCount}`], ['sub', `Sub-lease ${subCount}`], ['both', 'Both']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="avmode" data-m="${k}">${l}</button>`).join('')}</div>
-      ${isStaff() ? `<div class="btnrow" style="margin-top:8px"><button class="btn sm wa" data-act="shareavail">Share on WhatsApp</button></div>` : ''}
+      <div class="seg left" role="group" aria-label="Car type">${[['own', `Own and investor ${ownCount}`], ['sub', `External ${subCount}`], ['both', 'All']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="avmode" data-m="${k}">${l}</button>`).join('')}</div>
+      <div class="btnrow" style="margin-top:8px"><button class="btn sm wa" data-act="shareavail">Share on WhatsApp</button></div>
+      ${(() => { const od = overdueContracts(); return od.length ? `<div class="action-box"><h3>Action required (${od.length})</h3><p class="small" style="margin:0 0 6px">Return time passed but the contract is still open. These cars are kept out of the available list until you close, extend or update them.</p>${od.map(b => `<div class="act-row"><a href="#/booking/${b.id}" class="act-main"><span class="plate big">${esc(b.plate)}</span> <strong>${esc(b.carName)}</strong><br><span class="small">${esc(b.clientName)}${b.oldRef ? ', Agr ' + esc(b.oldRef) : ''}, due back ${esc(fmtDT(b.pickupAt))} <strong>(${durText(Date.now() - parseDT(b.pickupAt))} ago)</strong></span></a>
+        <div class="t-actions">${isStaff() ? `<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button>` : ''}<button class="btn sm good" data-act="done" data-id="${b.id}" data-type="pickup">Mark picked up</button><a class="btn sm" href="#/booking/${b.id}">Open</a></div></div>`).join('')}</div>` : ''; })()}
       <div class="av-list">${avAll.length ? avAll.map(availRow).join('') : `<p class="col-empty">${mode === 'sub' ? 'No sub-lease cars free. Add them under More, Sub-lease cars.' : 'Every car is booked or on rent ' + dayWord + '.'}</p>`}</div>
       ${['garage', 'nrm'].map(kind => { const list = [...S.garage.values()].filter(g => (kind === 'nrm') === isNrm(g)).sort((a, b) => a.inAt.localeCompare(b.inAt)); return list.length ? `<h3 class="sub-h" style="margin:14px 10px 6px">${kind === 'nrm' ? 'On NRM, staff use' : 'In garage'} (${list.length})</h3><div class="av-list" style="margin-top:0">${list.map(g => `<a class="av-row gar" href="#/${kind === 'nrm' ? 'nrm' : 'garage'}"><span class="av-main"><span class="plate big">${esc(g.plate)}</span> <strong>${esc(g.carName)}</strong></span><span class="av-sub">${kind === 'nrm' ? `${esc(g.purpose)}${g.staff ? ', ' + esc(g.staff) : ''}` : `${esc(g.purpose)} at ${esc(g.garage)}`}${g.expectedOut ? `, back ${esc(fmtDate(g.expectedOut))}` : ''}</span></a>`).join('')}</div>` : ''; }).join('')}
     </section>
@@ -1031,6 +1105,25 @@ ACT.day = d => {
   S.viewDate = d.set ? d.set : addDays(S.viewDate, +d.d);
   subscribeDay(); render();
 };
+
+/* charges entered by the driver at pickup */
+function pickupRead() {
+  const v = id => parseFloat(($('#' + id) || {}).value) || 0;
+  const method = ($('#h-paym') || {}).value || 'cash';
+  return { salik: v('h-salik'), parking: v('h-park'), fines: v('h-fines'), extraDays: parseInt(($('#h-xdays') || {}).value, 10) || 0,
+    otherLabel: (($('#h-othl') || {}).value || '').trim(), otherAmount: v('h-otha'), method, ccPct: method === 'card' ? +((($('input[name=h-cc]:checked') || {}).value) || 0) : 0 };
+}
+function pickupCalc(b, f, pc) {
+  const vm = f.vatMode || 'plus', v = vatRate(), rows = [];
+  const rent = estimate({ ...b, days: (+b.days || 0) + (f.rateType === 'month' ? 0 : pc.extraDays) }, f);
+  rows.push({ label: `Rent ${(+b.days || 0) + (f.rateType === 'month' ? 0 : pc.extraDays)} days${pc.extraDays && f.rateType !== 'month' ? ` (incl. ${pc.extraDays} extra)` : ''}`, gross: rent.gross });
+  [['Salik', pc.salik], ['Parking', pc.parking], [pc.otherLabel || 'Other', pc.otherAmount]].forEach(([l, a]) => { if (a) rows.push({ label: `${l} (${MODE_LABEL[vm]})`, gross: lineCalc(a, vm, v).gross }); });
+  if (pc.fines) rows.push({ label: 'Traffic fines (no VAT)', gross: r2(pc.fines) });
+  const subtotal = r2(rows.reduce((s, r) => s + r.gross, 0));
+  const cc = pc.method === 'card' ? r2(subtotal * (pc.ccPct || 0) / 100) : 0, ccVat = r2(cc * v);
+  const total = r2(subtotal + cc + ccVat), paid = paidSoFar(f);
+  return { rows, subtotal, cc, ccVat, ccPct: pc.ccPct, total, paid, due: r2(total - paid), method: pc.method };
+}
 ACT.done = ({ id, type }) => {
   const b = getB(id); if (!b) return;
   const del = type === 'delivery';
@@ -1040,9 +1133,14 @@ ACT.done = ({ id, type }) => {
     <div class="grid2"><label class="f">KM reading<input id="h-km" inputmode="numeric" placeholder="45210"></label>
     <label class="f">Fuel<select id="h-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>
     <label class="f">Damage and notes<textarea id="h-notes" placeholder="${del ? 'Scratch on rear bumper' : 'No new damage'}"></textarea></label>
+    ${del ? '' : `<h3 class="sub-h">Charges at return</h3>
+    <div class="grid2"><label class="f">Salik (AED)<input id="h-salik" class="hc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label><label class="f">Parking (AED)<input id="h-park" class="hc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label></div>
+    <div class="grid2"><label class="f">Traffic fines, no VAT (AED)<input id="h-fines" class="hc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label><label class="f">Extra days (if late)<input id="h-xdays" class="hc" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></label></div>
+    <div class="grid2"><label class="f">Other charge<input id="h-othl" placeholder="Car wash, damage, fuel"></label><label class="f">Amount (AED)<input id="h-otha" class="hc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label></div>`}
     <div id="h-due" class="calc small" style="margin-top:12px">Loading price…</div>
     <div class="grid2"><label class="f">Payment collected (AED)<input id="h-pay" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label>
     <label class="f">Paid by<select id="h-paym"><option value="cash">Cash</option><option value="card">Card</option><option value="bank">Bank transfer</option></select></label></div>
+    ${del ? '' : `<div id="h-ccbox" class="hidden"><div class="f" style="margin-top:10px;color:var(--muted);font-size:14px">CC charges</div><div class="pill-choice" role="radiogroup" aria-label="CC charges">${String(S.settings.ccOptions || '4,5').split(',').map(s => +s.trim()).filter(n => n > 0).map((p, i, arr) => `<label><input type="radio" name="h-cc" value="${p}" ${p === +(S.settings.defaultCc || arr[arr.length - 1]) ? 'checked' : ''}><span>${p}%</span></label>`).join('')}</div></div>`}
     <p class="err" id="h-err"></p>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn good" id="h-save">${del ? 'Confirm delivery' : 'Confirm pickup'}</button></div>`);
   (async () => {
@@ -1050,12 +1148,33 @@ ACT.done = ({ id, type }) => {
     const box = o.querySelector('#h-due'); if (!box) return;
     if (!f) { box.textContent = 'Price not available.'; return; }
     const e = estimate(b, f), paid = paidSoFar(f);
-    box.innerHTML = `<div class="r"><span>Rate</span><span>${rateText(f)}, ${MODE_LABEL[f.vatMode] || ''}</span></div><div class="r"><span>Rent ${b.days} days${f.rateType === 'month' ? ' (estimate)' : ''}</span><strong>AED ${money(e.gross)}</strong></div>
-      <div class="r"><span>Paid so far</span><span>AED ${money(paid)}</span></div><div class="r t"><span>Rent balance</span><strong>AED ${money(e.gross - paid)}</strong></div>${del ? '' : '<div class="small muted" style="margin-top:4px">Salik, fines and other charges are added at settlement.</div>'}`;
+    if (del) {
+      box.innerHTML = `<div class="r"><span>Rate</span><span>${rateText(f)}, ${MODE_LABEL[f.vatMode] || ''}</span></div><div class="r"><span>Rent ${b.days} days${f.rateType === 'month' ? ' (estimate)' : ''}</span><strong>AED ${money(e.gross)}</strong></div>
+        <div class="r"><span>Paid so far</span><span>AED ${money(paid)}</span></div><div class="r t"><span>Rent balance</span><strong>AED ${money(e.gross - paid)}</strong></div>`;
+      return;
+    }
+    let typed = false; o.querySelector('#h-pay').addEventListener('input', () => { typed = true; });
+    const calc = () => {
+      const s = pickupCalc(b, f, pickupRead());
+      o.querySelector('#h-ccbox').classList.toggle('hidden', s.method !== 'card');
+      box.innerHTML = `${s.rows.map(r => `<div class="r"><span>${esc(r.label)}</span><span>${money(r.gross)}</span></div>`).join('')}
+        <div class="r t"><span>Subtotal (VAT included)</span><span>${money(s.subtotal)}</span></div>
+        ${s.cc ? `<div class="r"><span>CC charges ${s.ccPct}% + VAT</span><span>${money(s.cc + s.ccVat)}</span></div>` : ''}
+        <div class="r t"><span>Total</span><strong>AED ${money(s.total)}</strong></div>
+        <div class="r"><span>Paid so far</span><span>- ${money(s.paid)}</span></div>
+        <div class="r t g"><span>To collect now</span><span>AED ${money(s.due)}</span></div>
+        ${f.rateType === 'month' ? '<div class="small muted">Monthly contract: rent shown is an estimate. Sales confirm the final rent at settlement.</div>' : ''}`;
+      if (!typed) o.querySelector('#h-pay').value = s.due > 0 ? s.due.toFixed(2) : '';
+    };
+    o.querySelectorAll('.hc, #h-othl').forEach(x => x.addEventListener('input', calc));
+    o.querySelector('#h-paym').addEventListener('change', calc);
+    o.querySelectorAll('input[name=h-cc]').forEach(x => x.addEventListener('change', calc));
+    o._fin = f; calc();
   })();
   o.querySelector('#h-save').onclick = async ev => {
     ev.target.disabled = true;
     const payAmt = parseFloat($('#h-pay').value) || 0, payM = $('#h-paym').value;
+    const pc = del ? null : { ...pickupRead(), by: S.me.name, at: nowLocal() };
     const agr = del ? ($('#h-agr').value || '').trim() : '';
     if (agr && agr !== (b.oldRef || '')) { const t = await agreementTaken(agr, id); if (t) { ev.target.disabled = false; $('#h-err').textContent = `Agreement ${agr} is already on ${t.ref} (${t.clientName}).`; return; } }
     const ho = { km: $('#h-km').value.trim(), fuel: $('#h-fuel').value, notes: $('#h-notes').value.trim(), by: S.me.name, byId: S.me.id };
@@ -1067,7 +1186,11 @@ ACT.done = ({ id, type }) => {
     if (payAmt) upd.log = FV.arrayUnion({ at, by: S.me.name, text: del ? `Delivered (KM ${ho.km || '-'}, fuel ${ho.fuel})` : `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` }, { at, by: S.me.name, text: `Payment collected AED ${money(payAmt)} by ${payM}` });
     try {
       const batch = db.batch(); batch.update(db.doc('bookings/' + id), upd);
-      if (payAmt) batch.update(db.doc('finance/' + id), { payments: FV.arrayUnion({ at, by: S.me.name, amount: payAmt, method: payM, stage: del ? 'delivery' : 'pickup' }) });
+      const fu = {};
+      if (payAmt) fu.payments = FV.arrayUnion({ at, by: S.me.name, amount: payAmt, method: payM, stage: del ? 'delivery' : 'pickup' });
+      if (pc && (pc.salik || pc.parking || pc.fines || pc.otherAmount || pc.extraDays || payM === 'card')) fu.pickupCharges = pc;
+      if (Object.keys(fu).length) batch.update(db.doc('finance/' + id), fu);
+      if (pc && (pc.salik || pc.parking || pc.fines || pc.otherAmount || pc.extraDays)) upd.log = FV.arrayUnion(...[{ at, by: S.me.name, text: `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` }, { at, by: S.me.name, text: `Charges at return: ${[pc.extraDays ? pc.extraDays + ' extra days' : '', pc.salik ? 'Salik ' + money(pc.salik) : '', pc.parking ? 'parking ' + money(pc.parking) : '', pc.fines ? 'fines ' + money(pc.fines) : '', pc.otherAmount ? (pc.otherLabel || 'other') + ' ' + money(pc.otherAmount) : ''].filter(Boolean).join(', ')}` }, ...(payAmt ? [{ at, by: S.me.name, text: `Payment collected AED ${money(payAmt)} by ${payM}` }] : [])]);
       await batch.commit();
       closeSheet(); toast((del ? 'Marked delivered. Pickup task added.' : 'Marked picked up.') + (payAmt ? ` AED ${money(payAmt)} recorded.` : '')); if (S.route === 'booking') backToList(); }
     catch (e) { ev.target.disabled = false; $('#h-err').textContent = friendlyError(e); }
@@ -1253,7 +1376,7 @@ function carNowHtml(c) {
   const state = gar ? `<span class="chip pickup">${isNrm(gar) ? 'On NRM' : 'In garage'}</span>` : c.active === false ? `<span class="chip cancelled">${isSub(c) ? 'Returned to supplier' : 'Inactive'}</span>`
     : onr ? `<span class="chip onrent">On rent</span>` : `<span class="chip done">Available now</span>`;
   return `<div class="pf-car"><div class="lr-top"><span><span class="plate big">${esc(c.plate)}</span> <strong>${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</strong></span>${state}</div>
-    <div class="lr-sub">${esc([c.color, isSub(c) ? 'Sub-lease: ' + (c.supplier || '-') : c.category].filter(Boolean).join(', '))}</div>
+    <div class="lr-sub">${esc([c.color, c.category, OWN_LABEL[ownershipOf(c)] + (isSub(c) ? ': ' + (c.supplier || '-') : c.investor ? ': ' + c.investor : '')].filter(Boolean).join(', '))}</div>
     ${onr ? `<a class="pf-line late-${parseDT(onr.pickupAt) < now}" href="#/booking/${onr.id}"><strong>With ${esc(onr.clientName)}</strong>${onr.clientPhone ? `, ${esc(onr.clientPhone)}` : ''}<br>Return ${esc(fmtDT(onr.pickupAt))}${parseDT(onr.pickupAt) < now ? ' <span class="chip late">Overdue</span>' : ''} <span class="muted">(${esc(onr.ref)}${onr.oldRef ? ', ' + esc(onr.oldRef) : ''})</span></a>` : ''}
     ${next.map(b => `<a class="pf-line" href="#/booking/${b.id}">Booked for <strong>${esc(b.clientName)}</strong><br>${esc(fmtDT(b.deliveryAt))} to ${esc(fmtDT(b.pickupAt))} <span class="muted">(${esc(b.ref)})</span></a>`).join('')}
     ${back ? `<a class="pf-line" href="#/booking/${back.id}">Returned by ${esc(back.clientName)}, waiting for settlement</a>` : ''}
@@ -1302,6 +1425,7 @@ function viewDetail(id) {
         <dt>Rent (${b.days} days)${f.rateType === 'month' ? ', estimate' : ''}</dt><dd>AED ${money(e.net)} + VAT ${money(e.vat)}</dd>
         <dt>Rent total</dt><dd class="big">AED ${money(e.gross)}</dd>
         ${+f.advance ? `<dt>Advance paid</dt><dd>AED ${money(f.advance)} (${esc(f.advanceMethod || 'cash')})</dd>` : ''}
+        ${f.pickupCharges ? `<dt>Charges at return</dt><dd>${esc([f.pickupCharges.extraDays ? f.pickupCharges.extraDays + ' extra days' : '', f.pickupCharges.salik ? 'Salik ' + money(f.pickupCharges.salik) : '', f.pickupCharges.parking ? 'Parking ' + money(f.pickupCharges.parking) : '', f.pickupCharges.fines ? 'Fines ' + money(f.pickupCharges.fines) : '', f.pickupCharges.otherAmount ? (f.pickupCharges.otherLabel || 'Other') + ' ' + money(f.pickupCharges.otherAmount) : ''].filter(Boolean).join(', ') || 'None')}<br><span class="muted small">entered by ${esc(f.pickupCharges.by || '')}</span></dd>` : ''}
         ${(f.payments || []).map(p => `<dt>Collected</dt><dd>AED ${money(p.amount)} by ${esc(p.method)}<br><span class="muted small">${esc(p.by)}, ${esc(fmtDT(p.at))}, at ${esc(p.stage)}</span></dd>`).join('')}
         ${paidSoFar(f) ? `<dt>Rent balance</dt><dd><strong>AED ${money(estimate(b, f).gross - paidSoFar(f))}</strong></dd>` : ''}
       </dl>${f.settlement && f.settlement.totals ? `<div class="calc">${settlementRowsHtml(f.settlement)}</div>` : ''}</section>`;
@@ -1319,8 +1443,8 @@ function viewDetail(id) {
   if (staff && b.status !== 'cancelled' && b.status !== 'closed') acts.push(`<a class="btn" href="#/edit/${id}">Edit booking</a>`);
   acts.push(`<button class="btn" data-act="slip" data-id="${id}">Booking slip PDF</button>`);
   if (f && f.settlement && f.settlement.totals) acts.push(`<button class="btn" data-act="bill" data-id="${id}">Final bill PDF</button>`);
-  if (staff) acts.push(`<button class="btn" data-act="wa" data-id="${id}">Share on WhatsApp</button>`);
-  if (staff && b.clientPhone) acts.push(`<button class="btn" data-act="waclient" data-id="${id}">Send to client</button>`);
+  acts.push(`<button class="btn wa" data-act="wa" data-id="${id}">Share on WhatsApp</button>`);
+  if (b.clientPhone) acts.push(`<button class="btn" data-act="waclient" data-id="${id}">Send to client</button>`);
   if (staff && b.status === 'booked') acts.push(`<button class="btn danger" data-act="cancelbk" data-id="${id}">Cancel booking</button>`);
   if (isAdmin()) acts.push(`<button class="btn danger" data-act="deletebk" data-id="${id}">Delete</button>`);
   const log = (b.log || []).slice().reverse();
@@ -1348,7 +1472,7 @@ function viewDetail(id) {
   ${log.length ? `<section class="card"><h2>History</h2>${log.map(l => `<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><strong>${esc(fmtDT(l.at))}</strong>, ${esc(l.by)}<br>${esc(l.text)}</div>`).join('')}</section>` : ''}`;
   return { title: `Booking ${b.ref}`, back: S.listHash || (staff ? '#/bookings' : '#/home'), html };
 }
-function carExtra(carId) { const c = S.cars.find(x => x.id === carId); return c && (c.color || c.category) ? `<br><span class="muted small">${esc([c.color, c.category].filter(Boolean).join(', '))}</span>` : ''; }
+function carExtra(carId) { const c = S.cars.find(x => x.id === carId); return c ? `<br><span class="muted small">${esc([c.color, c.category, OWN_LABEL[ownershipOf(c)] + (isSub(c) && c.supplier ? ': ' + c.supplier : '')].filter(Boolean).join(', '))}</span>` : ''; }
 function settlementRowsHtml(st) {
   const t = st.totals;
   return `${t.rows.map(r => `<div class="r"><span>${esc(r.label)} <span class="muted small">${MODE_LABEL[r.mode] || ''}</span></span><span class="num">${money(r.gross)}</span></div>`).join('')}
@@ -1364,7 +1488,7 @@ function settlementRowsHtml(st) {
 /* ========================================================= booking form */
 function conflicts(carId, startAt, endAt, excludeId) {
   const s = parseDT(startAt), e = parseDT(endAt);
-  return [...S.active.values()].filter(b => b.id !== excludeId && b.carId === carId && (b.status === 'booked' || b.status === 'onrent') && parseDT(b.deliveryAt) < e && parseDT(b.pickupAt) > s);
+  return [...S.active.values()].filter(b => b.id !== excludeId && b.carId === carId && (b.status === 'booked' || b.status === 'onrent') && parseDT(b.deliveryAt) < e && effEnd(b) > s);
 }
 function goHomeOn(d) { if (d && d !== S.viewDate) { S.viewDate = d; subscribeDay(); } if (location.hash === '#/home') render(); else location.hash = '#/home'; window.scrollTo(0, 0); }
 async function nextRef() {
@@ -1377,13 +1501,13 @@ function carOptions(startAt, endAt, selected, excludeId) {
   const opt = c => {
     const cf = startAt && endAt ? conflicts(c.id, startAt, endAt, excludeId) : [];
     const g = startAt && endAt ? garageClash(c.id, startAt, endAt) : null;
-    const lbl = `${c.plate}, ${carTitle(c)}${cf.length ? `, booked ${shortD(cf[0].deliveryAt)} to ${shortD(cf[0].pickupAt)} (${cf[0].ref})` : g ? ', ' + garageText(g) : ''}`;
+    const lbl = `${c.plate}, ${carTitle(c)}${cf.length ? (isOverdue(cf[0]) ? `, overdue with ${cf[0].clientName}, contract not closed (${cf[0].ref})` : `, booked ${shortD(cf[0].deliveryAt)} to ${shortD(cf[0].pickupAt)} (${cf[0].ref})`) : g ? ', ' + garageText(g) : ''}`;
     return `<option value="${c.id}" ${c.id === selected ? 'selected' : ''} ${(cf.length || g) && c.id !== selected ? 'disabled' : ''}>${esc(lbl)}</option>`;
   };
   const byPlate = (a, b) => String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true });
   const own = S.cars.filter(c => !isSub(c) && (c.active !== false || c.id === selected)).sort(byPlate);
   const sub = S.cars.filter(c => isSub(c) && (c.active !== false || c.id === selected)).sort(byPlate);
-  return `<option value="">Choose a car</option>${own.length ? `<optgroup label="Own cars">${own.map(opt).join('')}</optgroup>` : ''}${sub.length ? `<optgroup label="Sub-lease cars">${sub.map(opt).join('')}</optgroup>` : ''}<option value="__hire" ${selected === '__hire' ? 'selected' : ''}>+ Sub-lease hire for this booking</option>`;
+  return `<option value="">Choose a car</option>${own.length ? `<optgroup label="Own and investor cars">${own.map(opt).join('')}</optgroup>` : ''}${sub.length ? `<optgroup label="External cars (sub-lease)">${sub.map(opt).join('')}</optgroup>` : ''}<option value="__hire" ${selected === '__hire' ? 'selected' : ''}>+ New external car (sub-lease hire)</option>`;
 }
 const suppliers = () => [...new Set(S.cars.filter(isSub).map(c => c.supplier).filter(Boolean))].sort();
 
@@ -1417,7 +1541,7 @@ function viewForm(id) {
     <label class="f">Type plate to find the car<input id="b-pq" autocomplete="off" autocapitalize="characters" placeholder="9185"></label>
     <label class="f">Car<select id="b-car">${carOptions(b ? b.deliveryAt : '', b ? b.pickupAt : '', v.carId, id)}</select></label>
     <p class="small muted" style="margin:6px 0 0">Cars already booked for these dates are greyed out. Pick a sub-lease car or choose Sub-lease hire instead.</p>
-    <div id="b-hire" class="hire hidden"><h3>Sub-lease hire</h3>
+    <div id="b-hire" class="hire hidden"><h3>New external car (sub-lease hire)</h3>
       <label class="f">Supplier<input id="h-sup" list="h-sups" placeholder="Al Futtaim Rent A Car"><datalist id="h-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label>
       <div class="grid3"><label class="f">Make<input id="h-make" placeholder="GMC"></label><label class="f">Model<input id="h-model" placeholder="Yukon"></label><label class="f">Year<input id="h-year" inputmode="numeric" placeholder="2026"></label></div>
       <div class="grid2"><label class="f">Color<input id="h-color" placeholder="Black"></label><label class="f">Plate (if known)<input id="h-plate" autocapitalize="characters" placeholder="TBC"></label></div>
@@ -1533,11 +1657,12 @@ function viewSettle(id) {
   const b = getB(id), f = S.fin.get(id);
   if (!b || !f) return { title: 'Settle return', back: '#/booking/' + id, html: loading() };
   const st = f.settlement || {};
-  const vm = f.vatMode || 'plus', monthly = f.rateType === 'month';
+  const vm = f.vatMode || 'plus', monthly = f.rateType === 'month', pc0 = f.pickupCharges || null;
   const ccOpts = String(S.settings.ccOptions || '4,5').split(',').map(s => +s.trim()).filter(n => n > 0);
   const init = {
-    rentDays: st.rentDays ?? b.days, rentAmount: st.rentAmount ?? '', rentLines: st.rentLines || null, lines: st.lines || [{ label: 'Salik', amount: '', mode: vm }, { label: 'Parking', amount: '', mode: vm }],
-    fines: st.fines ?? '', advance: st.advance ?? paidSoFar(f), method: st.method || 'cash', ccPct: st.ccPct ?? (S.settings.defaultCc || ccOpts[ccOpts.length - 1] || 5), notes: st.notes || ''
+    rentDays: st.rentDays ?? ((+b.days || 0) + (pc0 && f.rateType !== 'month' ? (+pc0.extraDays || 0) : 0)), rentAmount: st.rentAmount ?? '', rentLines: st.rentLines || null,
+    lines: st.lines || [{ label: 'Salik', amount: pc0 ? pc0.salik || '' : '', mode: vm }, { label: 'Parking', amount: pc0 ? pc0.parking || '' : '', mode: vm }, ...(pc0 && pc0.otherAmount ? [{ label: pc0.otherLabel || 'Other', amount: pc0.otherAmount, mode: vm }] : [])],
+    fines: st.fines ?? (pc0 ? pc0.fines || '' : ''), advance: st.advance ?? paidSoFar(f), method: st.method || (pc0 && pc0.method) || 'cash', ccPct: st.ccPct ?? ((pc0 && pc0.ccPct) || S.settings.defaultCc || ccOpts[ccOpts.length - 1] || 5), notes: st.notes || ''
   };
   const elapsed = b.deliveredAt && b.pickedUpAt ? Math.max(1, Math.ceil((parseDT(b.pickedUpAt) - parseDT(b.deliveredAt)) / 864e5 - 0.0417)) : null;
   const modeSel = m => `<select aria-label="VAT">${['plus', 'incl'].map(k => `<option value="${k}" ${m === k ? 'selected' : ''}>${MODE_LABEL[k]}</option>`).join('')}</select>`;
@@ -1546,7 +1671,7 @@ function viewSettle(id) {
   if (!monthly && rc.length && !init.rentLines) {
     const pts = [(b.deliveredAt || b.deliveryAt).slice(0, 10), ...rc.map(x => x.at.slice(0, 10))], rates = [rc[0].from, ...rc.map(x => x.to)];
     init.rentLines = rates.map((r, i) => ({ rate: r, days: i < rates.length - 1 ? Math.max(0, dayDiff(pts[i], pts[i + 1])) : 0 }));
-    const used = init.rentLines.reduce((s, l) => s + l.days, 0); init.rentLines[init.rentLines.length - 1].days = Math.max(0, (+b.days || 0) - used);
+    const used = init.rentLines.reduce((s, l) => s + l.days, 0); init.rentLines[init.rentLines.length - 1].days = Math.max(0, (+b.days || 0) + (pc0 ? +pc0.extraDays || 0 : 0) - used);
   }
   const split = !monthly && Array.isArray(init.rentLines) && init.rentLines.length > 1;
   const locked = b.status === 'closed';
@@ -1656,7 +1781,7 @@ function filteredRows() {
   const F = S.filter, q = F.q.toLowerCase();
   return (S.listRows || []).filter(b => (F.status === 'all' || (F.status === 'active' ? ACTIVE.includes(b.status) : b.status === F.status))
     && (F.sp === 'all' || b.salespersonId === F.sp) && (F.car === 'all' || b.carId === F.car)
-    && (F.type === 'all' || (F.type === 'sub' ? b.carType === 'sublease' : b.carType !== 'sublease'))
+    && (F.type === 'all' || (F.type === 'sub' ? b.carType === 'sublease' : F.type === 'investor' ? (S.cars.find(c => c.id === b.carId) || {}).ownership === 'investor' : F.type === 'owned' ? b.carType !== 'sublease' && (S.cars.find(c => c.id === b.carId) || {}).ownership !== 'investor' : b.carType !== 'sublease'))
     && (!F.rtype || F.rtype === 'all' || rtypeOf(b) === F.rtype)
     && (!q || (plateSig(q).d.length >= 3 && plateSig(b.plate).d.includes(plateSig(q).d)) || [b.ref, b.oldRef, b.clientName, b.clientPhone, b.plate, b.carName, b.location, b.supplier].join(' ').toLowerCase().includes(q)));
 }
@@ -1690,7 +1815,7 @@ function viewBookings() {
     <div class="grid2"><label class="f">Status<select id="f-st">${[['all', 'All'], ['active', 'All open'], ...Object.entries(STATUS)].map(([k, l]) => `<option value="${k}" ${F.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
     <label class="f">Salesperson<select id="f-sp"><option value="all">All</option>${S.sales.map(s => `<option value="${s.id}" ${F.sp === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label></div>
     <div class="grid2"><label class="f">Car<select id="f-car"><option value="all">All</option>${[...S.cars].sort((a, b) => String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true })).map(c => `<option value="${c.id}" ${F.car === c.id ? 'selected' : ''}>${esc(c.plate)}, ${esc(carTitle(c))}</option>`).join('')}</select></label>
-    <label class="f">Car type<select id="f-type">${[['all', 'All'], ['own', 'Own cars'], ['sub', 'Sub-lease']].map(([k, l]) => `<option value="${k}" ${F.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
+    <label class="f">Ownership<select id="f-type">${[['all', 'All'], ['owned', 'Owned'], ['investor', 'Investor'], ['sub', 'External (sub-lease)']].map(([k, l]) => `<option value="${k}" ${F.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
     <div class="f" style="margin-top:12px;color:var(--muted);font-size:14px">Rental type</div>
     <div class="seg left" role="group" aria-label="Rental type" style="margin-top:6px">${[['all', 'All'], ['day', 'Daily'], ['month', 'Monthly']].map(([k, l]) => `<button class="${F.rtype === k ? 'on' : ''}" data-act="rtype" data-r="${k}">${l}</button>`).join('')}</div>
     <p class="small muted" style="margin:8px 0 0">Dates filter by delivery date. Searching a booking number finds it in any year.</p>
@@ -1758,7 +1883,7 @@ function viewCarHistory(id) {
   const canEdit = c && (isAdmin() || isSub(c));
   const p = carParts(c || { name: (rows[0] || {}).carName });
   return { title: 'Car history', back: c && isSub(c) ? '#/sublease' : (isAdmin() ? '#/cars' : (S.listHash && !S.listHash.startsWith('#/car/') ? S.listHash : '#/home')), html: `<section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</h2>${c ? `<span class="plate">${esc(c.plate)}</span>` : ''}</div>
-    ${c ? `<p class="muted" style="margin:6px 0 10px">${esc([c.color, isSub(c) ? 'Sub-lease from ' + (c.supplier || '-') : 'Own car', c.category].filter(Boolean).join(', '))}${c.active === false ? `, <strong>${isSub(c) ? 'returned to supplier' : 'inactive'}</strong>` : ''}</p>` : ''}
+    ${c ? `<p class="muted" style="margin:6px 0 10px">${esc([c.color, isSub(c) ? 'External (sub-lease) from ' + (c.supplier || '-') : OWN_LABEL[ownershipOf(c)] + (c.investor ? ': ' + c.investor : ''), c.category].filter(Boolean).join(', '))}${c.active === false ? `, <strong>${isSub(c) ? 'returned to supplier' : 'inactive'}</strong>` : ''}</p>` : ''}
     ${histSummary(rows, fin)}
     ${c && inGarage(c.id) ? (g0 => `<div class="warn">${isNrm(g0) ? `On NRM: ${esc(g0.purpose)} with ${esc(g0.staff || '-')}` : `In the garage: ${esc(g0.purpose)} at ${esc(g0.garage)}`} since ${esc(fmtDT(g0.inAt))} (${esc(g0.no)})</div>`)(inGarage(c.id)) : ''}
     <div class="btnrow">${canEdit ? `<button class="btn" data-act="${isSub(c) ? 'sub-edit' : 'car-edit'}" data-id="${c.id}">Edit car</button>${isSub(c) ? `<button class="btn" data-act="sub-toggle" data-id="${c.id}">${c.active === false ? 'Enable again' : 'Return to supplier'}</button>` : ''}` : ''}
@@ -1793,13 +1918,13 @@ function viewCalendar() {
   const days = Array.from({ length: N }, (_, i) => addDays(start, i));
   const dayHead = days.map(d => { const dt = parseDT(d + 'T12:00'); return `<div class="cal-d ${d === t ? 'today' : ''} ${[0, 6].includes(dt.getDay()) ? 'we' : ''}"><span>${dt.toLocaleDateString('en-GB', { weekday: 'short' })}</span><strong>${dt.getDate()}</strong></div>`; }).join('');
   const pos = (from, to) => { const a = Math.max(0, parseDT(from) - s0), z = Math.min(span, to - s0); return `left:${(a / span * 100).toFixed(3)}%;width:${Math.max(1.2, (z - a) / span * 100).toFixed(3)}%`; };
-  const bar = x => { const b = x.b, cls = x.leg ? 'dn' : b.status === 'booked' ? 'bk' : b.status === 'onrent' ? 'or' : 'dn';
+  const bar = x => { const b = x.b, cls = x.leg ? 'dn' : b.status === 'booked' ? 'bk' : isOverdue(b) ? 'od' : b.status === 'onrent' ? 'or' : 'dn';
     return `<a class="cal-bar ${cls}" href="#/booking/${b.id}" style="${pos(x.from, x.to)}" title="${esc(`${b.ref}, ${b.clientName}: ${fmtDT(x.from)} to ${fmtDT(localStr(x.to))}${x.leg ? ' (replaced)' : ''}`)}"><span>${x.leg ? '↺ ' : ''}${esc(b.clientName)}</span></a>`; };
   const gbar = x => isNrm(x.g) ? `<a class="cal-bar nrm" href="#/nrm" style="${pos(x.from, x.to)}" title="${esc(`${x.g.no}: ${x.g.purpose}, ${x.g.staff || ''}`)}"><span>NRM ${esc(x.g.staff || '')}</span></a>`
     : `<a class="cal-bar gr" href="#/garage" style="${pos(x.from, x.to)}" title="${esc(`${x.g.no}: ${x.g.purpose} at ${x.g.garage}`)}"><span>🔧 ${esc(x.g.garage)}</span></a>`;
   let lastSub = null;
   const rowsHtml = cars.map(c => {
-    const sep = lastSub !== isSub(c) ? `<div class="cal-sep">${isSub(c) ? 'Sub-lease cars' : 'Own cars'}</div>` : ''; lastSub = isSub(c);
+    const sep = lastSub !== isSub(c) ? `<div class="cal-sep">${isSub(c) ? 'External cars (sub-lease)' : 'Own and investor cars'}</div>` : ''; lastSub = isSub(c);
     const p = carParts(c);
     return `${sep}<div class="cal-row"><a class="cal-car" href="#/car/${c.id}"><strong class="num">${esc(c.plate)}</strong><span>${esc(p.make)} ${esc(p.model)}</span></a>
       <div class="cal-track">${days.map(d => `<i class="${d === t ? 'today' : ''}"></i>`).join('')}${segs.filter(x => x.carId === c.id).map(bar).join('')}${gsegs.filter(x => x.carId === c.id).map(gbar).join('')}</div></div>`;
@@ -1808,7 +1933,7 @@ function viewCalendar() {
   <div class="cal-ctl"><button class="iconbtn" data-act="calmove" data-n="-7" aria-label="Previous week">${ico('left')}</button>
     <div class="cal-range"><strong>${esc(fmtDate(start))} to ${esc(fmtDate(addDays(end, -1)))}</strong><span><button class="btn sm" data-act="calmove" data-n="0">Today</button> <input type="date" id="cal-jump" class="f-in" style="display:inline-block;width:auto;min-height:36px;padding:4px 8px;margin:0" value="${start}" aria-label="Jump to date"></span></div>
     <button class="iconbtn" data-act="calmove" data-n="7" aria-label="Next week">${ico('right')}</button></div>
-  <div class="cal-legend small"><span><i class="bk"></i>Booked</span><span><i class="or"></i>On rent</span><span><i class="dn"></i>Returned or replaced</span><span><i class="gr"></i>Garage</span><span><i class="nrm"></i>NRM</span></div>
+  <div class="cal-legend small"><span><i class="bk"></i>Booked</span><span><i class="or"></i>On rent</span><span><i class="od"></i>Overdue, not closed</span><span><i class="dn"></i>Returned or replaced</span><span><i class="gr"></i>Garage</span><span><i class="nrm"></i>NRM</span></div>
   ${!S.calRows ? loading() : cars.length ? `<div class="cal-wrap"><div class="cal-grid"><div class="cal-row cal-headrow"><div class="cal-car head">Car</div><div class="cal-days">${dayHead}</div></div>${rowsHtml}</div></div>
     <p class="small muted">Tap a bar to open the booking, or a car to see its full history. Scroll sideways on a phone.</p>` : '<div class="empty"><h3>No cars yet</h3><p>Add cars under More, Cars and plates.</p></div>'}`;
   return { title: 'Car calendar', html, wide: true, mount: () => { const j = $('#cal-jump'); j && j.addEventListener('change', () => { if (j.value) { S.calStart = j.value; render(); } }); } };
@@ -1840,7 +1965,7 @@ function viewMore() {
   const a = isAdmin();
   const html = `<div class="menu">
     <a href="#/account">My account<span class="muted small">${esc(S.me.username || '')}</span></a>
-    <a href="#/sublease">Sub-lease cars<span class="muted small">${S.cars.filter(c => isSub(c) && c.active !== false).length} active</span></a>
+    <a href="#/sublease">External cars (sub-lease)<span class="muted small">${S.cars.filter(c => isSub(c) && c.active !== false).length} active</span></a>
     <a href="#/calendar">Car calendar<span></span></a>
     <a href="#/garage">Garage<span class="muted small">${moveCount('garage') ? moveCount('garage') + ' in garage' : ''}</span></a>
     <a href="#/nrm">NRM, staff use<span class="muted small">${moveCount('nrm') ? moveCount('nrm') + ' out' : ''}</span></a>
@@ -1855,7 +1980,7 @@ function viewMore() {
     <a href="#/import">Import open agreements<span class="muted small">From Excel</span></a>
   </div>` : ''}
   <div class="menu"><button data-act="signout">Sign out<span></span></button></div>
-  <p class="small muted" style="text-align:center">Thomson Car Rental Booking Service</p>`;
+  <div class="credit"><strong>Thomson Car Rental Booking Service</strong><span>Version ${APP_VERSION}</span><span>${APP_CREDIT}</span><button class="linkbtn" data-act="checkver">Check for updates</button></div>`;
   return { title: 'More', html };
 }
 const CAT_COLORS = ['#1F6FD1', '#C47A12', '#2B8A57', '#7B4BC4', '#C8372D', '#0F8A8A', '#5A6A7B'];
@@ -1875,21 +2000,33 @@ function viewCars() {
   ${cats.map(cat => `<h2 class="cat-h"><span class="dot" style="background:${catColor(cat)}"></span>${esc(cat)} <span class="muted small">${groups[cat].length}</span></h2>
     <div class="car-grid">${groups[cat].map(c => { n++; const p = carParts(c); return `${sel ? `<button class="car-tile ${sel.has(c.id) ? 'picked' : ''}" data-act="car-pick" data-id="${c.id}" aria-pressed="${sel.has(c.id)}" style="--cc:${catColor(cat)}"><span class="tick">${sel.has(c.id) ? '✓' : ''}</span>` : `<a class="car-tile ${c.active === false ? 'off' : ''}" href="#/car/${c.id}" style="--cc:${catColor(cat)}">`}
       <span class="plate big">${esc(c.plate)}</span>${CAR}<span class="ct-name">${esc(p.make)} ${esc(p.model)}</span><span class="ct-sub">${[p.year, c.color].filter(Boolean).map(esc).join(', ')}</span>
-      ${c.active === false ? '<span class="chip cancelled">Inactive</span>' : ''}${sel ? '</button>' : '</a>'}`; }).join('')}</div>`).join('')}`
+      ${ownChip(c)}${c.active === false ? '<span class="chip cancelled">Inactive</span>' : ''}${sel ? '</button>' : '</a>'}`; }).join('')}</div>`).join('')}`
     : `<div class="empty">${CAR.replace('car-ico', 'car-ico big')}<h3>Add your cars</h3><p>Cars and plate numbers you add here appear in the booking form.${a ? ' Use <strong>Add many cars</strong> to paste your whole fleet from Excel at once.' : ''}</p></div>`}`;
   return { title: 'Own cars and plates', back: '#/more', html, wide: true };
 }
 function carFields(c, sub) {
-  const p = carParts(c);
-  return `<div class="grid3"><label class="f">Make<input id="c-make" value="${esc(p.make)}" placeholder="GMC"></label><label class="f">Model<input id="c-model" value="${esc(p.model)}" placeholder="Yukon"></label><label class="f">Year<input id="c-year" inputmode="numeric" value="${esc(p.year)}" placeholder="2026"></label></div>
+  const p = carParts(c), own = sub ? 'external' : ownershipOf(c);
+  return `<div class="f" style="margin-top:4px;color:var(--muted);font-size:14px">Ownership</div>
+    <div class="pill-choice" role="radiogroup" aria-label="Ownership">${Object.entries(OWN_LABEL).map(([k, l]) => `<label><input type="radio" name="c-own" value="${k}" ${own === k ? 'checked' : ''} ${sub && k !== 'external' ? 'disabled' : ''}><span>${l}</span></label>`).join('')}</div>
+    <div class="grid3"><label class="f">Make<input id="c-make" value="${esc(p.make)}" placeholder="GMC"></label><label class="f">Model<input id="c-model" value="${esc(p.model)}" placeholder="Yukon"></label><label class="f">Year<input id="c-year" inputmode="numeric" value="${esc(p.year)}" placeholder="2026"></label></div>
     <div class="grid2"><label class="f">Plate number<input id="c-plate" value="${esc(c.plate || '')}" placeholder="9185" autocapitalize="characters"></label><label class="f">Color<input id="c-color" value="${esc(c.color || '')}" placeholder="Black"></label></div>
-    ${sub ? `<label class="f">Supplier<input id="c-sup" list="c-sups" value="${esc(c.supplier || '')}" placeholder="Al Futtaim Rent A Car"><datalist id="c-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label>` : ''}
-    <label class="f">Category${sub ? ' (optional)' : ''}<select id="c-cat"><option value="">${sub ? 'No category' : 'Choose category'}</option>${catList().map(x => `<option ${x.name.toLowerCase() === String(c.category || '').toLowerCase() ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}${c.category && !catInfo(c.category) ? `<option selected>${esc(c.category)}</option>` : ''}</select></label>
+    <div id="c-supbox" class="${own === 'external' ? '' : 'hidden'}"><label class="f">Supplier (owner company)<input id="c-sup" list="c-sups" value="${esc(c.supplier || '')}" placeholder="Al Futtaim Rent A Car"><datalist id="c-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label></div>
+    <div id="c-invbox" class="${own === 'investor' ? '' : 'hidden'}"><label class="f">Investor name (optional)<input id="c-inv" value="${esc(c.investor || '')}" placeholder="Mr. Khalid"></label></div>
+    <label class="f">Category${own === 'external' ? ' (optional)' : ''}<select id="c-cat"><option value="">${own === 'external' ? 'No category' : 'Choose category'}</option>${catList().map(x => `<option ${x.name.toLowerCase() === String(c.category || '').toLowerCase() ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}${c.category && !catInfo(c.category) ? `<option selected>${esc(c.category)}</option>` : ''}</select></label>
     ${catList().length ? '' : `<p class="warn">No categories yet. ${isAdmin() ? '<a href="#/categories">Define your categories first</a>.' : 'Ask an admin to define them.'}</p>`}${isAdmin() ? '<p class="small" style="margin:6px 0 0"><a href="#/categories">Manage categories</a></p>' : ''}`;
 }
+function wireOwnership(o) {
+  o.querySelectorAll('input[name=c-own]').forEach(x => x.addEventListener('change', () => {
+    const v = (o.querySelector('input[name=c-own]:checked') || {}).value;
+    o.querySelector('#c-supbox').classList.toggle('hidden', v !== 'external');
+    o.querySelector('#c-invbox').classList.toggle('hidden', v !== 'investor');
+  }));
+}
 function readCarFields(sub) {
-  const d = { make: $('#c-make').value.trim(), model: $('#c-model').value.trim(), year: $('#c-year').value.trim(), plate: $('#c-plate').value.trim().toUpperCase(), color: $('#c-color').value.trim(), category: $('#c-cat').value.trim(), type: sub ? 'sublease' : 'own' };
-  if (sub) d.supplier = $('#c-sup').value.trim();
+  const own = sub ? 'external' : (($('input[name=c-own]:checked') || {}).value || 'owned');
+  const ext = own === 'external';
+  const d = { make: $('#c-make').value.trim(), model: $('#c-model').value.trim(), year: $('#c-year').value.trim(), plate: $('#c-plate').value.trim().toUpperCase(), color: $('#c-color').value.trim(), category: $('#c-cat').value.trim(),
+    type: ext ? 'sublease' : 'own', ownership: ext ? 'sublease' : own, supplier: ext ? $('#c-sup').value.trim() : '', investor: own === 'investor' ? $('#c-inv').value.trim() : '' };
   d.name = carTitle(d);
   return d;
 }
@@ -1907,10 +2044,16 @@ ACT['car-edit'] = ({ id }) => {
     <p class="err" id="c-err"></p>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="c-save">${id ? 'Save car' : 'Add car'}</button></div>
     ${id && isAdmin() ? `<div class="btnrow"><button class="btn danger" data-act="car-del" data-id="${id}">Delete this car</button></div>` : ''}`);
+  wireOwnership(o);
   o.querySelector('#c-save').onclick = async () => {
     const d = readCarFields(false); d.active = $('#c-active').value === '1';
-    const err = carCheck(d, id, false); if (err) { $('#c-err').textContent = err; return; }
-    try { id ? await db.doc('cars/' + id).update(d) : await db.collection('cars').add(d); closeSheet(); toast(id ? `${d.plate} saved.` : `${d.plate} added.`); go('#/cars'); }
+    const ext = d.type === 'sublease';
+    const err = carCheck(d, id, ext); if (err) { $('#c-err').textContent = err; return; }
+    try {
+      id ? await db.doc('cars/' + id).update(d) : await db.collection('cars').add(d);
+      if (id) { const bs = await db.collection('bookings').where('carId', '==', id).get(); if (bs.size) { const b = db.batch(); bs.docs.forEach(x => b.update(x.ref, { carName: d.name, plate: d.plate, carType: d.type, supplier: d.supplier || '' })); await b.commit(); } }
+      closeSheet(); toast(id ? `${d.plate} saved.` : `${d.plate} added.`); go(ext ? '#/sublease' : '#/cars');
+    }
     catch (e) { $('#c-err').textContent = friendlyError(e); }
   };
 };
@@ -1951,7 +2094,7 @@ function parseCarLines(text) {
       const c = l.split('\t'), v = k => C[k] >= 0 ? String(c[C[k]] ?? '').trim() : '';
       const year = v('year').match(/\d{4}/) ? v('year').match(/\d{4}/)[0] : '';
       const nm = C.make >= 0 ? { make: tidyCase(v('make')), model: tidyCase(v('model')) } : splitName(v('name') || v('model'), year);
-      const own = v('own').toLowerCase(), sub = /sub/.test(own);
+      const own = v('own').toLowerCase(), sub = /sub|external/.test(own);
       const d = { make: nm.make, model: nm.model, year, plate: v('plate'), color: tidyCase(v('color')), category: v('category'), type: sub ? 'sublease' : 'own',
         ownership: sub ? 'sublease' : /investor/.test(own) ? 'investor' : 'owned', active: !v('status') || /active/i.test(v('status')) && !/inactive/i.test(v('status')) };
       if (sub) d.supplier = v('supplier') || 'To confirm';
@@ -1967,7 +2110,7 @@ function parseCarLines(text) {
       if (/^(make|model|s\.?\s*no)/i.test(c[0])) return;
       if (/^(19|20)\d{2}$/.test(c[1] || '')) {
         const [name = '', year = '', plate = '', category = '', own = '', color = '', status = ''] = c;
-        const nm = splitName(name, year), o = own.toLowerCase(), sub = /sub/.test(o);
+        const nm = splitName(name, year), o = own.toLowerCase(), sub = /sub|external/.test(o);
         const d = { make: nm.make, model: nm.model, year, plate, color: tidyCase(color), category, type: sub ? 'sublease' : 'own', ownership: sub ? 'sublease' : /investor/.test(o) ? 'investor' : 'owned', active: !status || /active/i.test(status) && !/inactive/i.test(status) };
         if (sub) d.supplier = 'To confirm';
         push(d, i + 1);
@@ -2031,18 +2174,18 @@ function viewSublease() {
     <div class="lr-sub">${esc([c.color, 'Supplier: ' + (c.supplier || '-'), c.category].filter(Boolean).join(', '))}</div>
     <div class="t-actions"><a class="btn sm" href="#/car/${c.id}">History</a><button class="btn sm" data-act="sub-edit" data-id="${c.id}">Edit</button>
       <button class="btn sm ${c.active === false ? 'good' : ''}" data-act="sub-toggle" data-id="${c.id}">${c.active === false ? 'Enable again' : 'Return to supplier'}</button></div></div>`; };
-  const html = `<div class="toolbar"><button class="btn primary" data-act="sub-edit">Add sub-lease car</button></div>
+  const html = `<div class="toolbar"><button class="btn primary" data-act="sub-edit">Add external car</button></div>
     <div class="seg left" role="group" aria-label="Show">${[['active', `Active ${subs.filter(c => c.active !== false).length}`], ['returned', `Returned ${subs.filter(c => c.active === false).length}`]].map(([k, l]) => `<button class="${tab === k ? 'on' : ''}" data-act="subtab" data-t="${k}">${l}</button>`).join('')}</div>
     <label class="f">Search by plate, car or supplier<input id="sub-q" type="search" value="${esc(q)}" placeholder="9185"></label>
     ${other.length ? `<div class="strip info"><h3>Also found in ${tab === 'active' ? 'Returned' : 'Active'}</h3>${other.map(row).join('')}</div>` : ''}
     ${list.length ? list.map(row).join('') : `<div class="empty"><h3>${q ? 'No sub-lease car matches this search' : tab === 'active' ? 'No sub-lease cars with you right now' : 'No returned sub-lease cars yet'}</h3><p>${tab === 'active' ? 'Add a car you rent from a supplier, or use Sub-lease hire while making a booking.' : 'Cars you return to the supplier are kept here, so you can enable them again later.'}</p></div>`}`;
   const mount = () => { let t; $('#sub-q').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { S.subQ = e.target.value; render(); const i = $('#sub-q'); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }, 350); }); };
-  return { title: 'Sub-lease cars', back: '#/more', html, mount };
+  return { title: 'External cars (sub-lease)', back: '#/more', html, mount };
 }
 ACT.subtab = ({ t }) => { S.subTab = t; render(); };
 ACT['sub-edit'] = ({ id }) => {
   const c = S.cars.find(x => x.id === id) || { active: true, type: 'sublease' };
-  const o = openSheet(`<h2>${id ? 'Edit sub-lease car' : 'Add sub-lease car'}</h2>${carFields(c, true)}<p class="err" id="c-err"></p>
+  const o = openSheet(`<h2>${id ? 'Edit external car' : 'Add external car (sub-lease)'}</h2>${carFields(c, true)}<p class="err" id="c-err"></p>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="c-save">${id ? 'Save car' : 'Add sub-lease car'}</button></div>
     ${id && isAdmin() ? `<div class="btnrow"><button class="btn danger" data-act="car-del" data-id="${id}">Delete this car</button></div>` : ''}`);
   o.querySelector('#c-save').onclick = async () => {
@@ -2116,7 +2259,7 @@ ACT['user-new'] = () => {
     <label class="f">Full name<input id="u-name" placeholder="Ahmed Ali"></label>
     <label class="f">Username<input id="u-user" autocapitalize="none" autocomplete="off" placeholder="ahmed.driver"></label>
     <label class="f">Password<input id="u-pass" type="text" autocomplete="off" placeholder="At least 6 characters"></label>
-    <label class="f">Role<select id="u-role"><option value="driver">Driver: tasks, handover, prices and payment collection</option><option value="sales">Sales: bookings, prices, settlement</option><option value="admin">Admin: everything</option></select></label>
+    <label class="f">Role<select id="u-role"><option value="driver">Driver: full daily access, gets delivery and pickup reminders</option><option value="sales">Sales: full daily access, gets reminders for own bookings</option><option value="admin">Admin: also own cars, deleting, users, settings and reset</option></select></label>
     <label class="f" id="u-linkwrap"><select id="u-link"><option value="1">Also add as salesperson, with reminders</option><option value="0">Don't add as salesperson</option></select></label>
     <p class="err" id="u-err"></p>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="u-save">Create user</button></div>`);
@@ -2152,22 +2295,28 @@ function viewSettings() {
     <div class="grid2"><label class="f">VAT %<input id="st-vat" type="number" inputmode="decimal" step="0.01" value="${esc(s.vatRate ?? 5)}"></label>
     <label class="f">Default VAT mode<select id="st-mode"><option value="plus" ${s.defaultVatMode !== 'incl' ? 'selected' : ''}>Price + VAT</option><option value="incl" ${s.defaultVatMode === 'incl' ? 'selected' : ''}>VAT inclusive</option></select></label></div>
     <div class="grid2"><label class="f">CC charge options %<input id="st-cc" value="${esc(s.ccOptions || '4,5')}" placeholder="4,5"></label><label class="f">Default CC %<input id="st-ccd" type="number" inputmode="decimal" step="0.01" value="${esc(s.defaultCc ?? 5)}"></label></div></section>
-  <section class="card"><h2>Delete PIN</h2><p class="small muted" style="margin:0">Asked before an admin deletes a booking. Leave blank to keep the current PIN.</p>
-    <label class="f">New PIN<input id="st-pin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="4 to 8 digits"></label></section>
+  <section class="card"><h2>PINs</h2><p class="small muted" style="margin:0">Leave a box blank to keep the current PIN.</p>
+    <div class="grid2"><label class="f">Delete PIN<input id="st-pin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="4 to 8 digits"></label>
+    <label class="f">Reset PIN<input id="st-rpin" type="password" inputmode="numeric" autocomplete="new-password" placeholder="6 to 8 digits"></label></div>
+    <p class="small muted" style="margin:6px 0 0">Delete PIN: asked before deleting a booking or car. Reset PIN: asked before resetting data. Use different PINs.</p></section>
+  <section class="card danger-zone"><h2>Reset data</h2><p class="small" style="margin:0">Erase bookings, cars or other records to start fresh. Needs the Reset PIN.</p>
+    <div class="btnrow"><a class="btn danger" href="#/reset">Open reset data</a></div></section>
   <p class="err" id="st-err"></p><div class="btnrow"><button class="btn primary" id="st-save">Save settings</button></div>`;
   const mount = () => $('#st-save').onclick = async () => {
-    const pin = $('#st-pin').value.trim();
-    if (pin && !/^\d{4,8}$/.test(pin)) { $('#st-err').textContent = 'PIN must be 4 to 8 digits.'; return; }
+    const pin = $('#st-pin').value.trim(), rpin = $('#st-rpin').value.trim();
+    if (pin && !/^\d{4,8}$/.test(pin)) { $('#st-err').textContent = 'Delete PIN must be 4 to 8 digits.'; return; }
+    if (rpin && !/^\d{6,8}$/.test(rpin)) { $('#st-err').textContent = 'Reset PIN must be 6 to 8 digits.'; return; }
+    if (pin && rpin && pin === rpin) { $('#st-err').textContent = 'Use different numbers for the Delete PIN and the Reset PIN.'; return; }
     const d = { companyName: $('#st-name').value.trim() || COMPANY, address: $('#st-addr').value.trim(), phone: $('#st-phone').value.trim(), trn: $('#st-trn').value.trim(),
       vatRate: parseFloat($('#st-vat').value) || 0, defaultVatMode: $('#st-mode').value, ccOptions: $('#st-cc').value.replace(/[^\d.,]/g, '') || '4,5', defaultCc: parseFloat($('#st-ccd').value) || 5,
       shareName: $('#st-shn').value.trim() || 'Thomson Rent A Car', waNumber: $('#st-wa').value.trim() };
-    try { await db.doc('meta/settings').set(d, { merge: true }); if (pin) await db.doc('meta/secure').set({ pin }, { merge: true }); S.formOpen = false; toast('Settings saved.'); go('#/more'); }
+    try { await db.doc('meta/settings').set(d, { merge: true }); if (pin || rpin) await db.doc('meta/secure').set({ ...(pin ? { pin } : {}), ...(rpin ? { resetPin: rpin } : {}) }, { merge: true }); S.formOpen = false; toast('Settings saved.'); go('#/more'); }
     catch (e) { $('#st-err').textContent = friendlyError(e); }
   };
   return { title: 'Settings', back: '#/more', html, mount, form: true };
 }
 function viewAccount() {
-  const html = `<section class="card"><dl class="kv"><dt>Name</dt><dd>${esc(S.me.name)}</dd><dt>Username</dt><dd>${esc(S.me.username)}</dd><dt>Role</dt><dd>${esc(role())}</dd></dl></section>
+  const html = `<section class="card"><dl class="kv"><dt>Name</dt><dd>${esc(S.me.name)}</dd><dt>Username</dt><dd>${esc(S.me.username)}</dd><dt>Role</dt><dd>${esc(role())}</dd><dt>App version</dt><dd>${APP_VERSION}<br><span class="muted small">${APP_CREDIT}</span></dd></dl></section>
   <section class="card"><h2>Change password</h2>
     <label class="f">Current password<input id="ac-cur" type="password" autocomplete="current-password"></label>
     <label class="f">New password<input id="ac-new" type="password" autocomplete="new-password" placeholder="At least 6 characters"></label>
@@ -2190,7 +2339,7 @@ function viewLogin() {
   return `<div class="auth">${SKYLINE}<div class="auth-card">${brand()}<h1>Sign in</h1><p class="muted" style="margin-top:0">Thomson Car Rental Booking Service</p>
     <label class="f">Username<input id="l-user" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
     <label class="f">Password<input id="l-pass" type="password" autocomplete="current-password"></label>
-    <p class="err" id="l-err" role="alert"></p><button class="btn primary block" id="l-go">Sign in</button></div></div>`;
+    <p class="err" id="l-err" role="alert"></p><button class="btn primary block" id="l-go">Sign in</button><p class="small muted" style="text-align:center;margin:14px 0 0">Version ${APP_VERSION}<br>${APP_CREDIT}</p></div></div>`;
 }
 function mountLogin() {
   const go = async () => {
@@ -2206,7 +2355,7 @@ function viewSetup() {
     <label class="f">Full name<input id="su-name" placeholder="Sajid Ali"></label>
     <label class="f">Username<input id="su-user" autocapitalize="none" placeholder="sajid.admin"></label>
     <label class="f">Password<input id="su-pass" type="password" autocomplete="new-password" placeholder="At least 6 characters"></label>
-    <p class="err" id="su-err" role="alert"></p><button class="btn primary block" id="su-go">Create admin account</button></div></div>`;
+    <p class="err" id="su-err" role="alert"></p><button class="btn primary block" id="su-go">Create admin account</button><p class="small muted" style="text-align:center;margin:14px 0 0">Version ${APP_VERSION}<br>${APP_CREDIT}</p></div></div>`;
 }
 function mountSetup() {
   $('#su-go').onclick = async ev => {
@@ -2236,8 +2385,11 @@ function printHeader(title, sub) {
     <div><div class="p-co">${esc(s.companyName || COMPANY)}</div>${addr ? `<div class="p-addr">${esc(addr)}</div>` : ''}</div></div>
     <div class="p-title"><h1>${esc(title)}</h1><div>${esc(sub || '')}</div></div></header>`;
 }
-const printFoot = () => `<div class="p-foot">Printed by ${esc(S.me.name)} on ${esc(fmtDT(nowLocal()))}</div>`;
-function doPrint(html, landscape) {
+const printFoot = () => `<div class="p-foot">Printed by ${esc(S.me.name)} on ${esc(fmtDT(nowLocal()))}, app v${APP_VERSION}</div>`;
+const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load the PDF maker. Check the internet connection.')); document.head.appendChild(s); });
+/* phones, tablets and home-screen apps block the print window, so there we build a real PDF file */
+const useFilePdf = () => window.FORCE_FILE_PDF || matchMedia('(pointer: coarse)').matches || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function browserPrint(html, landscape) {
   $('#print').innerHTML = html;
   let ps = $('#pagestyle'); if (!ps) { ps = document.createElement('style'); ps.id = 'pagestyle'; document.head.appendChild(ps); }
   ps.textContent = `@page{size:A4 ${landscape ? 'landscape' : 'portrait'};margin:12mm}`;
@@ -2245,6 +2397,41 @@ function doPrint(html, landscape) {
   const go = () => setTimeout(() => window.print(), 150);
   if (!n) return go();
   imgs.forEach(i => { if (i.complete) { if (--n === 0) go(); } else { i.onload = i.onerror = () => { if (--n === 0) go(); }; } });
+}
+async function doPrint(html, landscape, fileName) {
+  const name = (fileName || 'Thomson').replace(/[^\w.-]+/g, '-') + '.pdf';
+  if (!useFilePdf()) return browserPrint(html, landscape);
+  openSheet(`<h2>Preparing PDF…</h2><p class="muted">${esc(name)}</p><div class="pdf-spin" aria-hidden="true"></div>`);
+  let wrap;
+  try {
+    if (!window.html2pdf) { try { await loadScript(window.H2P_URL || 'html2pdf.bundle.min.js'); } catch (e) { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'); } }
+    wrap = document.createElement('div');
+    wrap.className = 'pdf-stage';
+    wrap.style.width = (landscape ? 1062 : 733) + 'px';
+    wrap.innerHTML = `<div class="pdf-doc">${html}</div>`;
+    document.body.appendChild(wrap);
+    await Promise.all([...wrap.querySelectorAll('img')].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; })));
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const blob = await window.html2pdf().set({
+      margin: [8, 8, 8, 8], filename: name, image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: wrap.offsetWidth },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: landscape ? 'landscape' : 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.p-sign', '.p-kv'] }
+    }).from(wrap.firstElementChild).outputPdf('blob');
+    wrap.remove(); wrap = null;
+    const file = new File([blob], name, { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    const o = openSheet(`<h2>PDF ready</h2><p class="muted" style="margin:4px 0 0">${esc(name)}, ${Math.max(1, Math.round(blob.size / 1024))} KB</p>
+      <div class="btnrow">${canShare ? '<button class="btn primary" id="pdf-share">Share or save</button>' : ''}<a class="btn ${canShare ? '' : 'primary'}" id="pdf-open" href="${url}" target="_blank" rel="noopener">Open PDF</a><a class="btn" href="${url}" download="${esc(name)}">Download</a></div>
+      <p class="small muted" style="margin:10px 0 0">${canShare ? 'Share or save sends it to WhatsApp, email, Files or Print.' : 'Open PDF shows it, and from there you can share or print it.'}</p>
+      <div class="btnrow"><button class="btn" data-act="close">Close</button></div>`);
+    const sh = o.querySelector('#pdf-share');
+    if (sh) sh.onclick = async () => { try { await navigator.share({ files: [file], title: name }); } catch (e) { if (e && e.name !== 'AbortError') toast('Sharing was blocked. Use Open PDF instead.'); } };
+  } catch (e) {
+    if (wrap) wrap.remove();
+    closeSheet(); toast((e && e.message) || 'Could not make the PDF.'); console.error(e);
+  }
 }
 ACT.daysheet = async () => {
   const D = S.viewDate, tasks = tasksFor(D), staff = true;
@@ -2264,7 +2451,7 @@ ACT.daysheet = async () => {
     <tbody>${rows || `<tr><td colspan="${staff ? 14 : 12}">No tasks on this day.</td></tr>`}</tbody>
     <tfoot><tr><td colspan="${staff ? 11 : 10}">${nd} deliveries, ${tasks.length - nd} pickups</td>${staff ? `<td class="r">${money(total)}</td>` : ''}<td colspan="2"></td></tr></tfoot></table>
     ${staff ? '<p style="font-size:9.5px;color:#555">Total AED is the rent total including VAT for deliveries on this day.</p>' : ''}
-    <div class="p-sign"><div>Prepared by</div><div>Driver</div><div>Approved by</div></div>${printFoot()}`, true);
+    <div class="p-sign"><div>Prepared by</div><div>Driver</div><div>Approved by</div></div>${printFoot()}`, true, `Delivery-sheet-${D}`);
 };
 ACT.slip = ({ id }) => {
   const b = getB(id), f = S.fin.get(id), e = f ? estimate(b, f) : null;
@@ -2278,7 +2465,7 @@ ACT.slip = ({ id }) => {
       <tfoot><tr class="p-total"><td colspan="3">Total</td><td class="r">${money(e.gross)}</td></tr>${+f.advance ? `<tr><td colspan="3">Advance paid (${esc(f.advanceMethod || 'cash')})</td><td class="r">${money(f.advance)}</td></tr><tr class="p-total"><td colspan="3">Balance</td><td class="r">${money(e.gross - f.advance)}</td></tr>` : ''}</tfoot></table>
       <p style="font-size:9.5px;color:#555">Salik, parking, traffic fines and other charges during the rental are billed at return. Card payments carry a card charge.</p></div>` : ''}
     ${b.notes ? `<div class="p-sec"><h2>Notes</h2><p>${esc(b.notes)}</p></div>` : ''}
-    <div class="p-sign"><div>Client signature</div><div>For ${esc(S.settings.companyName || COMPANY)}</div></div>${printFoot()}`, false);
+    <div class="p-sign"><div>Client signature</div><div>For ${esc(S.settings.companyName || COMPANY)}</div></div>${printFoot()}`, false, `${b.ref}-booking${b.oldRef ? '-agr-' + b.oldRef : ''}`);
 };
 ACT.bill = ({ id }) => {
   const b = getB(id), f = S.fin.get(id); if (!f || !f.settlement) return;
@@ -2298,7 +2485,7 @@ ACT.bill = ({ id }) => {
       ${t.advance ? `<tr><td colspan="4">Less advance paid</td><td class="r">-${money(t.advance)}</td></tr><tr class="p-total"><td colspan="4">Balance due</td><td class="r">${money(t.balance)}</td></tr>` : ''}</tfoot></table>
       <p>Payment method: <strong>${esc(({ cash: 'Cash', card: 'Card', bank: 'Bank transfer' })[st.method] || st.method)}</strong>${b.status === 'pending' ? '. <strong>Some charges may still be added.</strong>' : ''}</p>
       ${st.notes ? `<p>Notes: ${esc(st.notes)}</p>` : ''}</div>
-    <div class="p-sign"><div>Client signature</div><div>For ${esc(S.settings.companyName || COMPANY)}</div></div>${printFoot()}`, false);
+    <div class="p-sign"><div>Client signature</div><div>For ${esc(S.settings.companyName || COMPANY)}</div></div>${printFoot()}`, false, `${b.ref}-final-bill`);
 };
 ACT['list-print'] = () => {
   const rows = filteredRows(), F = S.filter;
@@ -2307,7 +2494,7 @@ ACT['list-print'] = () => {
     return `<tr><td>${i + 1}</td><td>${esc(b.ref)}</td><td>${esc(b.oldRef || '')}</td><td>${rtypeOf(b) === 'month' ? 'Monthly' : 'Daily'}</td><td><strong>${esc(fmtDT(b.deliveryAt))}</strong></td><td>${esc(fmtDT(b.pickupAt))}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? ' (sub-lease)' : ''}</td><td>${esc(b.clientName)}</td><td class="r">${b.days}</td><td>${esc(b.salespersonName || '')}</td><td>${esc(STATUS[b.status] || b.status)}</td><td class="r">${money(v)}</td></tr>`; }).join('');
   doPrint(`${printHeader(F.rtype === 'month' ? 'Monthly bookings' : F.rtype === 'day' ? 'Daily bookings' : 'Bookings list', `${fmtDate(F.from)} to ${fmtDate(F.to)}`)}
     <table class="p-tbl"><thead><tr><th>#</th><th>Ref</th><th>Agr No</th><th>Type</th><th>Delivery</th><th>Return</th><th>Plate</th><th>Car</th><th>Client</th><th class="r">Days</th><th>Sales</th><th>Status</th><th class="r">Total AED</th></tr></thead>
-    <tbody>${body || '<tr><td colspan="13">No bookings.</td></tr>'}</tbody><tfoot><tr><td colspan="12">${rows.length} bookings (cancelled excluded from total)</td><td class="r">${money(total)}</td></tr></tfoot></table>${printFoot()}`, true);
+    <tbody>${body || '<tr><td colspan="13">No bookings.</td></tr>'}</tbody><tfoot><tr><td colspan="12">${rows.length} bookings (cancelled excluded from total)</td><td class="r">${money(total)}</td></tr></tfoot></table>${printFoot()}`, true, `Bookings-${F.from}-to-${F.to}`);
 };
 
 
@@ -2863,6 +3050,88 @@ function viewNrm() {
   return { title: 'NRM, staff use', back: '#/more', html, mount };
 }
 ACT.nrmtab = ({ t }) => { S.nrmTab = t; render(); };
+
+
+/* ---------- version check: tell people when a newer version is on the server ---------- */
+async function checkVersion(manual) {
+  try {
+    const r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+    const m = (await r.text()).match(/const APP_VERSION = '([^']+)'/);
+    if (m && m[1] !== APP_VERSION) {
+      if (!$('#verbar')) { const d = document.createElement('div'); d.id = 'verbar'; d.className = 'verbar'; d.innerHTML = `<span>New version <strong>${esc(m[1])}</strong> is ready.</span><button class="btn sm amber" data-act="reloadapp">Update now</button>`; document.body.appendChild(d); }
+    } else if (manual) toast(`You have the latest version (${APP_VERSION}).`);
+  } catch (e) { if (manual) toast('Could not check for updates. Check the connection.'); }
+}
+ACT.checkver = () => checkVersion(true);
+ACT.reloadapp = () => { location.reload(); };
+if (configured) { setTimeout(() => checkVersion(false), 8000); setInterval(() => checkVersion(false), 30 * 60000); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(false); }); }
+
+
+/* ---------- admin: backup and reset data (Reset PIN protected) ---------- */
+const RESET_SETS = [
+  { k: 'bookings', label: 'Bookings, payments and settlements', cols: ['bookings', 'finance'], note: 'All bookings, their prices, payments and final bills.' },
+  { k: 'garage', label: 'Garage and NRM history', cols: ['garage'], note: 'All garage visits and staff-use movements.' },
+  { k: 'external', label: 'External (sub-lease) cars', cols: [], cars: c => isSub(c), note: 'Only cars rented from other companies.' },
+  { k: 'cars', label: 'All cars (owned, investor and external)', cols: [], cars: () => true, note: 'The whole fleet list.' },
+  { k: 'sales', label: 'Salespeople list', cols: ['salespeople'], note: 'User logins are not touched.' },
+  { k: 'numbers', label: 'Restart numbering (BK, GRG, NRM)', cols: [], meta: 'meta/counter', note: 'Only safe if bookings are also reset.' }
+];
+async function backupAll() {
+  const out = { app: 'Thomson Booking', version: APP_VERSION, exportedAt: nowLocal(), by: S.me.name, collections: {} };
+  for (const c of ['bookings', 'finance', 'cars', 'garage', 'salespeople', 'users']) out.collections[c] = (await db.collection(c).get()).docs.map(d => ({ id: d.id, ...d.data() }));
+  for (const m of ['settings', 'counter']) { const d = await db.doc('meta/' + m).get(); out[m] = d.exists ? d.data() : null; }
+  const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
+  const name = `thomson-backup-${todayStr()}.json`;
+  const file = new File([blob], name, { type: 'application/json' });
+  if (useFilePdf() && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: name }); return true; } catch (e) { if (e && e.name === 'AbortError') return false; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  return true;
+}
+function viewReset() {
+  if (!isAdmin()) return deny();
+  const html = `<section class="card danger-zone"><h2>Reset data</h2>
+    <p class="small" style="margin:0">This permanently erases the records you tick. It can't be undone. <strong>User logins, company settings, categories and PINs are always kept</strong>, so everyone can still sign in.</p></section>
+  <section class="card"><h2>1. Download a backup first</h2><p class="small muted" style="margin:0">A file with every booking, car, payment and garage record, in case you need it later.</p>
+    <div class="btnrow"><button class="btn" id="rs-bk">Download backup</button></div><p class="small" id="rs-bkmsg" style="margin:6px 0 0"></p></section>
+  <section class="card"><h2>2. Choose what to erase</h2>
+    ${RESET_SETS.map(s => `<label class="check rs-opt"><input type="checkbox" value="${s.k}"><span><strong>${s.label}</strong><br><span class="small muted">${s.note}</span></span></label>`).join('')}</section>
+  <section class="card"><h2>3. Confirm</h2>
+    <label class="f">Reset PIN<input id="rs-pin" type="password" inputmode="numeric" autocomplete="off"></label>
+    <label class="f">Type RESET in capitals<input id="rs-word" autocapitalize="characters" autocomplete="off"></label>
+    <p class="err" id="rs-err"></p><p class="small" id="rs-prog"></p>
+    <div class="btnrow"><button class="btn danger" id="rs-go">Erase selected data</button></div></section>`;
+  const mount = () => {
+    $('#rs-bk').onclick = async ev => { ev.target.disabled = true; $('#rs-bkmsg').textContent = 'Preparing backup…'; try { const ok = await backupAll(); $('#rs-bkmsg').textContent = ok ? 'Backup saved. Keep this file safe.' : 'Backup cancelled.'; S.backupDone = ok; } catch (e) { $('#rs-bkmsg').textContent = friendlyError(e); } ev.target.disabled = false; };
+    $$('.rs-opt input').forEach(x => x.addEventListener('change', () => { if (x.value === 'cars' && x.checked) { const e = $('.rs-opt input[value=external]'); e.checked = true; } }));
+    $('#rs-go').onclick = async ev => {
+      const err = t => { $('#rs-err').textContent = t; };
+      const picked = $$('.rs-opt input:checked').map(x => x.value);
+      if (!picked.length) return err('Tick at least one item to erase.');
+      if ($('#rs-word').value.trim() !== 'RESET') return err('Type RESET in capitals to confirm.');
+      let rpin = ''; try { const s = await db.doc('meta/secure').get(); rpin = s.exists ? String(s.data().resetPin || '') : ''; } catch (e) { }
+      if (!rpin) return err('No Reset PIN is set yet. Set one under More, Company and VAT settings, PINs.');
+      if ($('#rs-pin').value.trim() !== rpin) { $('#rs-pin').value = ''; return err('Wrong Reset PIN. Nothing was erased.'); }
+      if (picked.includes('numbers') && !picked.includes('bookings')) return err('Restart numbering only together with resetting bookings, or numbers could repeat.');
+      if (!S.backupDone && !(await ask({ title: 'No backup downloaded', text: 'You haven\'t downloaded a backup in this session. Erase anyway?', ok: 'Erase without backup', danger: true }))) return;
+      ev.target.disabled = true;
+      const prog = t => { $('#rs-prog').textContent = t; };
+      try {
+        const sets = RESET_SETS.filter(s => picked.includes(s.k));
+        let total = 0;
+        const delDocs = async refs => { for (let i = 0; i < refs.length; i += 400) { const b = db.batch(); refs.slice(i, i + 400).forEach(r => b.delete(r)); await b.commit(); total += Math.min(400, refs.length - i); prog(`Erased ${total} records…`); } };
+        for (const s of sets) {
+          for (const c of s.cols) await delDocs((await db.collection(c).get()).docs.map(d => d.ref));
+          if (s.cars) await delDocs((await db.collection('cars').get()).docs.filter(d => s.cars({ id: d.id, ...d.data() })).map(d => d.ref));
+          if (s.meta) { await db.doc(s.meta).delete().catch(() => { }); total++; }
+        }
+        await db.doc('meta/settings').set({ lastReset: { at: nowLocal(), by: S.me.name, what: picked } }, { merge: true });
+        S.listRows = null; S.garageAll = null; S.nrmAll = null; S.hist = null; S.calRows = null; S.calKey = null; S.backupDone = false;
+        toast(`Reset done: ${total} records erased.`); go('#/home');
+      } catch (e) { ev.target.disabled = false; err(friendlyError(e)); }
+    };
+  };
+  return { title: 'Reset data', back: '#/settings', html, mount, form: true };
+}
 
 boot();
 
