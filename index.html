@@ -547,7 +547,7 @@ label.check input{width:20px;height:20px}
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.0-2026';
+const APP_VERSION = '3.2-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
 const COMPANY = 'Thomson Rent A Car LLC';
 const EMAIL_DOMAIN = 'thomson-booking.app'; // internal only: usernames become username@this-domain
@@ -733,8 +733,8 @@ function stopAll() {
 function onErr(e) { console.error(e); toast(friendlyError(e)); }
 function startListeners() {
   const L = S.unsub;
-  L.push(db.collection('cars').onSnapshot(s => { S.cars = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => carTitle(a).localeCompare(carTitle(b)) || (a.plate || '').localeCompare(b.plate || '')); refresh(); }, onErr));
-  L.push(db.collection('salespeople').onSnapshot(s => { S.sales = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); refresh(); }, onErr));
+  L.push(db.collection('cars').onSnapshot(s => { S.loadedCars = true; S.cars = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => carTitle(a).localeCompare(carTitle(b)) || (a.plate || '').localeCompare(b.plate || '')); refresh(); }, onErr));
+  L.push(db.collection('salespeople').onSnapshot(s => { S.loadedSales = true; S.sales = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); refresh(); }, onErr));
   L.push(db.collection('users').onSnapshot(s => { S.users = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || '')); refresh(); }, onErr));
   L.push(db.doc('meta/settings').onSnapshot(d => { S.settings = d.exists ? d.data() : {}; refresh(); }, onErr));
   L.push(db.collection('garage').where('status', '==', 'open').onSnapshot(s => { S.garage = new Map(s.docs.map(d => [d.data().carId, { id: d.id, ...d.data() }])); refresh(); }, onErr));
@@ -1094,11 +1094,20 @@ function viewHome() {
 }
 ACT.tab = ({ t }) => { S.homeTab = t; try { localStorage.setItem('tb-tab', t); } catch (e) { } render(); if (window.innerWidth < 1000) { const b = $('.sec-head'); b && b.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
 ACT.avmode = ({ m }) => { S.availMode = m; render(); };
+const splitNums = s => String(s || '').split(/[,;\n]+/).map(x => x.replace(/[^\d+]/g, '')).filter(x => x.length >= 7);
+function contactNumbers() {
+  const company = splitNums(S.settings.waNumber);
+  if (role() === 'driver') return company;
+  const me = S.users.find(u => u.id === S.me.id) || S.me;
+  const mine = splitNums(me.waNumbers);
+  return mine.length ? mine : company;
+}
 function availMessage(D, mode) {
   const list = sortCars(availableOn(D, mode)).filter(x => x.st.state !== 'until');
   const name = S.settings.shareName || 'Thomson Rent A Car';
-  const lines = list.map(x => { const p = carParts(x.c); return `♦️ ${p.make} ➖ ${[p.model, p.year].filter(Boolean).join(' ')}`.trim(); });
-  return { count: list.length, text: `🏁 ${name} 🏁\n\n\n🚦 Available Cars For ${dayWordFor(D)} 🚦\n\n${lines.join('\n')}\n\n📱 Call or WhatsApp: ${S.settings.waNumber || ''}`.trimEnd() };
+  const lines = list.map(x => { const p = carParts(x.c); return `🚗 ${[p.make, p.model, p.year].filter(Boolean).join(' ')}`; });
+  const nums = contactNumbers();
+  return { count: list.length, nums, text: `🏁 ${name} 🏁\n\n🚦 Available Cars For ${dayWordFor(D)} 🚦\n\n${lines.join('\n')}\n\n📱 Please contact on WhatsApp or call:${nums.length ? '\n' + nums.join('\n') : ''}` };
 }
 ACT.shareavail = () => {
   const o = openSheet(`<h2>Share available cars</h2>
@@ -1106,7 +1115,7 @@ ACT.shareavail = () => {
     <label class="f">Cars<select id="sh-mode"><option value="both">Own and sub-lease</option><option value="own">Own cars only</option><option value="sub">Sub-lease only</option></select></label></div>
     <label class="f">Message (you can edit it before sending)<textarea id="sh-text" rows="12" style="font-size:15px"></textarea></label>
     <p class="small muted" id="sh-count" style="margin:6px 0 0"></p>
-    ${S.settings.waNumber ? '' : '<p class="warn">Add your WhatsApp number under More, Company and VAT settings, so it appears at the end of the message.</p>'}
+    ${contactNumbers().length ? '' : `<p class="warn">No contact numbers yet. ${isAdmin() ? 'Add company numbers under More, Company and VAT settings, or personal numbers under Users and roles.' : 'Ask the admin to add them.'}</p>`}
     <div class="btnrow"><button class="btn" id="sh-copy">Copy</button><button class="btn wa" id="sh-send">Send on WhatsApp</button></div>`);
   const upd = () => { const m = availMessage($('#sh-date').value || S.viewDate, $('#sh-mode').value); $('#sh-text').value = m.text; $('#sh-count').textContent = `${m.count} car${m.count === 1 ? '' : 's'} in the list.`; };
   o.querySelector('#sh-date').onchange = upd; o.querySelector('#sh-mode').onchange = upd; upd();
@@ -1437,6 +1446,40 @@ ACT.undodeliver = async ({ id }) => {
   const d = b.deliveryDate; if (d && d !== S.viewDate) { S.viewDate = d; subscribeDay(); } go('#/home');
 };
 
+
+/* uniform "BOOKED" message for the team WhatsApp group */
+const amt = n => { const v = r2(n); return Number.isInteger(v) ? v.toLocaleString('en-US') : money(v); };
+const dmy = s => { if (!s) return ''; const d = parseDT(s); return `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}, ${time12(tOf(s))}`; };
+function bookedMsg(b, f) {
+  const phone = b.clientPhone ? '+' + waNum(b.clientPhone) : '';
+  const lines = ['🚘 BOOKED ✅ 🚘', b.ref, '',
+    `• Vehicle: ${b.carName}`,
+    f ? `• Rate: AED ${amt(f.rate)} per ${f.rateType === 'month' ? 'month' : 'day'}, ${f.vatMode === 'incl' ? 'VAT included' : '+VAT'}` : '',
+    `• Days: ${b.days}`,
+    `• Delivery: ${dmy(b.deliveryAt)}`,
+    `• Return: ${dmy(b.pickupAt)}`,
+    `• Location: ${b.location || '-'}`,
+    `• Client: ${b.clientName}`,
+    phone ? `• Contact: ${phone}` : '',
+    `• Booked by: ${b.salespersonName || S.me.name}`,
+    b.collectDocs ? '📄 Collect documents at delivery' : '',
+    b.notes ? `📝 ${b.notes}` : ''];
+  return lines.filter((l, i) => l !== '' || i === 2).join('\n');
+}
+function openBookedMsg(b, f, fresh) {
+  const o = openSheet(`<h2>${fresh ? `Booking ${esc(b.ref)} saved` : 'Booking message'}</h2><p class="muted" style="margin:4px 0 0">${fresh ? 'Share it to the team group?' : 'Send it to the team group.'} You can edit it first.</p>
+    <label class="f">Message<textarea id="bm-text" rows="14" style="font-size:15px">${esc(bookedMsg(b, f))}</textarea></label>
+    <div class="btnrow"><button class="btn" id="bm-copy">Copy</button><button class="btn wa" id="bm-send">Send on WhatsApp</button></div>
+    <div class="btnrow"><button class="btn" data-act="close">${fresh ? 'Not now' : 'Close'}</button></div>`);
+  o.querySelector('#bm-copy').onclick = async () => { const t = $('#bm-text').value; try { await navigator.clipboard.writeText(t); } catch (e) { const ta = $('#bm-text'); ta.select(); document.execCommand('copy'); } toast('Copied. Paste it in the group.'); };
+  o.querySelector('#bm-send').onclick = () => window.open('https://wa.me/?text=' + encodeURIComponent($('#bm-text').value), '_blank');
+}
+ACT.bkmsg = async ({ id }) => {
+  const b = getB(id); if (!b) return;
+  let f = S.fin.get(id); if (!f) { try { const d = await db.doc('finance/' + id).get(); f = d.exists ? d.data() : null; } catch (e) { f = null; } }
+  openBookedMsg(b, f, false);
+};
+
 /* ========================================================= booking detail */
 function viewDetail(id) {
   ensureDetail(id);
@@ -1472,6 +1515,7 @@ function viewDetail(id) {
   if (staff && b.status !== 'cancelled' && b.status !== 'closed') acts.push(`<a class="btn" href="#/edit/${id}">Edit booking</a>`);
   acts.push(`<button class="btn" data-act="slip" data-id="${id}">Booking slip PDF</button>`);
   if (f && f.settlement && f.settlement.totals) acts.push(`<button class="btn" data-act="bill" data-id="${id}">Final bill PDF</button>`);
+  if (b.status !== 'cancelled') acts.push(`<button class="btn wa" data-act="bkmsg" data-id="${id}">Booking message</button>`);
   acts.push(`<button class="btn wa" data-act="wa" data-id="${id}">Share on WhatsApp</button>`);
   if (b.clientPhone) acts.push(`<button class="btn" data-act="waclient" data-id="${id}">Send to client</button>`);
   if (staff && b.status === 'booked') acts.push(`<button class="btn danger" data-act="cancelbk" data-id="${id}">Cancel booking</button>`);
@@ -1543,6 +1587,7 @@ const suppliers = () => [...new Set(S.cars.filter(isSub).map(c => c.supplier).fi
 
 function viewForm(id) {
   if (!isStaff()) return deny();
+  if (!S.loadedCars || !S.loadedSales) return { title: id ? 'Edit booking' : 'New booking', back: '#/home', html: loading() };
   let b = null, f = null;
   if (id) {
     ensureDetail(id); b = getB(id); f = S.fin.get(id);
@@ -1670,6 +1715,7 @@ function viewForm(id) {
           batch.set(docRef, { ...data, ref, status: 'booked', pickupDriverId: '', pickupDriverName: '', createdAt: FV.serverTimestamp(), createdBy: S.me.name, log: [{ at: nowLocal(), by: S.me.name, text: 'Booking created' }] });
           batch.set(db.doc('finance/' + docRef.id), { ...fin, ref });
           await batch.commit(); S.formOpen = false; toast(`Booking ${ref} created for ${fmtDT(data.deliveryAt)}.`); goHomeOn(x.date);
+          setTimeout(() => openBookedMsg({ ...data, ref, id: docRef.id }, fin, true), 120);
         } else {
           batch.update(db.doc('bookings/' + id), { ...data, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: 'Booking edited' }) });
           batch.set(db.doc('finance/' + id), fin, { merge: true });
@@ -2315,7 +2361,8 @@ function viewUsers() {
   ${S.users.map(u => `<div class="list-row"><div class="lr-top"><strong>${esc(u.name)}</strong><span class="chip ${u.active === false ? 'cancelled' : 'booked'}">${u.active === false ? 'Inactive' : RL[u.role] || u.role}</span></div>
     <div class="lr-sub">Username: ${esc(u.username)}</div>
     ${u.id !== S.me.id ? `<div class="t-actions"><select class="f-in" style="width:auto;min-height:36px;margin:0;padding:4px 8px" data-role="${u.id}" aria-label="Role">${Object.entries(RL).map(([k, l]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
-    <button class="btn sm" data-act="user-toggle" data-id="${u.id}">${u.active === false ? 'Activate' : 'Deactivate'}</button></div>` : '<div class="lr-sub">This is you</div>'}</div>`).join('')}
+    <button class="btn sm" data-act="user-toggle" data-id="${u.id}">${u.active === false ? 'Activate' : 'Deactivate'}</button></div>` : '<div class="lr-sub">This is you</div>'}
+    ${u.role !== 'driver' ? `<div class="lr-sub">WhatsApp numbers: ${splitNums(u.waNumbers).length ? esc(splitNums(u.waNumbers).join(', ')) : '<span class="muted">none, uses company numbers</span>'} <button class="btn sm" data-act="user-nums" data-id="${u.id}">Edit numbers</button></div>` : '<div class="lr-sub muted">WhatsApp list uses the company numbers</div>'}</div>`).join('')}
   <p class="small muted">Forgotten password: deactivate the old login and create a new one. People can change their own password under More, My account.</p>`;
   const mount = () => $$('[data-role]').forEach(s => s.addEventListener('change', async () => {
     try { await db.doc('users/' + s.dataset.role).update({ role: s.value }); toast('Role updated.'); } catch (e) { onErr(e); }
@@ -2349,6 +2396,18 @@ ACT['user-new'] = () => {
     } catch (e) { ev.target.disabled = false; $('#u-err').textContent = friendlyError(e); }
   };
 };
+
+ACT['user-nums'] = ({ id }) => {
+  if (!isAdmin()) return;
+  const u = S.users.find(x => x.id === id); if (!u) return;
+  const o = openSheet(`<h2>WhatsApp numbers for ${esc(u.name)}</h2><p class="small muted" style="margin:4px 0 0">Shown at the end of the available cars message this person sends. One per line.</p>
+    <label class="f">Numbers<textarea id="un-nums" rows="3" placeholder="+971562900332&#10;+971562909072">${esc(splitNums(u.waNumbers).join('\n'))}</textarea></label>
+    <p class="err" id="un-err"></p><div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="un-save">Save numbers</button></div>`);
+  o.querySelector('#un-save').onclick = async () => {
+    try { await db.doc('users/' + id).update({ waNumbers: splitNums($('#un-nums').value).join(', ') }); closeSheet(); toast(`Numbers saved for ${u.name}.`); render(); }
+    catch (e) { $('#un-err').textContent = friendlyError(e); }
+  };
+};
 function viewSettings() {
   if (!isAdmin()) return deny();
   const s = S.settings;
@@ -2358,7 +2417,8 @@ function viewSettings() {
     <div class="grid2"><label class="f">Phone<input id="st-phone" value="${esc(s.phone || '')}" placeholder="04 123 4567"></label><label class="f">TRN<input id="st-trn" value="${esc(s.trn || '')}" placeholder="100XXXXXXXXXXXX"></label></div></section>
   <section class="card"><h2>WhatsApp available list</h2>
     <label class="f">Name at the top<input id="st-shn" value="${esc(s.shareName || 'Thomson Rent A Car')}"></label>
-    <label class="f">Call or WhatsApp number<input id="st-wa" type="tel" value="${esc(s.waNumber || '')}" placeholder="050 123 4567"></label>
+    <label class="f">Company WhatsApp or call numbers<textarea id="st-wa" rows="2" placeholder="+971505226338&#10;+971562909072">${esc(splitNums(s.waNumber).join('\n'))}</textarea></label>
+    <p class="small muted" style="margin:4px 0 0">One per line. Used on drivers' messages, and for anyone without personal numbers.</p>
     <p class="small muted" style="margin:10px 0 0">Cars are listed in your category order everywhere. Set the order under <a href="#/categories">Categories</a>.</p></section>
   <section class="card"><h2>VAT and card charges</h2>
     <div class="grid2"><label class="f">VAT %<input id="st-vat" type="number" inputmode="decimal" step="0.01" value="${esc(s.vatRate ?? 5)}"></label>
@@ -2378,7 +2438,7 @@ function viewSettings() {
     if (pin && rpin && pin === rpin) { $('#st-err').textContent = 'Use different numbers for the Delete PIN and the Reset PIN.'; return; }
     const d = { companyName: $('#st-name').value.trim() || COMPANY, address: $('#st-addr').value.trim(), phone: $('#st-phone').value.trim(), trn: $('#st-trn').value.trim(),
       vatRate: parseFloat($('#st-vat').value) || 0, defaultVatMode: $('#st-mode').value, ccOptions: $('#st-cc').value.replace(/[^\d.,]/g, '') || '4,5', defaultCc: parseFloat($('#st-ccd').value) || 5,
-      shareName: $('#st-shn').value.trim() || 'Thomson Rent A Car', waNumber: $('#st-wa').value.trim() };
+      shareName: $('#st-shn').value.trim() || 'Thomson Rent A Car', waNumber: splitNums($('#st-wa').value).join(', ') };
     try { await db.doc('meta/settings').set(d, { merge: true }); if (pin || rpin) await db.doc('meta/secure').set({ ...(pin ? { pin } : {}), ...(rpin ? { resetPin: rpin } : {}) }, { merge: true }); S.formOpen = false; toast('Settings saved.'); go('#/home'); }
     catch (e) { $('#st-err').textContent = friendlyError(e); }
   };
