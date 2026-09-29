@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Thomson Booking</title>
+<title>Booking</title>
 <meta name="theme-color" content="#16324F">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Thomson Booking">
+<meta name="apple-mobile-web-app-title" content="Booking">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -459,7 +459,7 @@ label.check input{width:20px;height:20px}
 .sp-logo .wordmark{padding:12px 16px;border-radius:12px}
 .sp-logo .wm-1{font-size:32px}.sp-logo .wm-2{font-size:14px}
 .sp-logo img{max-width:220px;max-height:110px;background:#fff;border-radius:12px;padding:8px}
-.sp-title .nw{white-space:nowrap}
+.sp-title .nw{text-wrap:balance}
 .sp-title{font-family:var(--head);font-stretch:108%;font-weight:800;font-size:clamp(24px,7vw,44px);line-height:1.1;margin:18px 0 0;color:#fff}
 .sp-sub{margin:0;color:#C9D6E6;font-size:16px}
 .sp-road{width:min(260px,70vw);height:4px;margin-top:26px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden}
@@ -574,9 +574,9 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 <body>
 <div id="splash" role="status" aria-label="Loading">
   <div class="sp-in">
-    <div class="sp-logo" id="sp-logo"><div class="wordmark"><span class="wm-1">Thomson</span><span class="wm-2">Rent A Car</span></div></div>
-    <h1 class="sp-title">Welcome to<br><span class="nw">Thomson Rent A Car</span></h1>
-    <p class="sp-sub">Car Rental Booking Service</p>
+    <div class="sp-logo" id="sp-logo"></div>
+    <h1 class="sp-title">Welcome to<br><span class="nw" id="sp-name"></span></h1>
+    <p class="sp-sub" id="sp-svc"></p>
     <div class="sp-road" aria-hidden="true"><span></span></div>
   </div>
   <p class="sp-foot" id="sp-foot"></p>
@@ -593,9 +593,11 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.7-2026';
+const APP_VERSION = '3.12-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
-const COMPANY = 'Thomson Rent A Car LLC';
+/* branding comes from config.js, so the same app works for any company */
+const BR = Object.assign({ company: 'Thomson Rent A Car LLC', name: 'Thomson Rent A Car', short: 'Thomson', tagline: 'Rent A Car', service: 'Car Rental Booking Service' }, window.BRAND || {});
+const COMPANY = BR.company;
 const EMAIL_DOMAIN = 'thomson-booking.app'; // internal only: usernames become username@this-domain
 
 /* ========================================================= helpers */
@@ -631,7 +633,7 @@ const ICON = {
   cal: '<path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z M4 10h16 M8.5 3v4 M15.5 3v4 M8 14h3"/>'
 };
 const ico = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
-const STATUS = { booked: 'Booked', onrent: 'On rent', returned: 'Returned, to settle', pending: 'Pending charges', closed: 'Closed', cancelled: 'Cancelled' };
+const STATUS = { booked: 'Booked', onrent: 'Open agreement', returned: 'Returned, to settle', pending: 'Pending charges', closed: 'Closed', cancelled: 'Cancelled' };
 const ACTIVE = ['booked', 'onrent', 'returned', 'pending'];
 const MODE_LABEL = { plus: '+VAT', incl: 'Incl. VAT', none: 'No VAT' };
 const FUEL = ['Empty', '1/4', '1/2', '3/4', 'Full'];
@@ -731,7 +733,9 @@ function hideSplash() {
 }
 (function initSplash() {
   const f = document.getElementById('sp-foot'); if (f) f.innerHTML = `Version ${APP_VERSION}<br>${APP_CREDIT}`;
-  const l = document.getElementById('sp-logo'); if (l && LOGO_URL) l.innerHTML = `<img src="${LOGO_URL}" alt="Thomson Rent A Car">`;
+  const l = document.getElementById('sp-logo'); if (l) l.innerHTML = LOGO_URL ? `<img src="${LOGO_URL}" alt="${esc(BR.name)}">` : `<div class="wordmark"><span class="wm-1">${esc(BR.short)}</span><span class="wm-2">${esc(BR.tagline)}</span></div>`;
+  const tt = document.getElementById('sp-name'); if (tt) tt.textContent = BR.name; const ts = document.getElementById('sp-svc'); if (ts) ts.textContent = BR.service;
+  document.title = `${BR.short} Booking`;
   setTimeout(hideSplash, 7000);
 })();
 function boot() {
@@ -853,12 +857,12 @@ function ask({ title, text = '', ok = 'Confirm', input = null, danger = false })
   });
 }
 function brand(cls = '') {
-  return LOGO_URL ? `<img src="${esc(LOGO_URL)}" class="logo ${cls}" alt="Thomson Rent A Car">`
-    : `<div class="wordmark ${cls}" aria-label="Thomson Rent A Car"><span class="wm-1">Thomson</span><span class="wm-2">Rent A Car</span></div>`;
+  return LOGO_URL ? `<img src="${esc(LOGO_URL)}" class="logo ${cls}" alt="${esc(BR.name)}">`
+    : `<div class="wordmark ${cls}" aria-label="${esc(BR.name)}"><span class="wm-1">${esc(BR.short)}</span><span class="wm-2">${esc(BR.tagline)}</span></div>`;
 }
 const loading = () => `<div class="empty"><p>Loading…</p></div>`;
 const deny = () => ({ title: 'Not available', back: '#/home', html: `<div class="empty"><h3>This page isn't available for your role</h3><p><a href="#/home">Go to tasks</a></p></div>` });
-const statusChip = s => `<span class="chip ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
+const statusChip = (s, b) => s === 'booked' && b && b.oldRef ? '<span class="chip onrent">Open agreement, to deliver</span>' : `<span class="chip ${esc(s)}">${esc(STATUS[s] || s)}</span>`;
 const carLabel = b => b && b.carTba ? `<span class="chip docs">Car to assign</span> ${esc(b.carName || 'Car')}` : `<span class="plate big">${esc(b.plate || '?')}</span> ${esc(b.carName || 'Car')}`;
 /* important details still missing on a booking */
 const missingInfo = b => !b || ['cancelled', 'closed'].includes(b.status) ? [] : [b.carTba && 'Car and plate', !b.oldRef && 'Agreement No', !b.clientPhone && 'Client phone', !b.location && 'Location', b.status === 'booked' && !b.deliveryDriverId && 'Driver'].filter(Boolean);
@@ -1117,7 +1121,7 @@ function viewHome() {
   const dayWord = dayWordFor(D).toLowerCase().startsWith('to') ? dayWordFor(D).toLowerCase() : 'this day';
   const tab = S.homeTab;
   const head = `<section class="hero home">${SKYLINE}<div class="hero-in">
-    <div class="hero-top">${brand()}<div style="flex:1"><div class="welcome">Welcome to Thomson Car Rental Booking Service</div><div class="who">Signed in as ${esc(S.me.name)}, ${esc(role())}</div></div><span class="bell-m">${bellHtml(true)}</span></div>
+    <div class="hero-top">${brand()}<div style="flex:1"><div class="welcome">Welcome to ${esc(BR.short)} ${esc(BR.service)}</div><div class="who">Signed in as ${esc(S.me.name)}, ${esc(role())}</div></div><span class="bell-m">${bellHtml(true)}</span></div>
     <div class="hero-date">
       <button class="iconbtn dark" data-act="day" data-d="-1" aria-label="Previous day">${ico('left')}</button>
       <div>
@@ -1131,7 +1135,7 @@ function viewHome() {
     <button class="stat s-d" data-act="tab" data-t="d"><strong class="num">${dl.length}</strong><span>Deliveries ${dayWord}</span><em>${dl.filter(t => t.done).length} done</em></button>
     <button class="stat s-p" data-act="tab" data-t="p"><strong class="num">${pk.length}</strong><span>Pickups ${dayWord}</span><em>${pk.filter(t => t.done).length} done</em></button>
     <button class="stat s-f" data-act="tab" data-t="a"><strong class="num">${ownCount}${subCount ? `<small>+${subCount}</small>` : ''}</strong><span>Cars available</span><em>${subCount ? `${ownCount} own, ${subCount} external` : 'Own cars'}${moveCount('garage') ? `, ${moveCount('garage')} in garage` : ''}${moveCount('nrm') ? `, ${moveCount('nrm')} on NRM` : ''}${overdueContracts().length ? `<br><b style="color:var(--late)">${overdueContracts().length} need action</b>` : ''}</em></button>
-    <a class="stat s-r" href="#/onrent"><strong class="num">${onrent}</strong><span>Cars on rent now</span><em>View list</em></a>
+    <a class="stat s-r" href="#/onrent"><strong class="num">${onrent}</strong><span>Open agreements</span><em>Cars on rent, view list</em></a>
   </div>`;
   const col = (key, title, list, cls) => `<section class="col col-${key}" aria-label="${title}"><header class="col-h ${cls}"><h2>${title}</h2><span class="num">${list.length}</span></header>
     ${list.length ? `<ol class="timeline">${list.map(taskCard).join('')}</ol>` : `<p class="col-empty">No ${title.toLowerCase()} ${dayWord}.</p>`}</section>`;
@@ -1163,6 +1167,14 @@ function viewHome() {
 }
 ACT.tab = ({ t }) => { S.homeTab = t; try { localStorage.setItem('tb-tab', t); } catch (e) { } render(); if (window.innerWidth < 1000) { const b = $('.sec-head'); b && b.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
 ACT.avmode = ({ m }) => { S.availMode = m; render(); };
+
+/* WhatsApp message style: Plain (safe everywhere, uses WhatsApp *bold*) or Emojis.
+   Emojis are built from code points so the file's text encoding can never damage them. */
+const EMO = { car: String.fromCodePoint(0x1F697), carF: String.fromCodePoint(0x1F698), ok: String.fromCodePoint(0x2705), flag: String.fromCodePoint(0x1F3C1), light: String.fromCodePoint(0x1F6A6), phone: String.fromCodePoint(0x1F4F1), doc: String.fromCodePoint(0x1F4C4), note: String.fromCodePoint(0x1F4DD) };
+const waStyle = () => { try { return localStorage.getItem('tb-wastyle') || 'plain'; } catch (e) { return 'plain'; } };
+const setWaStyle = v => { try { localStorage.setItem('tb-wastyle', v); } catch (e) { } };
+const styleToggle = id => `<div class="seg left" role="group" aria-label="Message style" style="margin:10px 0 0">${[['plain', 'Plain (works everywhere)'], ['emoji', 'With emojis']].map(([k, l]) => `<button type="button" class="${waStyle() === k ? 'on' : ''}" data-style="${k}" data-for="${id}">${l}</button>`).join('')}</div>`;
+function wireStyle(o, rebuild) { o.querySelectorAll('[data-style]').forEach(bt => bt.onclick = () => { setWaStyle(bt.dataset.style); o.querySelectorAll('[data-style]').forEach(x => x.classList.toggle('on', x === bt)); rebuild(); }); }
 const splitNums = s => String(s || '').split(/[,;\n]+/).map(x => x.replace(/[^\d+]/g, '')).filter(x => x.length >= 7);
 function contactNumbers() {
   const company = splitNums(S.settings.waNumber);
@@ -1173,21 +1185,25 @@ function contactNumbers() {
 }
 function availMessage(D, mode) {
   const list = sortCars(availableOn(D, mode)).filter(x => x.st.state !== 'until');
-  const name = S.settings.shareName || 'Thomson Rent A Car';
-  const lines = list.map(x => { const p = carParts(x.c); return `🚗 ${[p.make, p.model, p.year].filter(Boolean).join(' ')}`; });
+  const name = S.settings.shareName || BR.name, em = waStyle() === 'emoji';
   const nums = contactNumbers();
-  return { count: list.length, nums, text: `🏁 ${name} 🏁\n\n🚦 Available Cars For ${dayWordFor(D)} 🚦\n\n${lines.join('\n')}\n\n📱 Please contact on WhatsApp or call:${nums.length ? '\n' + nums.join('\n') : ''}` };
+  const cars = list.map(x => { const p = carParts(x.c); return `${em ? EMO.car : '-'} ${[p.make, p.model, p.year].filter(Boolean).join(' ')}`; });
+  const text = em
+    ? `${EMO.flag} ${name} ${EMO.flag}\n\n${EMO.light} Available Cars For ${dayWordFor(D)} ${EMO.light}\n\n${cars.join('\n')}\n\n${EMO.phone} Please contact on WhatsApp or call:${nums.length ? '\n' + nums.join('\n') : ''}`
+    : `*${name}*\n\n*Available Cars For ${dayWordFor(D)}*\n\n${cars.join('\n')}\n\nPlease contact on WhatsApp or call:${nums.length ? '\n' + nums.join('\n') : ''}`;
+  return { count: list.length, nums, text };
 }
 ACT.shareavail = () => {
   const o = openSheet(`<h2>Share available cars</h2>
     <div class="grid2"><label class="f">Date<input type="date" id="sh-date" value="${S.viewDate}"></label>
     <label class="f">Cars<select id="sh-mode"><option value="own" selected>Own and investor cars</option><option value="both">All, including external</option><option value="sub">External only</option></select></label></div>
+    ${styleToggle('sh')}
     <label class="f">Message (you can edit it before sending)<textarea id="sh-text" rows="12" style="font-size:15px"></textarea></label>
     <p class="small muted" id="sh-count" style="margin:6px 0 0"></p>
     ${contactNumbers().length ? '' : `<p class="warn">No contact numbers yet. ${isAdmin() ? 'Add company numbers under More, Company and VAT settings, or personal numbers under Users and roles.' : 'Ask the admin to add them.'}</p>`}
     <div class="btnrow"><button class="btn" id="sh-copy">Copy</button><button class="btn wa" id="sh-send">Send on WhatsApp</button></div>`);
   const upd = () => { const m = availMessage($('#sh-date').value || S.viewDate, $('#sh-mode').value); $('#sh-text').value = m.text; $('#sh-count').textContent = `${m.count} car${m.count === 1 ? '' : 's'} in the list.`; };
-  o.querySelector('#sh-date').onchange = upd; o.querySelector('#sh-mode').onchange = upd; upd();
+  o.querySelector('#sh-date').onchange = upd; o.querySelector('#sh-mode').onchange = upd; wireStyle(o, upd); upd();
   o.querySelector('#sh-copy').onclick = async () => {
     const t = $('#sh-text').value;
     try { await navigator.clipboard.writeText(t); } catch (e) { const ta = $('#sh-text'); ta.select(); document.execCommand('copy'); }
@@ -1227,6 +1243,50 @@ function pickupCalc(b, f, pc) {
   const cc = pc.method === 'card' ? r2(subtotal * (pc.ccPct || 0) / 100) : 0, ccVat = r2(cc * v);
   const total = r2(subtotal + cc + ccVat), paid = paidSoFar(f);
   return { rows, subtotal, cc, ccVat, ccPct: pc.ccPct, total, paid, due: r2(total - paid), method: pc.method };
+}
+
+/* DELIVERED and RETURNED messages for the team group, same pattern as BOOKED */
+function statusMsgHead(word, em, icon) { return em ? `${icon} ${word} ${EMO.ok}` : `*${word}*`; }
+const clientBold = b => `*${String(b.clientName || '').replace(/\*/g, '').trim()}*`;
+function deliveredMsg(b, x) {
+  const em = waStyle() === 'emoji', dot = em ? '•' : '-';
+  return [statusMsgHead('DELIVERED', em, EMO.car), `${b.ref}${x.agr ? ', Agr ' + x.agr : ''}`, '',
+    `${dot} Vehicle: ${b.carName}${b.plate ? ` (${b.plate})` : ''}`,
+    `${dot} Client: ${clientBold(b)}`,
+    `${dot} Delivered: ${dmy(x.at)}`,
+    `${dot} Return: ${dmy(b.pickupAt)}`,
+    x.ho.km || x.ho.fuel ? `${dot} KM out: ${x.ho.km || '-'}, Fuel: ${x.ho.fuel || '-'}` : '',
+    x.payAmt ? `${dot} Collected: AED ${amt(x.payAmt)} by ${({ cash: 'cash', card: 'card', bank: 'bank transfer' })[x.payM] || x.payM}` : '',
+    x.docs === null ? '' : `${dot} Documents: ${x.docs ? 'collected' : 'NOT collected'}`,
+    x.ho.notes ? `${dot} Notes: ${x.ho.notes}` : '',
+    `${dot} Delivered by: ${S.me.name}`].filter((l, i) => l !== '' || i === 2).join('\n');
+}
+function returnedMsg(b, x) {
+  const em = waStyle() === 'emoji', dot = em ? '•' : '-';
+  const out = b.deliveryHandover || {}, kmOut = +(b.legOutHandover || out).km || 0, kmIn = +x.ho.km || 0;
+  const pc = x.pc || {};
+  const ch = [pc.extraDays ? `${pc.extraDays} extra day${pc.extraDays === 1 ? '' : 's'}` : '', pc.salik ? `Salik ${amt(pc.salik)}` : '', pc.parking ? `Parking ${amt(pc.parking)}` : '', pc.fines ? `Fines ${amt(pc.fines)}` : '', pc.otherAmount ? `${pc.otherLabel || 'Other'} ${amt(pc.otherAmount)}` : ''].filter(Boolean);
+  const used = b.deliveredAt ? Math.max(1, Math.ceil((parseDT(x.at) - parseDT(b.deliveredAt)) / 864e5 - 0.0417)) : null;
+  return [statusMsgHead('RETURNED', em, String.fromCodePoint(0x1F519)), `${b.ref}${x.agr ? ', Agr ' + x.agr : ''}`, '',
+    `${dot} Vehicle: ${b.carName}${b.plate ? ` (${b.plate})` : ''}`,
+    `${dot} Client: ${clientBold(b)}`,
+    `${dot} Returned: ${dmy(x.at)}`,
+    b.deliveredAt ? `${dot} Delivered: ${dmy(b.deliveredAt)}${used ? ` (${used} day${used === 1 ? '' : 's'})` : ''}` : '',
+    x.ho.km || x.ho.fuel ? `${dot} KM back: ${x.ho.km || '-'}${kmOut && kmIn >= kmOut ? ` (${kmIn - kmOut} km driven)` : ''}, Fuel: ${x.ho.fuel || '-'}` : '',
+    ch.length ? `${dot} Charges: ${ch.join(', ')}` : '',
+    x.payAmt ? `${dot} Collected: AED ${amt(x.payAmt)} by ${({ cash: 'cash', card: 'card', bank: 'bank transfer' })[x.payM] || x.payM}` : '',
+    x.ho.notes ? `${dot} Notes: ${x.ho.notes}` : '',
+    `${dot} Picked up by: ${S.me.name}`].filter((l, i) => l !== '' || i === 2).join('\n');
+}
+function openMsgSheet({ title, sub, build, fresh, toPhone }) {
+  const o = openSheet(`<h2>${esc(title)}</h2><p class="muted" style="margin:4px 0 0">${esc(sub || '')} You can edit it first.</p>
+    ${styleToggle('ms')}
+    <label class="f">Message<textarea id="ms-text" rows="13" style="font-size:15px">${esc(build())}</textarea></label>
+    <div class="btnrow"><button class="btn" id="ms-copy">Copy</button><button class="btn wa" id="ms-send">Send on WhatsApp</button></div>
+    <div class="btnrow"><button class="btn" data-act="close">${fresh ? 'Not now' : 'Close'}</button></div>`);
+  wireStyle(o, () => { o.querySelector('#ms-text').value = build(); });
+  o.querySelector('#ms-copy').onclick = async () => { const t = $('#ms-text').value; try { await navigator.clipboard.writeText(t); } catch (e) { const ta = $('#ms-text'); ta.select(); document.execCommand('copy'); } toast('Copied. Paste it in the group.'); };
+  o.querySelector('#ms-send').onclick = () => openWhatsApp($('#ms-text').value, toPhone || '');
 }
 ACT.done = ({ id, type }) => {
   const b = getB(id); if (!b) return;
@@ -1300,7 +1360,10 @@ ACT.done = ({ id, type }) => {
       if (Object.keys(fu).length) batch.update(db.doc('finance/' + id), fu);
       if (pc && (pc.salik || pc.parking || pc.fines || pc.otherAmount || pc.extraDays)) upd.log = FV.arrayUnion(...[{ at, by: S.me.name, text: `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` }, { at, by: S.me.name, text: `Charges at return: ${[pc.extraDays ? pc.extraDays + ' extra days' : '', pc.salik ? 'Salik ' + money(pc.salik) : '', pc.parking ? 'parking ' + money(pc.parking) : '', pc.fines ? 'fines ' + money(pc.fines) : '', pc.otherAmount ? (pc.otherLabel || 'other') + ' ' + money(pc.otherAmount) : ''].filter(Boolean).join(', ')}` }, ...(payAmt ? [{ at, by: S.me.name, text: `Payment collected AED ${money(payAmt)} by ${payM}` }] : [])]);
       await batch.commit();
-      closeSheet(); toast((del ? 'Marked delivered. Pickup task added.' : 'Marked picked up.') + (payAmt ? ` AED ${money(payAmt)} recorded.` : '')); if (S.route === 'booking') backToList(); }
+      closeSheet(); toast((del ? 'Marked delivered. Pickup task added.' : 'Marked picked up.') + (payAmt ? ` AED ${money(payAmt)} recorded.` : '')); if (S.route === 'booking') backToList();
+      const info = { at, ho, payAmt, payM, pc, docs: del && b.collectDocs ? !!upd.docsCollected : null, agr: upd.oldRef || b.oldRef || '' };
+      setTimeout(() => openMsgSheet({ title: del ? `${b.plate} delivered` : `${b.plate} picked up`, sub: 'Share with the team group?', fresh: true,
+        build: () => del ? deliveredMsg(b, info) : returnedMsg(b, info) }), 150); }
     catch (e) { ev.target.disabled = false; $('#h-err').textContent = friendlyError(e); }
   };
 };
@@ -1525,26 +1588,28 @@ ACT.undodeliver = async ({ id }) => {
 const amt = n => { const v = r2(n); return Number.isInteger(v) ? v.toLocaleString('en-US') : money(v); };
 const dmy = s => { if (!s) return ''; const d = parseDT(s); return `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}, ${time12(tOf(s))}`; };
 function bookedMsg(b, f, updated) {
-  const phone = b.clientPhone ? '+' + waNum(b.clientPhone) : '';
-  const lines = ['🚘 BOOKED ✅ 🚘', updated ? `${b.ref} (updated)` : b.ref, '',
-    `• Vehicle: ${b.carName}`,
-    f ? `• Rate: AED ${amt(f.rate)} per ${f.rateType === 'month' ? 'month' : 'day'}, ${f.vatMode === 'incl' ? 'VAT included' : '+VAT'}` : '',
-    `• Days: ${b.days}`,
-    `• Delivery: ${dmy(b.deliveryAt)}`,
-    `• Return: ${dmy(b.pickupAt)}`,
-    `• Location: ${b.location || '-'}`,
-    `• Client: ${b.clientName}`,
-    phone ? `• Contact: ${phone}` : '',
-    `• Booked by: ${b.salespersonName || S.me.name}`,
-    b.collectDocs ? '📄 Collect documents at delivery' : '',
-    b.notes ? `📝 ${b.notes}` : ''];
+  const phone = b.clientPhone ? '+' + waNum(b.clientPhone) : '', em = waStyle() === 'emoji', dot = em ? '•' : '-';
+  const lines = [em ? `${EMO.carF} BOOKED ${EMO.ok} ${EMO.carF}` : '*BOOKED*', updated ? `${b.ref} (updated)` : b.ref, '',
+    `${dot} Vehicle: ${b.carName}`,
+    f ? `${dot} Rate: AED ${amt(f.rate)} per ${f.rateType === 'month' ? 'month' : 'day'}, ${f.vatMode === 'incl' ? 'VAT included' : '+VAT'}` : '',
+    `${dot} Days: ${b.days}`,
+    `${dot} Delivery: ${dmy(b.deliveryAt)}`,
+    `${dot} Return: ${dmy(b.pickupAt)}`,
+    `${dot} Location: ${b.location || '-'}`,
+    `${dot} Client: *${String(b.clientName || '').replace(/\*/g, '').trim()}*`,
+    phone ? `${dot} Contact: ${phone}` : '',
+    `${dot} Booked by: ${b.salespersonName || S.me.name}`,
+    b.collectDocs ? (em ? `${EMO.doc} Collect documents at delivery` : 'Collect documents at delivery') : '',
+    b.notes ? (em ? `${EMO.note} ${b.notes}` : `Note: ${b.notes}`) : ''];
   return lines.filter((l, i) => l !== '' || i === 2).join('\n');
 }
 function openBookedMsg(b, f, fresh, updated, toPhone) {
   const o = openSheet(`<h2>${fresh ? `Booking ${esc(b.ref)} ${updated ? 'updated' : 'saved'}` : toPhone ? `Send to ${esc(b.clientName)}` : 'Booking message'}</h2><p class="muted" style="margin:4px 0 0">${fresh ? (updated ? 'Share the updated booking with the team group?' : 'Share it to the team group?') : toPhone ? `Opens WhatsApp with +${esc(toPhone)}.` : 'Send it to the team group.'} You can edit it first.</p>
+    ${styleToggle('bm')}
     <label class="f">Message<textarea id="bm-text" rows="14" style="font-size:15px">${esc(bookedMsg(b, f, updated))}</textarea></label>
     <div class="btnrow"><button class="btn" id="bm-copy">Copy</button><button class="btn wa" id="bm-send">Send on WhatsApp</button></div>
     <div class="btnrow"><button class="btn" data-act="close">${fresh ? 'Not now' : 'Close'}</button></div>`);
+  wireStyle(o, () => { o.querySelector('#bm-text').value = bookedMsg(b, f, updated); });
   o.querySelector('#bm-copy').onclick = async () => { const t = $('#bm-text').value; try { await navigator.clipboard.writeText(t); } catch (e) { const ta = $('#bm-text'); ta.select(); document.execCommand('copy'); } toast('Copied. Paste it in the group.'); };
   o.querySelector('#bm-send').onclick = () => openWhatsApp($('#bm-text').value, toPhone || '');
 }
@@ -1641,7 +1706,7 @@ function viewDetail(id) {
     <div class="btnrow">${b.carTba ? `<button class="btn sm primary" data-act="assigncar" data-id="${id}">Assign car</button>` : ''}${miss.includes('Driver') ? `<button class="btn sm" data-act="assign" data-id="${id}">Assign driver</button>` : ''}${miss.some(m => /Agreement|phone|Location/.test(m)) ? `<a class="btn sm" href="#/edit/${id}">Add details</a>` : ''}</div></section>` : '';
   const log = (b.log || []).slice().reverse();
   const html = `
-  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2><span>${f ? (f.rateType === 'month' ? '<span class="chip onrent">Monthly</span> ' : '<span class="chip">Daily</span> ') : ''}${statusChip(b.status)}</span></div>
+  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2><span>${f ? (f.rateType === 'month' ? '<span class="chip onrent">Monthly</span> ' : '<span class="chip">Daily</span> ') : ''}${statusChip(b.status, b)}</span></div>
     ${b.status === 'cancelled' ? `<p class="warn">Cancelled: ${esc(b.cancelReason || '')}</p>` : ''}
     <dl class="kv" style="margin-top:10px">
       <dt>Agreement No</dt><dd>${b.oldRef ? `<strong class="num">${esc(b.oldRef)}</strong>` : `<span class="muted">Not entered yet</span>`}</dd>
@@ -1945,7 +2010,7 @@ function viewSettle(id) {
   const split = !monthly && Array.isArray(init.rentLines) && init.rentLines.length > 1;
   const locked = b.status === 'closed';
   const html = `
-  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2>${statusChip(b.status)}</div>
+  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2>${statusChip(b.status, b)}</div>
     <p style="margin:6px 0 0">${carLabel(b)}, ${esc(b.clientName)}</p>
     <p class="small muted" style="margin:4px 0 0">Delivered ${esc(fmtDT(b.deliveredAt) || '-')}, returned ${esc(fmtDT(b.pickedUpAt) || '-')}${elapsed ? `, about ${elapsed} day${elapsed === 1 ? '' : 's'} used` : ''}</p>
     ${locked ? '<p class="warn">This booking is closed. Change any figure and save to reopen and update it.</p>' : ''}
@@ -2063,7 +2128,7 @@ function rangeFor(r) {
   return ['2000-01-01', '2099-12-31'];
 }
 const listRowHtml = b => { const f = S.listFin.get(b.id); return `<a class="list-row" href="#/booking/${b.id}">
-      <div class="lr-top"><strong>${esc(b.ref)}, ${esc(b.clientName)}</strong><span>${rtChip(b)} ${statusChip(b.status)}</span></div>
+      <div class="lr-top"><strong>${esc(b.ref)}, ${esc(b.clientName)}</strong><span>${rtChip(b)} ${statusChip(b.status, b)}</span></div>
       <div class="lr-sub">${carLabel(b)} ${subTag(b)}${b.oldRef ? ` ${agrTag(b)}` : ''}</div>
       <div class="lr-when num">${esc(fmtDT(b.deliveryAt))} to ${esc(fmtDT(b.pickupAt))}</div>
       <div class="lr-top lr-sub"><span>${b.days} days, ${esc(b.salespersonName || '-')}</span><strong class="num" style="color:var(--ink)">AED ${money(bookingTotal(b, f))}</strong></div></a>`; };
@@ -2081,7 +2146,7 @@ function viewBookings() {
     <div class="seg left wrap" role="group" aria-label="Period">${[['open', 'Open now'], ['month', 'This month'], ['last', 'Last month'], ['next', 'Next 30 days'], ['year', 'This year'], ['all', 'All time']].map(([k, l]) => `<button class="${F.range === k ? 'on' : ''}" data-act="range" data-r="${k}">${l}</button>`).join('')}</div>
     <div class="grid2"><label class="f">From<input type="date" id="f-from" value="${F.from}"></label><label class="f">To<input type="date" id="f-to" value="${F.to}"></label></div>
     <label class="f">Search<input id="f-q" type="search" value="${esc(F.q)}" placeholder="Booking or old agreement number, client, phone, plate"></label>
-    <div class="grid2"><label class="f">Status<select id="f-st">${[['all', 'All'], ['active', 'All open'], ...Object.entries(STATUS)].map(([k, l]) => `<option value="${k}" ${F.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+    <div class="grid2"><label class="f">Status<select id="f-st">${[['all', 'All'], ['active', 'All not closed'], ...Object.entries(STATUS)].map(([k, l]) => `<option value="${k}" ${F.status === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
     <label class="f">Salesperson<select id="f-sp"><option value="all">All</option>${S.sales.map(s => `<option value="${s.id}" ${F.sp === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label></div>
     <div class="grid2"><label class="f">Car<select id="f-car"><option value="all">All</option>${[...S.cars].sort((a, b) => String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true })).map(c => `<option value="${c.id}" ${F.car === c.id ? 'selected' : ''}>${esc(c.plate)}, ${esc(carTitle(c))}</option>`).join('')}</select></label>
     <label class="f">Ownership<select id="f-type">${[['all', 'All'], ['owned', 'Owned'], ['investor', 'Investor'], ['sub', 'External (sub-lease)']].map(([k, l]) => `<option value="${k}" ${F.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>
@@ -2090,7 +2155,7 @@ function viewBookings() {
     <p class="small muted" style="margin:8px 0 0">Dates filter by delivery date. Searching a booking number finds it in any year.</p>
   </section>
   ${hits.length ? `<h2 class="cat-h">Found by booking number</h2>${hits.map(listRowHtml).join('')}` : ''}
-  <div class="toolbar" style="justify-content:space-between;align-items:center"><strong>${S.listRows ? `${rows.length} booking${rows.length === 1 ? '' : 's'}, AED ${money(total)}${F.rtype === 'all' && rows.length ? `<br><span class="muted small" style="font-weight:500">${rows.filter(b => rtypeOf(b) === 'day').length} daily, ${rows.filter(b => rtypeOf(b) === 'month').length} monthly</span>` : ''}` : 'Loading…'}</strong>
+  <div class="toolbar" style="justify-content:space-between;align-items:center"><strong>${S.listRows ? `${rows.length} booking${rows.length === 1 ? '' : 's'}, AED ${money(total)}${rows.length ? `<br><span class="muted small" style="font-weight:500">${rows.filter(b => b.status === 'onrent' || (b.status === 'booked' && b.oldRef)).length} open agreements, ${rows.filter(b => b.status === 'booked' && !b.oldRef).length} booked${F.rtype === 'all' ? `, ${rows.filter(b => rtypeOf(b) === 'day').length} daily, ${rows.filter(b => rtypeOf(b) === 'month').length} monthly` : ''}</span>` : ''}` : 'Loading…'}</strong>
     <span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" data-act="list-reload">Refresh</button><button class="btn sm" data-act="list-csv">Excel (CSV)</button><button class="btn sm" data-act="list-print">Print PDF</button></span></div>
   ${S.listRows && !rows.length && !hits.length ? `<div class="empty"><h3>No bookings match these filters</h3><p>Try All time, or clear the search.</p></div>` : ''}
   ${rows.map(listRowHtml).join('')}`;
@@ -2218,7 +2283,7 @@ function viewOnRent() {
   const busy = new Set([...S.active.values()].filter(b => (b.status === 'booked' || b.status === 'onrent') && b.deliveryDate <= D && b.pickupDate >= D).map(b => b.carId));
   const free = S.cars.filter(c => c.active !== false && !busy.has(c.id));
   const html = `
-  <h2 style="font-size:18px;margin:4px 0 8px">Cars with clients now (${on.length})</h2>
+  <h2 style="font-size:18px;margin:4px 0 8px">Open agreements, cars with clients (${on.length})</h2>
   ${on.length ? on.map(b => { const late = parseDT(b.pickupAt) < now; return `<a class="list-row" href="#/booking/${b.id}">
     <div class="lr-top"><span>${carLabel(b)}</span>${late ? '<span class="chip late">Pickup overdue</span>' : ''}</div>
     <div class="lr-sub">${esc(b.clientName)}${b.clientPhone ? `, ${esc(b.clientPhone)}` : ''}</div>
@@ -2228,7 +2293,7 @@ function viewOnRent() {
     <p class="small muted">${free.length} of ${S.cars.filter(c => c.active !== false).length} cars have no booking on ${esc(fmtDate(D))}.</p>
     ${free.map(c => `<a href="#/car/${c.id}" style="display:block;padding:8px 0;border-top:1px solid var(--line);color:inherit;text-decoration:none">${esc(carTitle(c))} <span class="plate">${esc(c.plate)}</span> <span class="muted small">${esc(isSub(c) ? 'Sub-lease: ' + (c.supplier || '') : c.category || '')}</span></a>`).join('')}
   </section>`;
-  return { title: 'On rent', html, mount: () => { $('#fr-date').addEventListener('change', e => { S.freeDate = e.target.value; render(); }); } };
+  return { title: 'Open agreements', html, mount: () => { $('#fr-date').addEventListener('change', e => { S.freeDate = e.target.value; render(); }); } };
 }
 /* ========================================================= more / admin */
 function viewMore() {
@@ -2239,7 +2304,7 @@ function viewMore() {
     <a href="#/calendar">Car calendar<span></span></a>
     <a href="#/garage">Garage<span class="muted small">${moveCount('garage') ? moveCount('garage') + ' in garage' : ''}</span></a>
     <a href="#/nrm">NRM, staff use<span class="muted small">${moveCount('nrm') ? moveCount('nrm') + ' out' : ''}</span></a>
-    <a href="#/onrent">Cars on rent now<span></span></a>
+    <a href="#/onrent">Open agreements (cars on rent)<span></span></a>
   </div>
   ${a ? `<h2 class="cat-h">Admin settings</h2><div class="menu">
     <a href="#/cars">Own cars and plates<span class="muted small">${S.cars.filter(c => !isSub(c)).length}</span></a>
@@ -2250,7 +2315,7 @@ function viewMore() {
     <a href="#/import">Import open agreements<span class="muted small">From Excel</span></a>
   </div>` : ''}
   <div class="menu"><button data-act="signout">Sign out<span></span></button></div>
-  <div class="credit"><strong>Thomson Car Rental Booking Service</strong><span>Version ${APP_VERSION}</span><span>${APP_CREDIT}</span><button class="linkbtn" data-act="checkver">Check for updates</button></div>`;
+  <div class="credit"><strong>${esc(BR.short)} ${esc(BR.service)}</strong><span>Version ${APP_VERSION}</span><span>${APP_CREDIT}</span><button class="linkbtn" data-act="checkver">Check for updates</button></div>`;
   return { title: 'More', html };
 }
 const CAT_COLORS = ['#1F6FD1', '#C47A12', '#2B8A57', '#7B4BC4', '#C8372D', '#0F8A8A', '#5A6A7B'];
@@ -2625,7 +2690,7 @@ function viewSettings() {
     <label class="f">Address<input id="st-addr" value="${esc(s.address || '')}" placeholder="Al Qusais, Dubai, UAE"></label>
     <div class="grid2"><label class="f">Phone<input id="st-phone" value="${esc(s.phone || '')}" placeholder="04 123 4567"></label><label class="f">TRN<input id="st-trn" value="${esc(s.trn || '')}" placeholder="100XXXXXXXXXXXX"></label></div></section>
   <section class="card"><h2>WhatsApp available list</h2>
-    <label class="f">Name at the top<input id="st-shn" value="${esc(s.shareName || 'Thomson Rent A Car')}"></label>
+    <label class="f">Name at the top<input id="st-shn" value="${esc(s.shareName || BR.name)}"></label>
     <label class="f">Company WhatsApp or call numbers<textarea id="st-wa" rows="2" placeholder="+971505226338&#10;+971562909072">${esc(splitNums(s.waNumber).join('\n'))}</textarea></label>
     <p class="small muted" style="margin:4px 0 0">One per line. Used on drivers' messages, and for anyone without personal numbers.</p>
     <p class="small muted" style="margin:10px 0 0">Cars are listed in your category order everywhere. Set the order under <a href="#/categories">Categories</a>.</p></section>
@@ -2647,7 +2712,7 @@ function viewSettings() {
     if (pin && rpin && pin === rpin) { $('#st-err').textContent = 'Use different numbers for the Delete PIN and the Reset PIN.'; return; }
     const d = { companyName: $('#st-name').value.trim() || COMPANY, address: $('#st-addr').value.trim(), phone: $('#st-phone').value.trim(), trn: $('#st-trn').value.trim(),
       vatRate: parseFloat($('#st-vat').value) || 0, defaultVatMode: $('#st-mode').value, ccOptions: $('#st-cc').value.replace(/[^\d.,]/g, '') || '4,5', defaultCc: parseFloat($('#st-ccd').value) || 5,
-      shareName: $('#st-shn').value.trim() || 'Thomson Rent A Car', waNumber: splitNums($('#st-wa').value).join(', ') };
+      shareName: $('#st-shn').value.trim() || BR.name, waNumber: splitNums($('#st-wa').value).join(', ') };
     try { await db.doc('meta/settings').set(d, { merge: true }); if (pin || rpin) await db.doc('meta/secure').set({ ...(pin ? { pin } : {}), ...(rpin ? { resetPin: rpin } : {}) }, { merge: true }); S.formOpen = false; toast('Settings saved.'); go('#/home'); }
     catch (e) { $('#st-err').textContent = friendlyError(e); }
   };
@@ -2674,7 +2739,7 @@ function viewNotConfigured() {
   return `<div class="auth"><div class="auth-card">${brand()}<h1>Connect Firebase first</h1><p class="muted">The file <strong>config.js</strong> is missing from your GitHub repository, or still has <strong>PASTE_</strong> values. Upload config.js with your Firebase keys, wait a minute, and reload.</p></div></div>`;
 }
 function viewLogin() {
-  return `<div class="auth">${SKYLINE}<div class="auth-card">${brand()}<h1>Sign in</h1><p class="muted" style="margin-top:0">Thomson Car Rental Booking Service</p>
+  return `<div class="auth">${SKYLINE}<div class="auth-card">${brand()}<h1>Sign in</h1><p class="muted" style="margin-top:0">${esc(BR.short)} ${esc(BR.service)}</p>
     <label class="f">Username<input id="l-user" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
     <label class="f">Password<input id="l-pass" type="password" autocomplete="current-password"></label>
     <p class="err" id="l-err" role="alert"></p><button class="btn primary block" id="l-go">Sign in</button><p class="small muted" style="text-align:center;margin:14px 0 0">Version ${APP_VERSION}<br>${APP_CREDIT}</p></div></div>`;
@@ -2719,7 +2784,7 @@ function mountSetup() {
 function printHeader(title, sub) {
   const s = S.settings;
   const addr = [s.address, s.phone, s.trn ? 'TRN ' + s.trn : ''].filter(Boolean).join('   |   ');
-  return `<header class="p-head"><div class="p-brand">${LOGO_URL ? `<img src="${esc(LOGO_URL)}" class="p-logo" alt="">` : '<div class="p-wm">Thomson</div>'}
+  return `<header class="p-head"><div class="p-brand">${LOGO_URL ? `<img src="${esc(LOGO_URL)}" class="p-logo" alt="">` : `<div class="p-wm">${esc(BR.short)}</div>`}
     <div><div class="p-co">${esc(s.companyName || COMPANY)}</div>${addr ? `<div class="p-addr">${esc(addr)}</div>` : ''}</div></div>
     <div class="p-title"><h1>${esc(title)}</h1><div>${esc(sub || '')}</div></div></header>`;
 }
@@ -2737,7 +2802,7 @@ function browserPrint(html, landscape) {
   imgs.forEach(i => { if (i.complete) { if (--n === 0) go(); } else { i.onload = i.onerror = () => { if (--n === 0) go(); }; } });
 }
 async function doPrint(html, landscape, fileName) {
-  const name = (fileName || 'Thomson').replace(/[^\w.-]+/g, '-') + '.pdf';
+  const name = (fileName || BR.short).replace(/[^\w.-]+/g, '-') + '.pdf';
   if (!useFilePdf()) return browserPrint(html, landscape);
   openSheet(`<h2>Preparing PDF…</h2><p class="muted">${esc(name)}</p><div class="pdf-spin" aria-hidden="true"></div>`);
   let wrap;
@@ -3416,11 +3481,11 @@ const RESET_SETS = [
   { k: 'numbers', label: 'Restart numbering (BK, GRG, NRM)', cols: [], meta: 'meta/counter', note: 'Only safe if bookings are also reset.' }
 ];
 async function backupAll() {
-  const out = { app: 'Thomson Booking', version: APP_VERSION, exportedAt: nowLocal(), by: S.me.name, collections: {} };
+  const out = { app: `${BR.short} Booking`, version: APP_VERSION, exportedAt: nowLocal(), by: S.me.name, collections: {} };
   for (const c of ['bookings', 'finance', 'cars', 'garage', 'salespeople', 'users']) out.collections[c] = (await db.collection(c).get()).docs.map(d => ({ id: d.id, ...d.data() }));
   for (const m of ['settings', 'counter']) { const d = await db.doc('meta/' + m).get(); out[m] = d.exists ? d.data() : null; }
   const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
-  const name = `thomson-backup-${todayStr()}.json`;
+  const name = `${BR.short.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-backup-${todayStr()}.json`;
   const file = new File([blob], name, { type: 'application/json' });
   if (useFilePdf() && navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: name }); return true; } catch (e) { if (e && e.name === 'AbortError') return false; } }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
@@ -3495,7 +3560,7 @@ ACT.bell = () => {
 let swReg = null;
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').then(r => { swReg = r; }).catch(() => { });
 ACT.notifon = async () => {
-  try { const p = await Notification.requestPermission(); if (p === 'granted') { toast('Notifications are on.'); phoneNotify('Thomson Booking', 'Notifications are working.', 'test'); } else toast('Notifications were not allowed.'); } catch (e) { toast('This phone does not support notifications here.'); }
+  try { const p = await Notification.requestPermission(); if (p === 'granted') { toast('Notifications are on.'); phoneNotify(`${BR.short} Booking`, 'Notifications are working.', 'test'); } else toast('Notifications were not allowed.'); } catch (e) { toast('This phone does not support notifications here.'); }
   ACT.bell();
 };
 function phoneNotify(title, body, tag) {
