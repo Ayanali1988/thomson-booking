@@ -646,7 +646,7 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.27-2026';
+const APP_VERSION = '3.29-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
 /* branding comes from config.js, so the same app works for any company */
 const BR = Object.assign({ company: 'Thomson Rent A Car LLC', name: 'Thomson Rent A Car', short: 'Thomson', tagline: 'Rent A Car', service: 'Car Rental Booking Service' }, window.BRAND || {});
@@ -690,7 +690,11 @@ const ico = n => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICON[n
 const STATUS = { booked: 'Booked', onrent: 'Open agreement', returned: 'Returned', pending: 'Returned', closed: 'Returned', cancelled: 'Cancelled' };
 const ACTIVE = ['booked', 'onrent', 'returned', 'pending'];
 const MODE_LABEL = { plus: '+VAT', incl: 'Incl. VAT', none: 'No VAT' };
-const FUEL = ['Empty', '1/4', '1/2', '3/4', 'Full'];
+const FUEL = ['Empty', '1/8', '2/8', '3/8', '4/8', '5/8', '6/8', '7/8', 'Full'];
+const FUEL4 = ['Empty', '1/4', '2/4', '3/4', 'Full'];
+/* fuel choices follow the car's gauge: 8 points (most cars) or 4 points */
+const fuelList = carId => { const c = S.cars.find(x => x.id === carId); return c && +c.fuelPoints === 4 ? FUEL4 : FUEL; };
+const fuelOpts = carId => fuelList(carId).map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('');
 
 /* ========================================================= VAT & totals */
 const vatRate = () => ((S.settings.vatRate ?? 5) / 100);
@@ -852,10 +856,24 @@ function startListeners() {
   L.push(db.collection('bookings').where('status', 'in', ACTIVE).onSnapshot(s => { S.active = new Map(s.docs.map(d => [d.id, { id: d.id, ...d.data() }])); refresh(); tick(true); }, onErr));
   subscribeDay();
 }
+/* older versions kept the planned date after an early or late return; fix those records once */
+const repaired = new Set();
+function repairActualDates(list) {
+  if (!S.me || !isStaff()) return;
+  list.forEach(b => {
+    if (repaired.has(b.id)) return;
+    const upd = {};
+    if (b.pickedUpAt && b.pickedUpAt.slice(0, 10) !== b.pickupDate) Object.assign(upd, { plannedPickupAt: b.plannedPickupAt || b.pickupAt, pickupAt: b.pickedUpAt, pickupDate: b.pickedUpAt.slice(0, 10) });
+    if (b.deliveredAt && b.deliveredAt.slice(0, 10) !== b.deliveryDate) Object.assign(upd, { plannedDeliveryAt: b.plannedDeliveryAt || b.deliveryAt, deliveryAt: b.deliveredAt, deliveryDate: b.deliveredAt.slice(0, 10) });
+    if (!Object.keys(upd).length) return;
+    repaired.add(b.id);
+    db.doc('bookings/' + b.id).update(upd).catch(() => repaired.delete(b.id));
+  });
+}
 function subscribeDay() {
   S.dayUnsub.forEach(f => f()); S.dayUnsub = [];
   const D = S.viewDate, dd = new Map(), pp = new Map();
-  const merge = () => { S.day = new Map([...dd, ...pp]); refresh(); };
+  const merge = () => { S.day = new Map([...dd, ...pp]); repairActualDates([...S.day.values()]); refresh(); };
   S.dayUnsub.push(db.collection('bookings').where('deliveryDate', '==', D).onSnapshot(s => { dd.clear(); s.docs.forEach(d => dd.set(d.id, { id: d.id, ...d.data() })); merge(); }, onErr));
   S.dayUnsub.push(db.collection('bookings').where('pickupDate', '==', D).onSnapshot(s => { pp.clear(); s.docs.forEach(d => pp.set(d.id, { id: d.id, ...d.data() })); merge(); }, onErr));
 }
@@ -1051,8 +1069,11 @@ function tasksFor(D) {
   const out = [];
   for (const b of map.values()) {
     if (b.status === 'cancelled') continue;
-    if (b.deliveryDate === D) out.push({ b, type: 'delivery', at: b.deliveryAt, done: !!b.deliveredAt });
-    if (b.pickupDate === D && b.deliveredAt) out.push({ b, type: 'pickup', at: b.pickupAt, done: !!b.pickedUpAt });
+    /* a finished task shows on the day it actually happened, not the planned day */
+    const dDay = b.deliveredAt ? b.deliveredAt.slice(0, 10) : b.deliveryDate;
+    const pDay = b.pickedUpAt ? b.pickedUpAt.slice(0, 10) : b.pickupDate;
+    if (dDay === D) out.push({ b, type: 'delivery', at: b.deliveredAt || b.deliveryAt, done: !!b.deliveredAt });
+    if (pDay === D && b.deliveredAt) out.push({ b, type: 'pickup', at: b.pickedUpAt || b.pickupAt, done: !!b.pickedUpAt });
   }
   return out.sort((a, c) => a.at.localeCompare(c.at) || (a.type === 'delivery' ? -1 : 1));
 }
@@ -1388,7 +1409,7 @@ ACT.done = ({ id, type }) => {
     <div class="grid2"><label class="f">${del ? 'Delivered on' : 'Returned on'}<input type="date" id="h-date" value="${nowLocal().slice(0, 10)}"></label><label class="f">Time<input type="time" id="h-time" value="${tOf(nowLocal())}"></label></div>
     <p class="small muted" id="h-when" style="margin:4px 0 0"></p>
     <div class="grid2"><label class="f">KM reading<input id="h-km" inputmode="numeric" placeholder="45210"></label>
-    <label class="f">Fuel<select id="h-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>
+    <label class="f">Fuel${+((S.cars.find(x => x.id === b.carId) || {}).fuelPoints) === 4 ? ' (4-point gauge)' : ''}<select id="h-fuel">${fuelOpts(b.carId)}</select></label></div>
     <label class="f">Damage and notes<textarea id="h-notes" placeholder="${del ? 'Scratch on rear bumper' : 'No new damage'}"></textarea></label>
     ${del ? '' : `<h3 class="sub-h">Charges at return</h3>
     <div class="grid2"><label class="f">Salik (AED)<input id="h-salik" class="hc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label><label class="f">Parking (AED)<input id="h-park" class="hc" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"></label></div>
@@ -2566,6 +2587,7 @@ function carFields(c, sub) {
     <div id="c-supbox" class="${own === 'external' ? '' : 'hidden'}"><label class="f">Supplier (owner company)<input id="c-sup" list="c-sups" value="${esc(c.supplier || '')}" placeholder="Al Futtaim Rent A Car"><datalist id="c-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label></div>
     <div id="c-invbox" class="${own === 'investor' ? '' : 'hidden'}"><label class="f">Investor name (optional)<input id="c-inv" value="${esc(c.investor || '')}" placeholder="Mr. Khalid"></label></div>
     <label class="f">Car type (category)${own === 'external' ? ', optional' : ''}<select id="c-cat"><option value="">${own === 'external' ? 'No car type' : 'Choose car type: Luxury, Economy, Small…'}</option>${catList().map(x => `<option ${x.name.toLowerCase() === String(c.category || '').toLowerCase() ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}${c.category && !catInfo(c.category) ? `<option selected>${esc(c.category)}</option>` : ''}</select></label>
+    <label class="f">Fuel gauge<select id="c-fuelpts"><option value="8" ${+c.fuelPoints !== 4 ? 'selected' : ''}>8 points (1/8 to 8/8)</option><option value="4" ${+c.fuelPoints === 4 ? 'selected' : ''}>4 points (1/4 to 4/4)</option></select></label>
     <div class="grid2"><label class="f">Registration expiry<input type="date" id="c-reg" value="${esc(c.regExpiry || '')}"></label><label class="f">Insurance expiry<input type="date" id="c-ins" value="${esc(c.insExpiry || '')}"></label></div>
     <div class="grid2"><label class="f">Insurance company (optional)<input id="c-insco" value="${esc(c.insurer || '')}" placeholder="Orient Insurance"></label><label class="f">Policy no. (optional)<input id="c-pol" value="${esc(c.policyNo || '')}"></label></div>
     ${catList().length ? '' : `<p class="warn">No categories yet. ${isAdmin() ? '<a href="#/categories">Define your categories first</a>.' : 'Ask an admin to define them.'}</p>`}${isAdmin() ? '<p class="small" style="margin:6px 0 0"><a href="#/categories">Manage car types</a></p>' : ''}`;
@@ -2582,7 +2604,7 @@ function readCarFields(sub) {
   const ext = own === 'external';
   const d = { make: $('#c-make').value.trim(), model: $('#c-model').value.trim(), year: $('#c-year').value.trim(), plate: $('#c-plate').value.trim().toUpperCase(), color: $('#c-color').value.trim(), category: $('#c-cat').value.trim(),
     type: ext ? 'sublease' : 'own', ownership: ext ? 'sublease' : own, supplier: ext ? $('#c-sup').value.trim() : '', investor: own === 'investor' ? $('#c-inv').value.trim() : '',
-    regExpiry: $('#c-reg').value, insExpiry: $('#c-ins').value, insurer: $('#c-insco').value.trim(), policyNo: $('#c-pol').value.trim() };
+    fuelPoints: +$('#c-fuelpts').value || 8, regExpiry: $('#c-reg').value, insExpiry: $('#c-ins').value, insurer: $('#c-insco').value.trim(), policyNo: $('#c-pol').value.trim() };
   d.name = carTitle(d);
   return d;
 }
@@ -3369,8 +3391,8 @@ const PURPOSES = ['Repair', 'Oil change / service', 'Accident', 'Tyres', 'Regist
 const needsGarage = r => /repair|oil|service|accident/i.test(r || '');
 const garageNames = () => [...new Set([...(S.garageAll || []), ...S.garage.values()].filter(g => !isNrm(g)).map(g => g.garage).filter(Boolean))].sort();
 const byPlateSort = (a, b) => (isSub(a) - isSub(b)) || String(a.plate).localeCompare(String(b.plate), undefined, { numeric: true });
-const HO_FIELDS = (p, label) => `<h3 class="sub-h">${label}</h3><div class="grid2"><label class="f">KM reading<input id="${p}-km" inputmode="numeric" placeholder="45210"></label>
-  <label class="f">Fuel<select id="${p}-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>`;
+const HO_FIELDS = (p, label, carId) => `<h3 class="sub-h">${label}</h3><div class="grid2"><label class="f">KM reading<input id="${p}-km" inputmode="numeric" placeholder="45210"></label>
+  <label class="f">Fuel<select id="${p}-fuel">${fuelOpts(carId)}</select></label></div>`;
 const hoRead = p => ({ km: ($('#' + p + '-km') || {}).value?.trim() || '', fuel: ($('#' + p + '-fuel') || {}).value || '', by: S.me.name });
 function garageFieldsHtml(p, opt = {}) {
   return `<div class="grid2"><label class="f">Garage name<input id="${p}-gname" list="${p}-glist" placeholder="Al Futtaim Service Centre" value="${esc(opt.garage || '')}"><datalist id="${p}-glist">${garageNames().map(g => `<option>${esc(g)}</option>`).join('')}</datalist></label>
@@ -3407,7 +3429,7 @@ ACT.replace = async ({ id }) => {
       <label class="f">Supplier<input id="rh-sup" list="rh-sups" placeholder="Al Futtaim Rent A Car"><datalist id="rh-sups">${suppliers().map(s => `<option>${esc(s)}</option>`).join('')}</datalist></label>
       <div class="grid3"><label class="f">Make<input id="rh-make" placeholder="Nissan"></label><label class="f">Model<input id="rh-model" placeholder="Sunny"></label><label class="f">Year<input id="rh-year" inputmode="numeric" placeholder="2025"></label></div>
       <div class="grid2"><label class="f">Color<input id="rh-color" placeholder="White"></label><label class="f">Plate (if known)<input id="rh-plate" autocapitalize="characters" placeholder="TBC"></label></div></div>
-    ${HO_FIELDS('ro', `Coming back: ${esc(b.plate)}`)}
+    ${HO_FIELDS('ro', `Coming back: ${esc(b.plate)}`, b.carId)}
     <label class="f">Damage and notes<input id="ro-notes" placeholder="Engine warning light on"></label>
     ${HO_FIELDS('rn', 'Going out: replacement car')}
     <label class="check"><input type="checkbox" id="r-gar" checked> Send <strong>${esc(b.plate)}</strong> to the garage</label>
@@ -3423,7 +3445,7 @@ ACT.replace = async ({ id }) => {
   };
   o.querySelector('#r-why').onchange = e => { $('#r-gar').checked = needsGarage(e.target.value); sync(); };
   ['#r-date', '#r-time'].forEach(s => o.querySelector(s).onchange = () => { const v = sel.value; sel.innerHTML = opts(swapAt()); sel.value = v; sync(); });
-  sel.onchange = sync; o.querySelector('#r-gar').onchange = sync; sync();
+  sel.onchange = () => { sync(); const f = o.querySelector('#rn-fuel'); if (f && sel.value && !sel.value.startsWith('__')) f.innerHTML = fuelOpts(sel.value); }; o.querySelector('#r-gar').onchange = sync; sync();
   o.querySelector('#r-pq').addEventListener('input', e => {
     const hits = plateMatches(e.target.value);
     [...sel.options].forEach(op => { if (!op.value || op.value === '__hire') return; op.hidden = !!e.target.value.trim() && !hits.some(h => h.id === op.value); });
@@ -3622,7 +3644,7 @@ ACT.nrmback = ({ car }) => {
   const o = openSheet(`<h2>Back from NRM</h2>
     <p style="margin:4px 0 0"><span class="plate big">${esc(g.plate)}</span> ${esc(g.carName)}<br><span class="muted">${esc(g.no)}, ${esc(g.purpose)} with ${esc(g.staff || '-')}, out since ${esc(fmtDT(g.inAt))}${g.startKm ? `, KM out ${esc(g.startKm)}` : ''}</span></p>
     <div class="grid2"><label class="f">Date back<input type="date" id="nb-date" value="${now.slice(0, 10)}"></label><label class="f">Time back<input type="time" id="nb-time" value="${tOf(now)}"></label></div>
-    <div class="grid2"><label class="f">KM back<input id="nb-km" inputmode="numeric" placeholder="45380"></label><label class="f">Fuel<select id="nb-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>
+    <div class="grid2"><label class="f">KM back<input id="nb-km" inputmode="numeric" placeholder="45380"></label><label class="f">Fuel<select id="nb-fuel">${fuelOpts(g.carId)}</select></label></div>
     <label class="f">Notes<input id="nb-notes" placeholder="No damage"></label>
     <p class="err" id="nb-err"></p>
     <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn good" id="nb-save">Car is back</button></div>`);
