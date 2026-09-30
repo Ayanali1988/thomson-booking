@@ -581,6 +581,11 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 .lr-title{min-width:0}
 .t-agr{font-size:14.5px;font-weight:700;margin:2px 0 4px;overflow-wrap:anywhere}
 .t-agr .agr-no{font-size:15px}
+.hs{background:#F6F8FB;border:1px solid var(--line);border-radius:10px;padding:4px 12px;margin:0 0 10px}
+.hs-row{display:grid;grid-template-columns:78px 1fr;gap:8px;padding:8px 0;font-size:14px;border-top:1px solid var(--line)}
+.hs-row:first-child{border-top:0}
+.hs-l{font-weight:700;color:var(--navy)}
+.hs-row .chip{margin-left:4px}
 /* print */
 #print{display:none}
 @media print{
@@ -641,7 +646,7 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.25-2026';
+const APP_VERSION = '3.27-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
 /* branding comes from config.js, so the same app works for any company */
 const BR = Object.assign({ company: 'Thomson Rent A Car LLC', name: 'Thomson Rent A Car', short: 'Thomson', tagline: 'Rent A Car', service: 'Car Rental Booking Service' }, window.BRAND || {});
@@ -1079,6 +1084,7 @@ function taskCard(t) {
   if (!t.done) {
     acts.push(`<button class="btn sm" data-act="resched" data-id="${b.id}" data-type="${t.type}">Reschedule</button>`);
     if (t.type === 'pickup' && isStaff()) acts.push(`<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button>`);
+    if (t.type === 'pickup') acts.push(`<button class="btn sm" data-act="earlyret" data-id="${b.id}">Early return</button>`);
     if (isStaff()) acts.push(`<button class="btn sm" data-act="assign" data-id="${b.id}">${drvName ? 'Driver' : 'Assign driver'}</button>`);
     acts.push(`<button class="btn sm" data-act="ics" data-id="${b.id}" data-type="${t.type}" aria-label="Add to phone calendar">📅 Calendar</button>`);
     if (b.carTba) acts.push(`<button class="btn sm primary" data-act="assigncar" data-id="${b.id}">Assign car</button>`);
@@ -1353,6 +1359,7 @@ function returnedMsg(b, x) {
     `${dot} Client: ${clientBold(b)}`,
     `${dot} Returned: ${dmy(x.at)}`,
     b.deliveredAt ? `${dot} Delivered: ${dmy(b.deliveredAt)}${used ? ` (${used} day${used === 1 ? '' : 's'})` : ''}` : '',
+    x.planned && x.at < x.planned ? `${dot} *Returned early*${x.early ? ` (${x.early} day${x.early === 1 ? '' : 's'})` : ''}, was due ${dmy(x.planned)}` : '',
     x.ho.km || x.ho.fuel ? `${dot} KM back: ${x.ho.km || '-'}${kmOut && kmIn >= kmOut ? ` (${kmIn - kmOut} km driven)` : ''}, Fuel: ${x.ho.fuel || '-'}` : '',
     ch.length ? `${dot} Charges: ${ch.join(', ')}` : '',
     x.payAmt ? `${dot} Collected: AED ${amt(x.payAmt)} by ${({ cash: 'cash', card: 'card', bank: 'bank transfer' })[x.payM] || x.payM}` : '',
@@ -1378,6 +1385,8 @@ ACT.done = ({ id, type }) => {
     ${del ? `<label class="f">Agreement No<input id="h-agr" inputmode="numeric" value="${esc(b.oldRef || '')}" placeholder="15797"></label>` : ''}
     ${del && b.collectDocs ? `<label class="check docs-check"><input type="checkbox" id="h-docs"> <span><strong>Client documents collected</strong><br><span class="small muted">ID, driving licence, passport as required</span></span></label>` : ''}
     ${b.notes ? `<div class="t-note" style="margin-top:10px">📝 ${esc(b.notes)}</div>` : ''}
+    <div class="grid2"><label class="f">${del ? 'Delivered on' : 'Returned on'}<input type="date" id="h-date" value="${nowLocal().slice(0, 10)}"></label><label class="f">Time<input type="time" id="h-time" value="${tOf(nowLocal())}"></label></div>
+    <p class="small muted" id="h-when" style="margin:4px 0 0"></p>
     <div class="grid2"><label class="f">KM reading<input id="h-km" inputmode="numeric" placeholder="45210"></label>
     <label class="f">Fuel<select id="h-fuel">${FUEL.map(f => `<option ${f === 'Full' ? 'selected' : ''}>${f}</option>`).join('')}</select></label></div>
     <label class="f">Damage and notes<textarea id="h-notes" placeholder="${del ? 'Scratch on rear bumper' : 'No new damage'}"></textarea></label>
@@ -1419,6 +1428,9 @@ ACT.done = ({ id, type }) => {
     o.querySelectorAll('input[name=h-cc]').forEach(x => x.addEventListener('change', calc));
     o._fin = f; calc();
   })();
+  const whenHint = () => { const at = `${$('#h-date').value}T${$('#h-time').value}`; const w = $('#h-when'); if (!w) return;
+    w.innerHTML = !del && at < b.pickupAt ? `<strong style="color:var(--deliv)">Early return:</strong> planned ${esc(fmtDT(b.pickupAt))}. Days will change to the days actually used.` : !del && at.slice(0, 10) > b.pickupDate ? `Returned after the planned ${esc(fmtDT(b.pickupAt))}.` : del && at.slice(0, 10) !== b.deliveryDate ? `Planned delivery was ${esc(fmtDT(b.deliveryAt))}. The task moves to the actual day.` : ''; };
+  o.querySelector('#h-date').addEventListener('input', whenHint); o.querySelector('#h-time').addEventListener('input', whenHint); whenHint();
   o.querySelector('#h-save').onclick = async ev => {
     ev.target.disabled = true;
     const payAmt = parseFloat($('#h-pay').value) || 0, payM = $('#h-paym').value;
@@ -1426,23 +1438,41 @@ ACT.done = ({ id, type }) => {
     const agr = del ? ($('#h-agr').value || '').trim() : '';
     if (agr && agr !== (b.oldRef || '')) { const t = await agreementTaken(agr, id); if (t) { ev.target.disabled = false; $('#h-err').textContent = `Agreement ${agr} is already on ${t.ref} (${t.clientName}).`; return; } }
     const ho = { km: $('#h-km').value.trim(), fuel: $('#h-fuel').value, notes: $('#h-notes').value.trim(), by: S.me.name, byId: S.me.id };
-    const at = nowLocal();
+    const at = `${$('#h-date').value || nowLocal().slice(0, 10)}T${$('#h-time').value || tOf(nowLocal())}`;
+    if (at > localStr(new Date(Date.now() + 10 * 60000))) { ev.target.disabled = false; $('#h-err').textContent = 'That time is in the future. Use the actual time.'; return; }
     const upd = del ? { status: 'onrent', deliveredAt: at, deliveryHandover: ho } : { status: 'closed', pickedUpAt: at, pickupHandover: ho, closedAt: at };
+    const moveLog = [];
+    if (del && at.slice(0, 10) !== b.deliveryDate) {
+      upd.plannedDeliveryAt = b.plannedDeliveryAt || b.deliveryAt; upd.deliveryAt = at; upd.deliveryDate = at.slice(0, 10);
+      const nd = Math.max(1, dayDiff(at.slice(0, 10), b.pickupDate)); if (nd !== +b.days) upd.days = nd;
+      moveLog.push(`Delivered on a different day: planned ${fmtDT(b.deliveryAt)}, delivered ${fmtDT(at)}${upd.days ? `, days now ${upd.days}` : ''}`);
+    }
+    if (!del && at < b.pickupAt) {
+      const used = Math.max(1, Math.ceil((parseDT(at) - parseDT(b.deliveredAt || b.deliveryAt)) / 864e5 - 0.0417));
+      const early = Math.max(0, dayDiff(at.slice(0, 10), b.pickupDate));
+      upd.plannedPickupAt = b.plannedPickupAt || b.pickupAt; upd.pickupAt = at; upd.pickupDate = at.slice(0, 10); upd.days = used; upd.returnedEarly = early;
+      moveLog.push(`Returned early${early ? ` (${early} day${early === 1 ? '' : 's'})` : ''}: planned ${fmtDT(b.pickupAt)}, returned ${fmtDT(at)}. Days now ${used}`);
+    } else if (!del && at.slice(0, 10) > b.pickupDate) {
+      upd.plannedPickupAt = b.plannedPickupAt || b.pickupAt; upd.pickupAt = at; upd.pickupDate = at.slice(0, 10);
+      moveLog.push(`Returned late: planned ${fmtDT(b.pickupAt)}, returned ${fmtDT(at)}`);
+    }
     if (agr && agr !== (b.oldRef || '')) upd.oldRef = agr;
     if (del && b.collectDocs) { const dc = !!($('#h-docs') || {}).checked; upd.docsCollected = dc; if (dc) upd.docsCollectedBy = `${S.me.name}, ${fmtDT(at)}`; }
     upd.updatedAt = FV.serverTimestamp(); upd.updatedBy = S.me.name;
-    upd.log = FV.arrayUnion({ at, by: S.me.name, text: del ? `Delivered (KM ${ho.km || '-'}, fuel ${ho.fuel})` : `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` });
-    if (payAmt) upd.log = FV.arrayUnion({ at, by: S.me.name, text: del ? `Delivered (KM ${ho.km || '-'}, fuel ${ho.fuel})` : `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` }, { at, by: S.me.name, text: `Payment collected AED ${money(payAmt)} by ${payM}` });
+    const logs = [{ at, by: S.me.name, text: del ? `Delivered on ${fmtDT(at)} (KM ${ho.km || '-'}, fuel ${ho.fuel})` : `Returned on ${fmtDT(at)} (KM ${ho.km || '-'}, fuel ${ho.fuel})` }];
+    moveLog.forEach(text => logs.push({ at: nowLocal(), by: S.me.name, text }));
+    if (pc && (pc.salik || pc.parking || pc.fines || pc.otherAmount || pc.extraDays)) logs.push({ at, by: S.me.name, text: `Charges at return: ${[pc.extraDays ? pc.extraDays + ' extra days' : '', pc.salik ? 'Salik ' + money(pc.salik) : '', pc.parking ? 'parking ' + money(pc.parking) : '', pc.fines ? 'fines ' + money(pc.fines) : '', pc.otherAmount ? (pc.otherLabel || 'other') + ' ' + money(pc.otherAmount) : ''].filter(Boolean).join(', ')}` });
+    if (payAmt) logs.push({ at, by: S.me.name, text: `Payment collected AED ${money(payAmt)} by ${payM}` });
+    upd.log = FV.arrayUnion(...logs);
     try {
       const batch = db.batch(); batch.update(db.doc('bookings/' + id), upd);
       const fu = {};
       if (payAmt) fu.payments = FV.arrayUnion({ at, by: S.me.name, amount: payAmt, method: payM, stage: del ? 'delivery' : 'pickup' });
       if (pc && (pc.salik || pc.parking || pc.fines || pc.otherAmount || pc.extraDays || payM === 'card')) fu.pickupCharges = pc;
       if (Object.keys(fu).length) batch.update(db.doc('finance/' + id), fu);
-      if (pc && (pc.salik || pc.parking || pc.fines || pc.otherAmount || pc.extraDays)) upd.log = FV.arrayUnion(...[{ at, by: S.me.name, text: `Picked up (KM ${ho.km || '-'}, fuel ${ho.fuel})` }, { at, by: S.me.name, text: `Charges at return: ${[pc.extraDays ? pc.extraDays + ' extra days' : '', pc.salik ? 'Salik ' + money(pc.salik) : '', pc.parking ? 'parking ' + money(pc.parking) : '', pc.fines ? 'fines ' + money(pc.fines) : '', pc.otherAmount ? (pc.otherLabel || 'other') + ' ' + money(pc.otherAmount) : ''].filter(Boolean).join(', ')}` }, ...(payAmt ? [{ at, by: S.me.name, text: `Payment collected AED ${money(payAmt)} by ${payM}` }] : [])]);
       await batch.commit();
       closeSheet(); toast((del ? 'Marked delivered. Pickup task added.' : 'Marked picked up.') + (payAmt ? ` AED ${money(payAmt)} recorded.` : '')); if (S.route === 'booking') backToList();
-      const info = { at, ho, payAmt, payM, pc, docs: del && b.collectDocs ? !!upd.docsCollected : null, agr: upd.oldRef || b.oldRef || '' };
+      const info = { at, ho, payAmt, payM, pc, early: upd.returnedEarly || 0, planned: upd.plannedPickupAt || '', docs: del && b.collectDocs ? !!upd.docsCollected : null, agr: upd.oldRef || b.oldRef || '' };
       setTimeout(() => openMsgSheet({ title: del ? `${b.plate} delivered` : `${b.plate} picked up`, sub: 'Share with the team group?', fresh: true,
         build: () => del ? deliveredMsg(b, info) : returnedMsg(b, info) }), 150); }
     catch (e) { ev.target.disabled = false; $('#h-err').textContent = friendlyError(e); }
@@ -1744,6 +1774,40 @@ ACT.assigncar = ({ id }) => {
   };
 };
 
+
+/* Early return: the client will bring the car back before the planned date */
+ACT.earlyret = ({ id }) => {
+  const b = getB(id); if (!b || b.status !== 'onrent') return;
+  const now = nowLocal(), def = now < b.pickupAt ? now.slice(0, 10) : b.pickupDate;
+  const o = openSheet(`<h2>Early return</h2><p class="muted" style="margin:4px 0 0">${b.oldRef ? agrTitle(b) : esc(b.clientName)}<br>${carLabel(b)}<br>Planned return: <strong>${esc(fmtDT(b.pickupAt))}</strong></p>
+    <div class="grid2"><label class="f">New return date<input type="date" id="er-date" value="${def}"></label><label class="f">Time<input type="time" id="er-time" value="${tOf(b.pickupAt)}"></label></div>
+    <div class="calc small" id="er-sum"></div><p class="err" id="er-err"></p>
+    <div class="btnrow"><button class="btn" data-act="close">Go back</button><button class="btn primary" id="er-save">Save early return</button></div>`);
+  const calc = () => { const at = `${$('#er-date').value}T${$('#er-time').value}`; const used = Math.max(1, Math.ceil((parseDT(at) - parseDT(b.deliveredAt || b.deliveryAt)) / 864e5 - 0.0417));
+    $('#er-sum').innerHTML = at < b.pickupAt ? `<div class="r"><span>New return</span><strong>${esc(fmtDT(at))}</strong></div><div class="r"><span>Rental days</span><span>${b.days} → <strong>${used}</strong></span></div>` : '<div class="r">Choose a time earlier than the planned return.</div>'; return { at, used }; };
+  ['#er-date', '#er-time'].forEach(s => o.querySelector(s).addEventListener('input', calc)); calc();
+  o.querySelector('#er-save').onclick = async ev => {
+    const { at, used } = calc();
+    if (!(at < b.pickupAt)) { $('#er-err').textContent = 'The new return must be before the planned return. To make it later, use Extend.'; return; }
+    if (at < (b.deliveredAt || b.deliveryAt)) { $('#er-err').textContent = 'The return can\'t be before the delivery.'; return; }
+    ev.target.disabled = true;
+    try {
+      await db.doc('bookings/' + id).update({ plannedPickupAt: b.plannedPickupAt || b.pickupAt, pickupAt: at, pickupDate: at.slice(0, 10), days: used, updatedAt: FV.serverTimestamp(), updatedBy: S.me.name,
+        log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: `Early return arranged: ${fmtDT(b.pickupAt)} → ${fmtDT(at)}, days ${b.days} → ${used}` }) });
+      closeSheet(); toast(`Return moved to ${fmtDT(at)}. Days now ${used}.`); if (S.route === 'booking') backToList();
+    } catch (e) { ev.target.disabled = false; $('#er-err').textContent = friendlyError(e); }
+  };
+};
+
+
+/* planned vs actual delivery and return, shown at the top of the booking history */
+function histSummaryHtml(b) {
+  const pd = b.plannedDeliveryAt || b.deliveryAt, pp = b.plannedPickupAt || b.pickupAt;
+  const diff = (plan, act) => { if (!act || !plan) return ''; const m = Math.round((parseDT(act) - parseDT(plan)) / 60000); if (Math.abs(m) < 30) return '<span class="chip done">On time</span>'; return m < 0 ? `<span class="chip delivery">${durText(-m * 60000)} early</span>` : `<span class="chip late">${durText(m * 60000)} late</span>`; };
+  const row = (label, plan, act, by) => `<div class="hs-row"><span class="hs-l">${label}</span><span><span class="muted">Planned</span> ${esc(fmtDT(plan))}<br><span class="muted">Actual</span> ${act ? `<strong>${esc(fmtDT(act))}</strong> ${diff(plan, act)}${by ? `<br><span class="muted small">by ${esc(by)}</span>` : ''}` : '<em class="muted">not yet</em>'}</span></div>`;
+  return `<div class="hs">${row('Delivery', pd, b.deliveredAt, (b.deliveryHandover || {}).by)}${row('Return', pp, b.pickedUpAt, (b.pickupHandover || {}).by)}</div>`;
+}
+
 /* ========================================================= booking detail */
 function viewDetail(id) {
   ensureDetail(id);
@@ -1774,6 +1838,7 @@ function viewDetail(id) {
   if (staff && b.status === 'onrent' && !(b.legs || []).length) acts.push(`<button class="btn" data-act="undodeliver" data-id="${id}">Not delivered yet</button>`);
   if (b.status === 'onrent') acts.push(`<button class="btn good" data-act="done" data-id="${id}" data-type="pickup">Mark picked up</button>`, `<button class="btn" data-act="resched" data-id="${id}" data-type="pickup">Reschedule pickup</button>`);
   if (staff && ['booked', 'onrent'].includes(b.status)) acts.push(`<button class="btn primary" data-act="extend" data-id="${id}">Extend rental</button>`);
+  if (b.status === 'onrent') acts.push(`<button class="btn" data-act="earlyret" data-id="${id}">Early return</button>`);
   if (staff && (b.status === 'returned' || b.status === 'pending' || b.status === 'closed') && b.pickedUpAt) acts.push(`<a class="btn" href="#/settle/${id}">Final bill (optional)</a>`);
   if (staff && ['booked', 'onrent'].includes(b.status)) acts.push(`<button class="btn" data-act="assign" data-id="${id}">Assign drivers</button>`);
   if (staff && b.status !== 'cancelled' && b.status !== 'closed') acts.push(`<a class="btn" href="#/edit/${id}">Edit booking</a>`);
@@ -1799,7 +1864,7 @@ function viewDetail(id) {
       ${b.pickupLocation ? `<dt>Pickup location</dt><dd>${esc(b.pickupLocation)}</dd>` : ''}
       <dt>Car</dt><dd><a href="#/car/${esc(b.carId)}" style="color:inherit">${carLabel(b)}</a>${carExtra(b.carId)}${staff ? '<br>' + subTag(b) : ''}</dd>
       <dt>Delivery</dt><dd class="big">${esc(fmtDT(b.deliveryAt))}</dd>
-      <dt>Pickup</dt><dd class="big">${esc(fmtDT(b.pickupAt))}</dd>
+      <dt>Pickup</dt><dd class="big">${esc(fmtDT(b.pickupAt))}${b.plannedPickupAt && b.plannedPickupAt !== b.pickupAt ? `<br><span class="muted small" style="font-weight:400">Planned ${esc(fmtDT(b.plannedPickupAt))}${b.pickupAt < b.plannedPickupAt ? ', returned early' : ''}</span>` : ''}</dd>
       <dt>Days</dt><dd>${esc(b.days)}${b.extendable ? ' <span class="chip ext">Extendable</span>' : ''}</dd>
       <dt>Salesperson</dt><dd>${esc(b.salespersonName || '-')}</dd>
       <dt>Drivers</dt><dd>Delivery: ${esc(b.deliveryDriverName || 'not assigned')}<br>Pickup: ${esc(b.pickupDriverName || 'not assigned')}</dd>
@@ -1811,7 +1876,7 @@ function viewDetail(id) {
   ${(b.legs || []).length ? `<section class="card"><h2>Cars used in this rental</h2>${[...b.legs, { plate: b.plate, carName: b.carName, from: b.legStart, to: null, current: true }].map(l => `<div class="leg"><span class="plate big">${esc(l.plate)}</span> ${esc(l.carName)}<br><span class="small">${esc(fmtDT(l.from))} to ${l.to ? esc(fmtDT(l.to)) : (b.pickedUpAt ? esc(fmtDT(b.pickedUpAt)) : 'now')}${l.reason ? `, replaced: <strong>${esc(l.reason)}</strong>` : l.current ? ', <strong>current car</strong>' : ''}</span>${l.inHo ? `<br><span class="muted small">Came back KM ${esc(l.inHo.km || '-')}, fuel ${esc(l.inHo.fuel || '-')}${l.inHo.notes ? ', ' + esc(l.inHo.notes) : ''}</span>` : ''}</div>`).join('')}</section>` : ''}
   ${b.deliveryHandover || b.pickupHandover ? `<section class="card"><h2>Handover</h2><dl class="kv">${ho(b.deliveryHandover, 'At delivery')}${ho(b.pickupHandover, 'At pickup')}</dl></section>` : ''}
   <div class="btnrow">${acts.join('')}</div>
-  ${log.length ? `<section class="card"><h2>History</h2>${log.map(l => `<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><strong>${esc(fmtDT(l.at))}</strong>, ${esc(l.by)}<br>${esc(l.text)}</div>`).join('')}</section>` : ''}`;
+  ${log.length || b.status !== 'cancelled' ? `<section class="card"><h2>History</h2>${histSummaryHtml(b)}${log.map(l => `<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><strong>${esc(fmtDT(l.at))}</strong>, ${esc(l.by)}<br>${esc(l.text)}</div>`).join('')}</section>` : ''}`;
   return { title: b.oldRef ? `Agreement ${b.oldRef}` : `Booking ${b.ref}`, back: S.listHash || (staff ? '#/bookings' : '#/home'), html };
 }
 function carExtra(carId) { const c = S.cars.find(x => x.id === carId); return c ? `<br><span class="muted small">${esc([c.color, c.category, OWN_LABEL[ownershipOf(c)] + (isSub(c) && c.supplier ? ': ' + c.supplier : '')].filter(Boolean).join(', '))}</span>` : ''; }
