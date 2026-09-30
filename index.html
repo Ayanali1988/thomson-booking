@@ -576,6 +576,11 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 .dash-foot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 22px;font-size:12px;color:var(--muted);text-align:center;padding:18px 8px 6px;border-top:1px solid var(--line);margin-top:18px}
 .dash-foot strong{color:var(--ink);font-weight:600}
 @media(min-width:1000px) and (min-height:620px){body.dash .dash-foot{flex:none;margin-top:8px;padding:6px 8px 0}}
+.agr-no{font-family:var(--head);font-weight:800;color:var(--navy);letter-spacing:.02em}
+.bk-side{display:inline-block;font-size:11.5px;font-weight:600;color:var(--muted);background:#EEF1F5;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.lr-title{min-width:0}
+.t-agr{font-size:14.5px;font-weight:700;margin:2px 0 4px;overflow-wrap:anywhere}
+.t-agr .agr-no{font-size:15px}
 /* print */
 #print{display:none}
 @media print{
@@ -597,6 +602,8 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 .p-tbl tr:nth-child(even) td{background:#F3F6F9}
 .p-tbl .r{text-align:right}
 .p-tbl tfoot td{font-weight:700;background:#E6ECF2!important;border-top:2px solid #16324F}
+.p-tbl tfoot tr.p-sub td{font-weight:600;background:#F1F4F8!important;border-top:1px solid #CCD3DB}
+.p-tbl tfoot tr.p-total td{font-size:12px;border-top:2px solid #16324F}
 .p-sec{margin-top:12px}
 .p-sec h2{font-size:12.5px;color:#16324F;border-bottom:1px solid #16324F;padding-bottom:3px;margin-bottom:6px}
 .p-kv{display:grid;grid-template-columns:140px 1fr 140px 1fr;gap:4px 10px}
@@ -634,7 +641,7 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.23-2026';
+const APP_VERSION = '3.25-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
 /* branding comes from config.js, so the same app works for any company */
 const BR = Object.assign({ company: 'Thomson Rent A Car LLC', name: 'Thomson Rent A Car', short: 'Thomson', tagline: 'Rent A Car', service: 'Car Rental Booking Service' }, window.BRAND || {});
@@ -936,6 +943,9 @@ async function nextNo(prefix, pad3) {
 }
 const plateKey = p => String(p || '').replace(/\s/g, '').toUpperCase();
 const phoneKey = p => { const d = String(p || '').replace(/\D/g, ''); return d.length >= 9 ? d.slice(-9) : d; };
+/* agreement opened: 'Agreement no. : Client' is the main way to track it */
+const agrTitle = b => b.oldRef ? `<span class="agr-no">${esc(b.oldRef)}</span> : ${esc(b.clientName)}` : `${esc(b.ref)}, ${esc(b.clientName)}`;
+const bkSide = b => b.oldRef ? `<span class="bk-side">${esc(b.ref)}</span>` : '';
 const agrTag = b => b && b.oldRef ? `<span class="chip agr">Agr ${esc(b.oldRef)}</span>` : '';
 async function agreementTaken(no, exceptId) { if (!no) return null; const s = await db.collection('bookings').where('oldRef', '==', no).get(); const d = s.docs.find(x => x.id !== exceptId && x.data().status !== 'cancelled'); return d ? d.data() : null; }
 const subTag = b => b && b.carType === 'sublease' ? `<span class="chip sub">External${b.supplier ? ': ' + esc(b.supplier) : ''}</span>` : '';
@@ -1077,9 +1087,10 @@ function taskCard(t) {
   return `<li class="task ${t.type} ${st}">
     <div class="t-time num">${time12(tOf(t.at)).replace(' ', '<br>')}</div>
     <div class="t-card">
-      <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${b.extendable && t.type === 'pickup' && !t.done ? '<span class="chip ext">Extendable</span>' : ''}${!t.done && missingInfo(b).length ? `<span class="chip needs" title="${esc(missingInfo(b).join(', '))}">Needs details: ${missingInfo(b).length}</span>` : ''}${agrTag(b)}${b.collectDocs && t.type === 'delivery' && !b.docsCollected ? '<span class="chip docs">📄 Collect documents</span>' : ''}${isStaff() ? subTag(b) : ''}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
+      <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${b.extendable && t.type === 'pickup' && !t.done ? '<span class="chip ext">Extendable</span>' : ''}${!t.done && missingInfo(b).length ? `<span class="chip needs" title="${esc(missingInfo(b).join(', '))}">Needs details: ${missingInfo(b).length}</span>` : ''}${b.collectDocs && t.type === 'delivery' && !b.docsCollected ? '<span class="chip docs">📄 Collect documents</span>' : ''}${isStaff() ? subTag(b) : ''}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
+      ${b.oldRef ? `<div class="t-agr">${agrTitle(b)} ${bkSide(b)}</div>` : ''}
       <div class="t-car">${CAR}<span>${carLabel(b)}</span></div>
-      <div class="t-meta"><strong class="t-client">${esc(b.clientName)}</strong>${loc ? ` · ${esc(loc)}` : ''}</div>
+      <div class="t-meta">${b.oldRef ? '' : `<strong class="t-client">${esc(b.clientName)}</strong>`}${loc ? `${b.oldRef ? '' : ' · '}${esc(loc)}` : ''}</div>
       <div class="t-meta">${t.type === 'delivery' ? `${b.days} day${b.days == 1 ? '' : 's'}${b.extendable ? ' (extendable)' : ''}, ` : ''}${t.done ? `Done by ${esc(((t.type === 'delivery' ? b.deliveryHandover : b.pickupHandover) || {}).by || drvName || '-')}` : drvName ? `Driver: ${esc(drvName)}` : '<strong>No driver assigned</strong>'}</div>
       ${b.notes && !t.done ? `<div class="t-note">📝 ${esc(b.notes.length > 140 ? b.notes.slice(0, 140) + '…' : b.notes)}</div>` : ''}
       <div class="t-actions">${acts.join('')}</div>
@@ -1210,7 +1221,7 @@ function viewHome() {
     <section class="col col-a" aria-label="Available cars"><header class="col-h h-a"><h2>Available cars</h2><span class="num">${avCount}</span></header>
       <div class="seg left" role="group" aria-label="Car type">${[['own', `Own and investor ${ownCount}`], ['sub', `External ${subCount}`], ['both', 'All']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="avmode" data-m="${k}">${l}</button>`).join('')}</div>
       <div class="btnrow" style="margin-top:8px"><button class="btn sm wa" data-act="shareavail">Share on WhatsApp</button></div>
-      ${(() => { const od = overdueContracts(); return od.length ? `<div class="action-box"><h3>Action required (${od.length})</h3><p class="small" style="margin:0 0 6px">Return time passed but the contract is still open. These cars are kept out of the available list until you close, extend or update them.</p>${od.map(b => `<div class="act-row"><a href="#/booking/${b.id}" class="act-main"><span class="plate big">${esc(b.plate)}</span> <strong>${esc(b.carName)}</strong><br><span class="small">${esc(b.clientName)}${b.oldRef ? ', Agr ' + esc(b.oldRef) : ''}, due back ${esc(fmtDT(b.pickupAt))} <strong>(${durText(Date.now() - parseDT(b.pickupAt))} ago)</strong></span></a>
+      ${(() => { const od = overdueContracts(); return od.length ? `<div class="action-box"><h3>Action required (${od.length})</h3><p class="small" style="margin:0 0 6px">Return time passed but the contract is still open. These cars are kept out of the available list until you close, extend or update them.</p>${od.map(b => `<div class="act-row"><a href="#/booking/${b.id}" class="act-main"><span class="plate big">${esc(b.plate)}</span> <strong>${esc(b.carName)}</strong><br><span class="small">${b.oldRef ? `<strong>${esc(b.oldRef)}</strong> : ` : ''}${esc(b.clientName)}, due back ${esc(fmtDT(b.pickupAt))} <strong>(${durText(Date.now() - parseDT(b.pickupAt))} ago)</strong></span></a>
         <div class="t-actions">${isStaff() ? `<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button>` : ''}<button class="btn sm good" data-act="done" data-id="${b.id}" data-type="pickup">Mark picked up</button><a class="btn sm" href="#/booking/${b.id}">Open</a></div></div>`).join('')}</div>` : ''; })()}
       <div class="av-list">${avAll.length ? avAll.map(availRow).join('') : `<p class="col-empty">${mode === 'sub' ? 'No sub-lease cars free. Add them under More, Sub-lease cars.' : 'Every car is booked or on rent ' + dayWord + '.'}</p>`}</div>
       ${(() => { const ex = expectedBackOn(D, mode); return ex.length ? `<h3 class="sub-h" style="margin:14px 10px 6px">Expected back, not picked up yet (${ex.length})</h3><div class="av-list" style="margin-top:0">${ex.map(x => `<a class="av-row exp" href="#/booking/${x.st.b.id}"><span class="av-main"><span class="plate big">${esc(x.c.plate)}</span> <strong>${esc(carTitle(x.c))}</strong></span><span class="av-sub">With ${esc(x.st.b.clientName)}, due back ${esc(fmtDT(x.st.at))}</span></a>`).join('')}</div>` : ''; })()}
@@ -1622,7 +1633,7 @@ function carNowHtml(c) {
     : onr ? `<span class="chip onrent">On rent</span>` : `<span class="chip done">Available now</span>`;
   return `<div class="pf-car"><div class="lr-top"><span><span class="plate big">${esc(c.plate)}</span> <strong>${esc(p.make)} ${esc(p.model)} ${esc(p.year)}</strong></span>${state}</div>
     <div class="lr-sub">${esc([c.color, c.category, OWN_LABEL[ownershipOf(c)] + (isSub(c) ? ': ' + (c.supplier || '-') : c.investor ? ': ' + c.investor : '')].filter(Boolean).join(', '))}</div>
-    ${onr ? `<a class="pf-line late-${parseDT(onr.pickupAt) < now}" href="#/booking/${onr.id}"><strong>With ${esc(onr.clientName)}</strong>${onr.clientPhone ? `, ${esc(onr.clientPhone)}` : ''}<br>Return ${esc(fmtDT(onr.pickupAt))}${parseDT(onr.pickupAt) < now ? ' <span class="chip late">Overdue</span>' : ''} <span class="muted">(${esc(onr.ref)}${onr.oldRef ? ', ' + esc(onr.oldRef) : ''})</span></a>` : ''}
+    ${onr ? `<a class="pf-line late-${parseDT(onr.pickupAt) < now}" href="#/booking/${onr.id}"><strong>${agrTitle(onr)}</strong>${onr.clientPhone ? `, ${esc(onr.clientPhone)}` : ''}<br>Return ${esc(fmtDT(onr.pickupAt))}${parseDT(onr.pickupAt) < now ? ' <span class="chip late">Overdue</span>' : ''} ${bkSide(onr) || `<span class="muted">(${esc(onr.ref)})</span>`}</a>` : ''}
     ${next.map(b => `<a class="pf-line" href="#/booking/${b.id}">Booked for <strong>${esc(b.clientName)}</strong><br>${esc(fmtDT(b.deliveryAt))} to ${esc(fmtDT(b.pickupAt))} <span class="muted">(${esc(b.ref)})</span></a>`).join('')}
     ${back ? `<a class="pf-line" href="#/booking/${back.id}">Returned by ${esc(back.clientName)}, waiting for settlement</a>` : ''}
     ${gar ? `<div class="pf-line"><strong>${esc(gar.purpose)}</strong> ${isNrm(gar) ? `with ${esc(gar.staff || '-')}` : `at ${esc(gar.garage)}`} since ${esc(fmtDT(gar.inAt))}${gar.expectedOut ? `, expected back ${esc(fmtDate(gar.expectedOut))}` : ''} <span class="muted">(${esc(gar.no)})</span></div>` : ''}
@@ -1778,7 +1789,7 @@ function viewDetail(id) {
     <div class="btnrow">${b.carTba ? `<button class="btn sm primary" data-act="assigncar" data-id="${id}">Assign car</button>` : ''}${miss.includes('Driver') ? `<button class="btn sm" data-act="assign" data-id="${id}">Assign driver</button>` : ''}${miss.some(m => /Agreement|phone|Location/.test(m)) ? `<a class="btn sm" href="#/edit/${id}">Add details</a>` : ''}</div></section>` : '';
   const log = (b.log || []).slice().reverse();
   const html = `
-  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${esc(b.ref)}</h2><span>${f ? (f.rateType === 'month' ? '<span class="chip onrent">Monthly</span> ' : '<span class="chip">Daily</span> ') : ''}${statusChip(b.status, b)}</span></div>
+  <section class="card"><div class="t-top" style="justify-content:space-between"><h2 style="margin:0">${b.oldRef ? `${agrTitle(b)}<br><span class="bk-side" style="margin-top:4px;display:inline-block">Booking ${esc(b.ref)}</span>` : esc(b.ref)}</h2><span>${f ? (f.rateType === 'month' ? '<span class="chip onrent">Monthly</span> ' : '<span class="chip">Daily</span> ') : ''}${statusChip(b.status, b)}</span></div>
     ${b.status === 'cancelled' ? `<p class="warn">Cancelled: ${esc(b.cancelReason || '')}</p>` : ''}
     <dl class="kv" style="margin-top:10px">
       <dt>Agreement No</dt><dd>${b.oldRef ? `<strong class="num">${esc(b.oldRef)}</strong>` : `<span class="muted">Not entered yet</span>`}</dd>
@@ -1801,7 +1812,7 @@ function viewDetail(id) {
   ${b.deliveryHandover || b.pickupHandover ? `<section class="card"><h2>Handover</h2><dl class="kv">${ho(b.deliveryHandover, 'At delivery')}${ho(b.pickupHandover, 'At pickup')}</dl></section>` : ''}
   <div class="btnrow">${acts.join('')}</div>
   ${log.length ? `<section class="card"><h2>History</h2>${log.map(l => `<div class="small" style="padding:6px 0;border-top:1px solid var(--line)"><strong>${esc(fmtDT(l.at))}</strong>, ${esc(l.by)}<br>${esc(l.text)}</div>`).join('')}</section>` : ''}`;
-  return { title: `Booking ${b.ref}`, back: S.listHash || (staff ? '#/bookings' : '#/home'), html };
+  return { title: b.oldRef ? `Agreement ${b.oldRef}` : `Booking ${b.ref}`, back: S.listHash || (staff ? '#/bookings' : '#/home'), html };
 }
 function carExtra(carId) { const c = S.cars.find(x => x.id === carId); return c ? `<br><span class="muted small">${esc([c.color, c.category, OWN_LABEL[ownershipOf(c)] + (isSub(c) && c.supplier ? ': ' + c.supplier : '')].filter(Boolean).join(', '))}</span>` : ''; }
 function settlementRowsHtml(st) {
@@ -2208,8 +2219,8 @@ function rangeFor(r) {
   return ['2000-01-01', '2099-12-31'];
 }
 const listRowHtml = b => { const f = S.listFin.get(b.id); return `<a class="list-row" href="#/booking/${b.id}">
-      <div class="lr-top"><strong>${esc(b.ref)}, ${esc(b.clientName)}</strong><span>${rtChip(b)} ${statusChip(b.status, b)}</span></div>
-      <div class="lr-sub">${carLabel(b)} ${subTag(b)}${b.oldRef ? ` ${agrTag(b)}` : ''}</div>
+      <div class="lr-top"><strong class="lr-title">${agrTitle(b)}</strong><span>${bkSide(b)} ${rtChip(b)} ${statusChip(b.status, b)}</span></div>
+      <div class="lr-sub">${carLabel(b)} ${subTag(b)}</div>
       <div class="lr-when num">${esc(fmtDT(b.deliveryAt))} to ${esc(fmtDT(b.pickupAt))}</div>
       <div class="lr-top lr-sub"><span>${b.days} days, ${esc(b.salespersonName || '-')}</span><strong class="num" style="color:var(--ink)">AED ${money(bookingTotal(b, f))}</strong></div></a>`; };
 const KIND_ST = { bookings: ['booked', 'cancelled'], agreements: ['onrent', 'returned', 'pending', 'closed'] };
@@ -2962,10 +2973,10 @@ async function doPrint(html, landscape, fileName) {
 ACT.daysheet = async () => {
   const D = S.viewDate, tasks = tasksFor(D), staff = true;
   const fins = await getFinMany([...new Set(tasks.map(t => t.b.id))]);
-  let total = 0;
+  let totD = 0, totP = 0;
   const rows = tasks.map((t, i) => {
     const b = t.b, f = fins.get(b.id), e = f ? estimate(b, f) : null;
-    if (t.type === 'delivery' && e) total += e.gross;
+    if (e) { if (t.type === 'delivery') totD += e.gross; else totP += e.gross; }
     const loc = t.type === 'pickup' ? (b.pickupLocation || b.location) : b.location;
     return `<tr><td>${i + 1}</td><td><strong>${time12(tOf(t.at))}</strong></td><td class="${t.type === 'delivery' ? 'p-type-d' : 'p-type-p'}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}${t.done ? ' (done)' : ''}${t.type === 'delivery' && b.collectDocs && !b.docsCollected ? '<br><span style="color:#7A4500">+ collect documents</span>' : ''}${b.notes ? `<br><span style="color:#444;font-weight:400">Note: ${esc(b.notes.slice(0, 80))}</span>` : ''}</td>
       <td>${esc(b.oldRef || '')}</td><td><strong style="font-size:12.5px">${esc(b.carTba ? 'TO ASSIGN' : b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? `<br><em style="color:#7A4500">Sub-lease: ${esc(b.supplier || '')}</em>` : ''}</td><td>${esc(b.clientName)}</td><td>${esc(b.clientPhone || '')}</td><td>${esc(loc || '')}</td><td class="r">${b.days}${b.extendable ? '+' : ''}</td>
@@ -2975,8 +2986,10 @@ ACT.daysheet = async () => {
   doPrint(`${printHeader('Daily delivery and pickup sheet', fmtLong(D))}
     <table class="p-tbl"><thead><tr><th>#</th><th>Time</th><th>Task</th><th>Agr No</th><th>Plate</th><th>Car</th><th>Client</th><th>Phone</th><th>Location</th><th class="r">Days</th>${staff ? '<th class="r">Rate</th><th class="r">Total AED</th>' : ''}<th>Sales</th><th>Driver</th></tr></thead>
     <tbody>${rows || `<tr><td colspan="${staff ? 14 : 12}">No tasks on this day.</td></tr>`}</tbody>
-    <tfoot><tr><td colspan="${staff ? 11 : 10}">${nd} deliveries, ${tasks.length - nd} pickups</td>${staff ? `<td class="r">${money(total)}</td>` : ''}<td colspan="2"></td></tr></tfoot></table>
-    ${staff ? '<p style="font-size:9.5px;color:#555">Total AED is the rent total including VAT for deliveries on this day.</p>' : ''}
+    <tfoot><tr class="p-sub"><td colspan="${staff ? 11 : 10}">Deliveries (${nd})</td>${staff ? `<td class="r">${money(totD)}</td>` : ''}<td colspan="2"></td></tr>
+      <tr class="p-sub"><td colspan="${staff ? 11 : 10}">Pickups (${tasks.length - nd})</td>${staff ? `<td class="r">${money(totP)}</td>` : ''}<td colspan="2"></td></tr>
+      <tr class="p-total"><td colspan="${staff ? 11 : 10}">Total for the day (${tasks.length} task${tasks.length === 1 ? '' : 's'})</td>${staff ? `<td class="r">${money(totD + totP)}</td>` : ''}<td colspan="2"></td></tr></tfoot></table>
+    ${staff ? '<p style="font-size:9.5px;color:#555">Total AED is each booking\'s rent including VAT (days × rate). Salik, fines and other charges added at return are not included.</p>' : ''}
     <div class="p-sign"><div>Prepared by</div><div>Driver</div><div>Approved by</div></div>${printFoot()}`, true, `Delivery-sheet-${D}`);
 };
 ACT.slip = ({ id }) => {
@@ -3017,9 +3030,9 @@ ACT['list-print'] = () => {
   const rows = filteredRows(), F = S.filter;
   let total = 0;
   const body = rows.map((b, i) => { const v = b.status === 'cancelled' ? 0 : bookingTotal(b, S.listFin.get(b.id)); total += v;
-    return `<tr><td>${i + 1}</td><td>${esc(b.ref)}</td><td>${esc(b.oldRef || '')}</td><td>${rtypeOf(b) === 'month' ? 'Monthly' : 'Daily'}</td><td><strong>${esc(fmtDT(b.deliveryAt))}</strong></td><td>${esc(fmtDT(b.pickupAt))}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? ' (sub-lease)' : ''}</td><td>${esc(b.clientName)}</td><td class="r">${b.days}</td><td>${esc(b.salespersonName || '')}</td><td>${esc(STATUS[b.status] || b.status)}</td><td class="r">${money(v)}</td></tr>`; }).join('');
+    return `<tr><td>${i + 1}</td>${S.listKind === 'agreements' ? `<td><strong>${esc(b.oldRef || '-')}</strong></td><td>${esc(b.ref)}</td>` : `<td>${esc(b.ref)}</td><td>${esc(b.oldRef || '')}</td>`}<td>${rtypeOf(b) === 'month' ? 'Monthly' : 'Daily'}</td><td><strong>${esc(fmtDT(b.deliveryAt))}</strong></td><td>${esc(fmtDT(b.pickupAt))}</td><td><strong>${esc(b.plate)}</strong></td><td>${esc(b.carName)}${b.carType === 'sublease' ? ' (sub-lease)' : ''}</td><td>${esc(b.clientName)}</td><td class="r">${b.days}</td><td>${esc(b.salespersonName || '')}</td><td>${esc(STATUS[b.status] || b.status)}</td><td class="r">${money(v)}</td></tr>`; }).join('');
   doPrint(`${printHeader(`${F.rtype === 'month' ? 'Monthly ' : F.rtype === 'day' ? 'Daily ' : ''}${S.listKind === 'agreements' ? 'agreements' : 'bookings'}`.replace(/^./, c => c.toUpperCase()), F.range === 'open' ? `${S.listKind === 'agreements' ? 'Open agreements' : 'To deliver'} on ${fmtDate(todayStr())}` : F.range === 'all' ? 'All dates' : `${fmtDate(F.from)} to ${fmtDate(F.to)}`)}
-    <table class="p-tbl"><thead><tr><th>#</th><th>Ref</th><th>Agr No</th><th>Type</th><th>Delivery</th><th>Return</th><th>Plate</th><th>Car</th><th>Client</th><th class="r">Days</th><th>Sales</th><th>Status</th><th class="r">Total AED</th></tr></thead>
+    <table class="p-tbl"><thead><tr><th>#</th>${S.listKind === 'agreements' ? '<th>Agr No</th><th>Ref</th>' : '<th>Ref</th><th>Agr No</th>'}<th>Type</th><th>Delivery</th><th>Return</th><th>Plate</th><th>Car</th><th>Client</th><th class="r">Days</th><th>Sales</th><th>Status</th><th class="r">Total AED</th></tr></thead>
     <tbody>${body || '<tr><td colspan="13">No bookings.</td></tr>'}</tbody><tfoot><tr><td colspan="12">${rows.length} bookings (cancelled excluded from total)</td><td class="r">${money(total)}</td></tr></tfoot></table>${printFoot()}`, true, `${S.listKind === 'agreements' ? 'Agreements' : 'Bookings'}-${F.range === 'open' ? 'open-' + todayStr() : F.from + '-to-' + F.to}`);
 };
 
