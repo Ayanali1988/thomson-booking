@@ -586,6 +586,17 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 .hs-row:first-child{border-top:0}
 .hs-l{font-weight:700;color:var(--navy)}
 .hs-row .chip{margin-left:4px}
+.od-sec{margin:10px 6px 4px;border-top:2px dashed #E9A39C;padding-top:8px}
+.od-sec h3{font-size:14px;color:var(--late);margin:0 4px 6px}
+.od-card{background:#FFF8F7;border:1px solid #E9A39C;border-radius:12px;padding:8px 10px;margin-bottom:8px;box-shadow:inset 4px 0 0 var(--late)}
+.od-main{display:flex;flex-direction:column;gap:2px;color:var(--ink);text-decoration:none;font-size:13.5px}
+.od-btns{display:flex;flex-direction:column;gap:4px}
+@media(min-width:1000px){.board .od-sec{margin:6px 10px 6px}}
+.found-list{margin-top:6px}
+.found-row{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;text-align:left;border:1px solid var(--line);background:#F7F9FB;border-radius:10px;padding:9px 12px;margin-top:6px;font:inherit;color:var(--ink);cursor:pointer}
+.found-row span{font-size:13px;color:var(--muted)}
+.found-row:hover,.found-row:focus{border-color:var(--deliv);background:#EEF4FC}
+.found-ok{margin:8px 0 0;font-size:14px;background:var(--done-bg);color:#1F5E39;border-radius:8px;padding:8px 10px}
 /* print */
 #print{display:none}
 @media print{
@@ -646,7 +657,7 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.29-2026';
+const APP_VERSION = '3.31-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
 /* branding comes from config.js, so the same app works for any company */
 const BR = Object.assign({ company: 'Thomson Rent A Car LLC', name: 'Thomson Rent A Car', short: 'Thomson', tagline: 'Rent A Car', service: 'Car Rental Booking Service' }, window.BRAND || {});
@@ -997,7 +1008,8 @@ function isMine(t) {
 }
 function tick(silentRender) {
   if (!S.me) return;
-  if (typeof checkExpiryPopup === 'function') setTimeout(checkExpiryPopup, 2500);
+  if (typeof checkOverduePopup === 'function') setTimeout(checkOverduePopup, 2200);
+  if (typeof checkExpiryPopup === 'function') setTimeout(checkExpiryPopup, 2600);
   const now = Date.now();
   const due = [];
   for (const b of S.active.values()) {
@@ -1096,6 +1108,7 @@ function taskCard(t) {
   const b = t.b, st = taskState(t), mine = isMine(t);
   const ms = parseDT(t.at) - Date.now();
   const doneAt = t.type === 'delivery' ? b.deliveredAt : b.pickedUpAt;
+  const actReq = t.type === 'pickup' && st === 'late' ? '<span class="chip late act-req">Action required</span>' : '';
   const badge = st === 'done' ? `<span class="chip done">Done ${time12(tOf(doneAt))}</span>`
     : st === 'late' ? `<span class="chip late">Late by ${durText(ms)}</span>`
     : st === 'soon' ? `<span class="chip soon">Due in ${durText(ms)}</span>` : '';
@@ -1114,7 +1127,7 @@ function taskCard(t) {
   return `<li class="task ${t.type} ${st}">
     <div class="t-time num">${time12(tOf(t.at)).replace(' ', '<br>')}</div>
     <div class="t-card">
-      <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${b.extendable && t.type === 'pickup' && !t.done ? '<span class="chip ext">Extendable</span>' : ''}${!t.done && missingInfo(b).length ? `<span class="chip needs" title="${esc(missingInfo(b).join(', '))}">Needs details: ${missingInfo(b).length}</span>` : ''}${b.collectDocs && t.type === 'delivery' && !b.docsCollected ? '<span class="chip docs">📄 Collect documents</span>' : ''}${isStaff() ? subTag(b) : ''}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
+      <div class="t-top"><span class="chip ${t.type}">${t.type === 'delivery' ? 'Delivery' : 'Pickup'}</span>${badge}${actReq}${b.extendable && t.type === 'pickup' && !t.done ? '<span class="chip ext">Extendable</span>' : ''}${!t.done && missingInfo(b).length ? `<span class="chip needs" title="${esc(missingInfo(b).join(', '))}">Needs details: ${missingInfo(b).length}</span>` : ''}${b.collectDocs && t.type === 'delivery' && !b.docsCollected ? '<span class="chip docs">📄 Collect documents</span>' : ''}${isStaff() ? subTag(b) : ''}${mine && !t.done ? '<span class="chip mine">Yours</span>' : ''}</div>
       ${b.oldRef ? `<div class="t-agr">${agrTitle(b)} ${bkSide(b)}</div>` : ''}
       <div class="t-car">${CAR}<span>${carLabel(b)}</span></div>
       <div class="t-meta">${b.oldRef ? '' : `<strong class="t-client">${esc(b.clientName)}</strong>`}${loc ? `${b.oldRef ? '' : ' · '}${esc(loc)}` : ''}</div>
@@ -1199,6 +1212,17 @@ function progTile(k, label, list, dayWord) {
     <em>${total ? `<b class="num">${done}</b> of <b class="num">${total}</b> done` : `No ${label.toLowerCase()} ${dayWord}`}</em>
     ${total ? `<span class="prog-bar ${left ? '' : 'full'}" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ''}</button>`;
 }
+
+/* tasks not done from earlier days: listed once, at the end of their column */
+function overdueSection(type) {
+  const t = todayStr();
+  const list = [...S.active.values()].filter(b => type === 'pickup' ? b.status === 'onrent' && b.pickupDate < t : b.status === 'booked' && b.deliveryDate < t)
+    .sort((a, c) => (type === 'pickup' ? a.pickupAt.localeCompare(c.pickupAt) : a.deliveryAt.localeCompare(c.deliveryAt)));
+  if (!list.length) return '';
+  return `<div class="od-sec"><h3>Not ${type === 'pickup' ? 'picked up' : 'delivered'} from earlier days (${list.length})</h3>${list.map(b => { const at = type === 'pickup' ? b.pickupAt : b.deliveryAt;
+    return `<div class="od-card"><a href="#/booking/${b.id}" class="od-main"><span class="t-agr">${agrTitle(b)} ${bkSide(b)}</span><span>${carLabel(b)}</span><span class="small">Was due ${esc(fmtDT(at))} <strong>(${esc(durText(Date.now() - parseDT(at)))} ago)</strong></span></a>
+      <div class="t-actions">${type === 'pickup' ? `<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button><button class="btn sm" data-act="earlyret" data-id="${b.id}">Early return</button><button class="btn sm good" data-act="done" data-id="${b.id}" data-type="pickup">Mark picked up</button>` : `<button class="btn sm" data-act="resched" data-id="${b.id}" data-type="delivery">Reschedule</button><button class="btn sm good" data-act="done" data-id="${b.id}" data-type="delivery">Mark delivered</button>`}</div></div>`; }).join('')}</div>`;
+}
 function viewHome() {
   const D = S.viewDate, today = todayStr(), tomorrow = addDays(today, 1);
   const tasks = tasksFor(D);
@@ -1229,11 +1253,10 @@ function viewHome() {
     <button class="stat s-f" data-act="tab" data-t="a"><strong class="num">${ownCount}${subCount ? `<small>+${subCount}</small>` : ''}</strong><span>Cars available</span><em>${subCount ? `${ownCount} own, ${subCount} external` : 'Own cars'}${moveCount('garage') ? `, ${moveCount('garage')} in garage` : ''}${moveCount('nrm') ? `, ${moveCount('nrm')} on NRM` : ''}${overdueContracts().length ? `<br><b style="color:var(--late)">${overdueContracts().length} need action</b>` : ''}</em></button>
     <a class="stat s-r" href="#/agreements"><strong class="num">${onrent}</strong><span>Open agreements</span><em>Cars with clients</em></a>
   </div>`;
-  const col = (key, title, list, cls) => `<section class="col col-${key}" aria-label="${title}"><header class="col-h ${cls}"><h2>${title}</h2><span class="num col-prog">${list.length ? `${list.filter(t => t.done).length} of ${list.length} done` : '0'}</span></header>
-    ${list.length ? `<ol class="timeline">${list.map(taskCard).join('')}</ol>` : `<p class="col-empty">No ${title.toLowerCase()} ${dayWord}.</p>`}</section>`;
+  const col = (key, title, list, cls, extra = '') => `<section class="col col-${key}" aria-label="${title}"><header class="col-h ${cls}"><h2>${title}</h2><span class="num col-prog">${list.length ? `${list.filter(t => t.done).length} of ${list.length} done` : '0'}</span></header>
+    ${list.length ? `<ol class="timeline">${list.map(taskCard).join('')}</ol>` : `<p class="col-empty">No ${title.toLowerCase()} ${dayWord}.</p>`}${extra}</section>`;
   const html = `
   ${miniCal(false)}
-  ${overdue.length ? `<div class="strip late" role="alert"><h3>Overdue from earlier days (${overdue.length})</h3>${overdue.map(t => `<a class="row" href="#/booking/${t.b.id}"><span>${t.type === 'delivery' ? 'Delivery' : 'Pickup'}: ${esc(t.b.carName)} ${esc(t.b.plate)}, ${esc(t.b.clientName)}</span><strong class="num">${esc(fmtDay(t.at))}</strong></a>`).join('')}</div>` : ''}
 
   <div class="sec-head"><div class="tabs-m" role="tablist" aria-label="Show">
       ${[['all', 'All', tasks.length], ['d', 'Deliveries', `${dl.filter(t => !t.done).length} left`], ['p', 'Pickups', `${pk.filter(t => !t.done).length} left`], ['a', 'Available', avCount]].map(([k, l, n]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-act="tab" data-t="${k}">${l} <span class="num">${n}</span></button>`).join('')}
@@ -1241,15 +1264,13 @@ function viewHome() {
     <div class="toolbar"><button class="btn sm plate-btn" data-act="findplate">Find plate</button><a class="btn sm" href="#/calendar">Calendar</a><button class="btn sm" data-act="daysheet">Delivery sheet PDF</button>${isStaff() ? '<a class="btn sm primary" href="#/new">New booking</a>' : ''}</div></div>
   <div class="board tab-${tab}">
     ${miniCal(true)}
-    <section class="col col-all" aria-label="All tasks">${tasks.length ? `<ol class="timeline">${tasks.map(taskCard).join('')}</ol>`
+    <section class="col col-all" aria-label="All tasks">${D === today ? overdueSection('delivery') + overdueSection('pickup') : ''}${tasks.length ? `<ol class="timeline">${tasks.map(taskCard).join('')}</ol>`
       : `<div class="empty">${CAR.replace('car-ico', 'car-ico big')}<h3>No deliveries or pickups ${dayWord}</h3><p>${isStaff() ? '<a class="btn primary" href="#/new">Create a booking</a>' : `Tasks for ${esc(fmtDate(D))} will appear here.`}</p></div>`}</section>
-    ${col('d', 'Deliveries', dl, 'h-d')}
-    ${col('p', 'Pickups', pk, 'h-p')}
+    ${col('d', 'Deliveries', dl, 'h-d', D === today ? overdueSection('delivery') : '')}
+    ${col('p', 'Pickups', pk, 'h-p', D === today ? overdueSection('pickup') : '')}
     <section class="col col-a" aria-label="Available cars"><header class="col-h h-a"><h2>Available cars</h2><span class="num">${avCount}</span></header>
       <div class="seg left" role="group" aria-label="Car type">${[['own', `Own and investor ${ownCount}`], ['sub', `External ${subCount}`], ['both', 'All']].map(([k, l]) => `<button class="${mode === k ? 'on' : ''}" data-act="avmode" data-m="${k}">${l}</button>`).join('')}</div>
       <div class="btnrow" style="margin-top:8px"><button class="btn sm wa" data-act="shareavail">Share on WhatsApp</button></div>
-      ${(() => { const od = overdueContracts(); return od.length ? `<div class="action-box"><h3>Action required (${od.length})</h3><p class="small" style="margin:0 0 6px">Return time passed but the contract is still open. These cars are kept out of the available list until you close, extend or update them.</p>${od.map(b => `<div class="act-row"><a href="#/booking/${b.id}" class="act-main"><span class="plate big">${esc(b.plate)}</span> <strong>${esc(b.carName)}</strong><br><span class="small">${b.oldRef ? `<strong>${esc(b.oldRef)}</strong> : ` : ''}${esc(b.clientName)}, due back ${esc(fmtDT(b.pickupAt))} <strong>(${durText(Date.now() - parseDT(b.pickupAt))} ago)</strong></span></a>
-        <div class="t-actions">${isStaff() ? `<button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button>` : ''}<button class="btn sm good" data-act="done" data-id="${b.id}" data-type="pickup">Mark picked up</button><a class="btn sm" href="#/booking/${b.id}">Open</a></div></div>`).join('')}</div>` : ''; })()}
       <div class="av-list">${avAll.length ? avAll.map(availRow).join('') : `<p class="col-empty">${mode === 'sub' ? 'No sub-lease cars free. Add them under More, Sub-lease cars.' : 'Every car is booked or on rent ' + dayWord + '.'}</p>`}</div>
       ${(() => { const ex = expectedBackOn(D, mode); return ex.length ? `<h3 class="sub-h" style="margin:14px 10px 6px">Expected back, not picked up yet (${ex.length})</h3><div class="av-list" style="margin-top:0">${ex.map(x => `<a class="av-row exp" href="#/booking/${x.st.b.id}"><span class="av-main"><span class="plate big">${esc(x.c.plate)}</span> <strong>${esc(carTitle(x.c))}</strong></span><span class="av-sub">With ${esc(x.st.b.clientName)}, due back ${esc(fmtDT(x.st.at))}</span></a>`).join('')}</div>` : ''; })()}
       ${['garage', 'nrm'].map(kind => { const list = [...S.garage.values()].filter(g => (kind === 'nrm') === isNrm(g)).sort((a, b) => a.inAt.localeCompare(b.inAt)); return list.length ? `<h3 class="sub-h" style="margin:14px 10px 6px">${kind === 'nrm' ? 'On NRM, staff use' : 'In garage'} (${list.length})</h3><div class="av-list" style="margin-top:0">${list.map(g => `<a class="av-row gar" href="#/${kind === 'nrm' ? 'nrm' : 'garage'}"><span class="av-main"><span class="plate big">${esc(g.plate)}</span> <strong>${esc(g.carName)}</strong></span><span class="av-sub">${kind === 'nrm' ? `${esc(g.purpose)}${g.staff ? ', ' + esc(g.staff) : ''}` : `${esc(g.purpose)} at ${esc(g.garage)}`}${g.expectedOut ? `, back ${esc(fmtDate(g.expectedOut))}` : ''}</span></a>`).join('')}</div>` : ''; }).join('')}
@@ -2003,6 +2024,35 @@ function fillFromMessage(upd) {
   $('#b-fillmsg').innerHTML = `<div class="calc small" style="margin-top:10px"><strong>Filled:</strong> ${want.filter(([k]) => p.found.includes(k)).map(w => w[2]).join(', ') || 'nothing'}${miss.length ? `<br><strong style="color:var(--late)">Not in the message:</strong> ${miss.map(w => w[2]).join(', ')} (highlighted, fill in or leave for later)` : ''}${msg.length ? '<br>' + msg.join('<br>') : ''}</div>`;
 }
 
+
+/* client list: kept up to date from every booking, used to fill the booking form */
+const clientKey = (name, phone) => { const pk = phoneKey(phone); if (pk && pk.length >= 7) return 'p' + pk; const n = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); return n ? 'n-' + n.slice(0, 80) : ''; };
+async function loadClients() {
+  if (S.clients) return S.clients;
+  const s = await db.collection('clients').get();
+  S.clients = s.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (!S.clients.length && isStaff()) await buildClients();
+  return S.clients;
+}
+async function buildClients() {
+  const s = await db.collection('bookings').get(), map = new Map();
+  s.docs.map(d => d.data()).filter(b => b.clientName).sort((a, c) => String(a.deliveryAt).localeCompare(String(c.deliveryAt))).forEach(b => {
+    const k = clientKey(b.clientName, b.clientPhone); if (!k) return;
+    const prev = map.get(k) || { count: 0 };
+    map.set(k, { name: b.clientName, phone: b.clientPhone || prev.phone || '', phoneKey: phoneKey(b.clientPhone || prev.phone), location: b.location || prev.location || '', lastBooking: b.ref, lastAt: b.deliveryAt, count: prev.count + 1 });
+  });
+  const entries = [...map.entries()];
+  for (let i = 0; i < entries.length; i += 400) { const bt = db.batch(); entries.slice(i, i + 400).forEach(([k, v]) => bt.set(db.doc('clients/' + k), v, { merge: true })); await bt.commit(); }
+  S.clients = entries.map(([id, v]) => ({ id, ...v }));
+}
+function findClients(q) {
+  const t = String(q || '').trim().toLowerCase(); if (!t || !S.clients) return [];
+  const digits = t.replace(/\D/g, '');
+  const words = t.split(/\s+/).filter(Boolean);
+  return S.clients.filter(c => (digits.length >= 3 && String(c.phone || '').replace(/\D/g, '').includes(digits)) || words.every(w => String(c.name || '').toLowerCase().includes(w)))
+    .sort((a, b) => (b.count || 0) - (a.count || 0) || String(b.lastAt || '').localeCompare(String(a.lastAt || ''))).slice(0, 8);
+}
+
 function viewForm(id) {
   if (!isStaff()) return deny();
   if (!S.loadedCars || !S.loadedSales) return { title: id ? 'Edit booking' : 'New booking', back: '#/home', html: loading() };
@@ -2017,7 +2067,7 @@ function viewForm(id) {
   const mySp = S.sales.find(s => s.uid === S.me.id);
   const v = {
     agr: b ? b.oldRef || '' : '', clientName: b ? b.clientName : '', clientPhone: b ? b.clientPhone || '' : '', location: b ? b.location || '' : '', pickupLocation: b ? b.pickupLocation || '' : '',
-    carId: b ? (b.carTba ? '__tba' : b.carId) : pre, tbaModel: b && b.carTba ? b.carName : '', date: b ? b.deliveryDate : S.viewDate, time: b ? tOf(b.deliveryAt) : '10:00', days: b ? b.days : 1,
+    carId: b ? (b.carTba ? '__tba' : b.carId) : pre, tbaModel: b && b.carTba ? b.carName : '', date: b ? b.deliveryDate : todayStr(), time: b ? tOf(b.deliveryAt) : '10:00', days: b ? b.days : 1,
     rate: f ? f.rate : '', rateType: f ? f.rateType || 'day' : 'day', vatMode: f ? f.vatMode : (S.settings.defaultVatMode || 'plus'), sp: b ? b.salespersonId : (mySp ? mySp.id : ''),
     drv: b ? b.deliveryDriverId || '' : '', ext: b ? !!b.extendable : false, docs: b ? !!b.collectDocs : false, advance: f ? f.advance || '' : '', advMethod: f ? f.advanceMethod || 'cash' : 'cash', notes: b ? b.notes || '' : ''
   };
@@ -2028,6 +2078,7 @@ function viewForm(id) {
     <p class="small muted" style="margin:4px 0 0">Type after each colon, or select all and paste a WhatsApp message over it. Dates like 30/09, times like 11 am or 23:45.</p>
     <div class="btnrow"><button class="btn primary" type="button" id="b-fill">Fill the form</button><button class="btn" type="button" id="b-tpl">Reset lines</button></div><div id="b-fillmsg"></div></section>`}
   <section class="card"><h2>Client</h2>
+    ${id ? '' : `<label class="f">Find existing client<input id="b-find" type="search" autocomplete="off" placeholder="Type name, part of name or phone"></label><div id="b-found" class="found-list"></div>`}
     <label class="f">Agreement No (if already opened)<input id="b-agr" inputmode="numeric" value="${esc(v.agr)}" placeholder="15797"></label>
     <label class="f">Client name<input id="b-name" value="${esc(v.clientName)}" autocomplete="off" placeholder="Mohammed Khan"></label>
     <label class="f">Phone<input id="b-phone" type="tel" value="${esc(v.clientPhone)}" placeholder="050 123 4567"></label>
@@ -2097,7 +2148,32 @@ function viewForm(id) {
     $$('#app input, #app select, #app textarea').forEach(el => el.addEventListener('input', upd));
     upd();
     const fb = $('#b-fill'); if (fb) fb.onclick = () => fillFromMessage(upd);
+    const fi = $('#b-find');
+    if (fi) {
+      loadClients().then(() => { if (fi.value) fi.dispatchEvent(new Event('input')); }).catch(() => { });
+      fi.addEventListener('input', () => {
+        const list = findClients(fi.value), box = $('#b-found');
+        box.innerHTML = !fi.value.trim() ? '' : !S.clients ? '<p class="small muted">Loading clients…</p>' : list.length ? list.map((c, i) => `<button type="button" class="found-row" data-i="${i}"><strong>${esc(c.name)}</strong><span>${esc(c.phone || 'no phone')}${c.location ? ' · ' + esc(c.location) : ''}${c.count ? ` · ${c.count} booking${c.count === 1 ? '' : 's'}` : ''}</span></button>`).join('') : '<p class="small muted">No previous client matches. Fill in the details below.</p>';
+        box.querySelectorAll('.found-row').forEach(bt => bt.onclick = () => {
+          const c = list[+bt.dataset.i];
+          $('#b-name').value = c.name || ''; $('#b-phone').value = c.phone || ''; if (c.location && !$('#b-loc').value) $('#b-loc').value = c.location;
+          ['#b-name', '#b-phone', '#b-loc'].forEach(s => $(s).classList.remove('missing'));
+          box.innerHTML = `<p class="found-ok">Returning client: <strong>${esc(c.name)}</strong>${c.count ? `, ${c.count} past booking${c.count === 1 ? '' : 's'}` : ''}${c.phoneKey ? ` · <a href="#/client/${esc(c.phoneKey)}">history</a>` : ''}</p>`;
+          fi.value = ''; upd();
+        });
+      });
+    }
     const tb = $('#b-tpl'); if (tb) tb.onclick = () => { $('#b-paste').value = PASTE_TEMPLATE; $('#b-paste').focus(); };
+    let pastOk = id ? (b && b.deliveryDate) : '';
+    const pastCheck = async () => {
+      const d = $('#b-date').value; if (!d || d >= todayStr() || d === pastOk) return true;
+      const n = dayDiff(d, todayStr()), monthOff = d.slice(0, 7) !== todayStr().slice(0, 7);
+      const yes = await ask({ title: 'This date is in the past', ok: `Keep ${fmtDate(d)}`, text: `You entered <strong>${esc(fmtLong(d))}</strong>, which is <strong>${n} day${n === 1 ? '' : 's'} before today</strong>${monthOff ? ' (a previous month)' : ''}. Today is ${esc(fmtLong(todayStr()))}.<br><br>Tap <strong>Go back</strong> to change it to today.` });
+      if (yes) { pastOk = d; return true; }
+      $('#b-date').value = todayStr(); $('#b-date').dispatchEvent(new Event('input')); $('#b-date').focus(); return false;
+    };
+    $('#b-date').addEventListener('change', pastCheck);
+    S.pastCheck = pastCheck;
     $('#b-pq').addEventListener('input', e => {
       const hits = plateMatches(e.target.value).filter(c => c.active !== false), sel = $('#b-car');
       [...sel.options].forEach(o => { if (!o.value || o.value === '__hire') return; o.hidden = !!e.target.value.trim() && !hits.some(h => h.id === o.value); });
@@ -2113,6 +2189,7 @@ function viewForm(id) {
         : !x.date || !x.time ? 'Enter the delivery date and time.' : x.days < 1 ? 'Days must be at least 1.' : !x.rate ? 'Enter the rate.'
         : cf.length ? 'This car is already booked for these dates. Choose another car or Sub-lease hire.' : gc ? 'This car is in the garage for these dates. Choose another car.' : '';
       $('#b-err').textContent = err; if (err) return;
+      if (S.pastCheck && !(await S.pastCheck())) return;
       if (x.agr && x.agr !== ((b && b.oldRef) || '')) { const t = await agreementTaken(x.agr, id); if (t) { $('#b-err').textContent = `Agreement ${x.agr} is already on ${t.ref} (${t.clientName}).`; return; } }
       const batch0 = db.batch();
       let car;
@@ -2145,11 +2222,13 @@ function viewForm(id) {
           const docRef = db.collection('bookings').doc();
           batch.set(docRef, { ...data, ref, status: 'booked', pickupDriverId: '', pickupDriverName: '', createdAt: FV.serverTimestamp(), createdBy: S.me.name, log: [{ at: nowLocal(), by: S.me.name, text: 'Booking created' }] });
           batch.set(db.doc('finance/' + docRef.id), { ...fin, ref });
+          const ck = clientKey(x.name, x.phone); if (ck) batch.set(db.doc('clients/' + ck), { name: x.name, phone: x.phone, phoneKey: phoneKey(x.phone), location: x.loc, lastBooking: ref, lastAt: nowLocal(), count: FV.increment(1) }, { merge: true });
           await batch.commit(); S.formOpen = false; toast(`Booking ${ref} created for ${fmtDT(data.deliveryAt)}.`); goHomeOn(x.date);
           setTimeout(() => openBookedMsg({ ...data, ref, id: docRef.id }, fin, true), 120);
         } else {
           batch.update(db.doc('bookings/' + id), { ...data, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: 'Booking edited' }) });
           batch.set(db.doc('finance/' + id), fin, { merge: true });
+          const ck = clientKey(x.name, x.phone); if (ck) batch.set(db.doc('clients/' + ck), { name: x.name, phone: x.phone, phoneKey: phoneKey(x.phone), location: x.loc, lastAt: nowLocal() }, { merge: true });
           await batch.commit(); S.formOpen = false; toast('Changes saved.'); goHomeOn(x.date);
           setTimeout(() => openBookedMsg({ ...b, ...data, id }, { ...f, ...fin }, true, true), 120);
         }
@@ -3700,11 +3779,12 @@ const RESET_SETS = [
   { k: 'external', label: 'External (sub-lease) cars', cols: [], cars: c => isSub(c), note: 'Only cars rented from other companies.' },
   { k: 'cars', label: 'All cars (owned, investor and external)', cols: [], cars: () => true, note: 'The whole fleet list.' },
   { k: 'sales', label: 'Salespeople list', cols: ['salespeople'], note: 'User logins are not touched.' },
+  { k: 'clients', label: 'Client list (quick booking search)', cols: ['clients'], note: 'It rebuilds from bookings the next time someone opens New booking.' },
   { k: 'numbers', label: 'Restart numbering (BK, GRG, NRM)', cols: [], meta: 'meta/counter', note: 'Only safe if bookings are also reset.' }
 ];
 async function backupAll() {
   const out = { app: `${BR.short} Booking`, version: APP_VERSION, exportedAt: nowLocal(), by: S.me.name, collections: {} };
-  for (const c of ['bookings', 'finance', 'cars', 'garage', 'salespeople', 'users']) out.collections[c] = (await db.collection(c).get()).docs.map(d => ({ id: d.id, ...d.data() }));
+  for (const c of ['bookings', 'finance', 'cars', 'garage', 'salespeople', 'users', 'clients']) out.collections[c] = (await db.collection(c).get()).docs.map(d => ({ id: d.id, ...d.data() }));
   for (const m of ['settings', 'counter']) { const d = await db.doc('meta/' + m).get(); out[m] = d.exists ? d.data() : null; }
   const blob = new Blob([JSON.stringify(out, null, 1)], { type: 'application/json' });
   const name = `${BR.short.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-backup-${todayStr()}.json`;
@@ -3751,7 +3831,7 @@ function viewReset() {
           if (s.meta) { await db.doc(s.meta).delete().catch(() => { }); total++; }
         }
         await db.doc('meta/settings').set({ lastReset: { at: nowLocal(), by: S.me.name, what: picked } }, { merge: true });
-        S.listRows = null; S.garageAll = null; S.nrmAll = null; S.hist = null; S.calRows = null; S.calKey = null; S.backupDone = false;
+        S.clients = null; S.listRows = null; S.garageAll = null; S.nrmAll = null; S.hist = null; S.calRows = null; S.calKey = null; S.backupDone = false;
         toast(`Reset done: ${total} records erased.`); go('#/home');
       } catch (e) { ev.target.disabled = false; err(friendlyError(e)); }
     };
@@ -3770,9 +3850,13 @@ function alertItems() {
   for (const g of S.garage.values()) if (g.expectedOut && g.expectedOut < t) items.push({ k: 'late', g, text: `${isNrm(g) ? 'NRM' : 'Garage'} overdue since ${fmtDate(g.expectedOut)}`, at: g.expectedOut + 'T23:59' });
   return items.sort((a, c) => (a.k === 'late' ? 0 : 1) - (c.k === 'late' ? 0 : 1) || a.at.localeCompare(c.at));
 }
-function bellHtml(dark) { const n = alertItems().length; return `<button class="bell ${dark ? 'dark' : ''} ${n ? 'has' : ''}" data-act="bell" aria-label="Alerts: ${n}"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15z M10 21h4"/></svg>${n ? `<b>${n > 99 ? '99+' : n}</b>` : ''}</button>`; }
+const alertKey = x => `${x.k}|${x.b ? x.b.id : x.g ? x.g.id : ''}|${x.type || ''}|${x.at}`;
+function bellSeen() { try { return new Set(JSON.parse(localStorage.getItem('tb-bell-seen') || '[]')); } catch (e) { return new Set(); } }
+function bellHtml(dark) { const seen = bellSeen(); const n = alertItems().filter(x => !seen.has(alertKey(x))).length; return `<button class="bell ${dark ? 'dark' : ''} ${n ? 'has' : ''}" data-act="bell" aria-label="Alerts: ${n} new"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17V11a6 6 0 1 1 12 0v6l1.5 2h-15z M10 21h4"/></svg>${n ? `<b>${n > 99 ? '99+' : n}</b>` : ''}</button>`; }
 ACT.bell = () => {
   const items = alertItems();
+  try { const keep = new Set([...bellSeen(), ...items.map(alertKey)]); localStorage.setItem('tb-bell-seen', JSON.stringify([...keep].slice(-400))); } catch (e) { }
+  setTimeout(() => $$('.bell').forEach(bt => { bt.classList.remove('has'); const n = bt.querySelector('b'); if (n) n.remove(); }), 50);
   const perm = 'Notification' in window ? Notification.permission : 'unsupported';
   openSheet(`<h2>Alerts</h2>
     ${perm === 'default' ? `<div class="strip info"><h3>Get phone notifications</h3><p class="small" style="margin:0 0 8px">Pop-up alerts for tasks due in 30 minutes and overdue items, while the app is open or in the background.</p><button class="btn sm primary" data-act="notifon">Turn on notifications</button></div>` : perm === 'denied' ? '<p class="small muted">Phone notifications are blocked. Allow them in your phone\'s settings for this app.</p>' : ''}
@@ -3877,6 +3961,23 @@ ACT.renew = ({ car, what }) => {
     } catch (e) { ev.target.disabled = false; $('#rn-err').textContent = friendlyError(e); }
   };
 };
+
+
+/* Action required pop-up: open contracts past their return time. Shown when the app opens and when a new one appears */
+S.odSeen = new Set();
+function checkOverduePopup() {
+  if (!S.me || !isStaff() || $('#overlay') || S.formOpen || document.getElementById('splash')) return;
+  const all = overdueContracts(); if (!all.length) return;
+  if (!all.some(b => !S.odSeen.has(b.id + '|' + b.pickupAt))) return;
+  const o = openSheet(`<h2>Action required</h2><p class="muted" style="margin:4px 0 0">${all.length} car${all.length === 1 ? ' is' : 's are'} past the return time and not picked up. Close, extend or update ${all.length === 1 ? 'it' : 'them'}.</p>
+    ${all.map(b => `<div class="alert-row late exp-row"><a class="exp-link" href="#/booking/${b.id}"><strong>${b.oldRef ? `${esc(b.oldRef)} : ` : ''}${esc(b.clientName)}</strong><span>${esc(b.plate)} ${esc(b.carName)}, due back ${esc(fmtDT(b.pickupAt))} (${esc(durText(Date.now() - parseDT(b.pickupAt)))} ago)</span></a>
+      <span class="od-btns"><button class="btn sm" data-act="extend" data-id="${b.id}">Extend</button><button class="btn sm good" data-act="done" data-id="${b.id}" data-type="pickup">Picked up</button></span></div>`).join('')}
+    <div class="btnrow"><button class="btn primary" id="od-ok">OK</button></div>`);
+  const seen = () => all.forEach(b => S.odSeen.add(b.id + '|' + b.pickupAt));
+  o.querySelector('#od-ok').onclick = () => { seen(); closeSheet(); };
+  o.querySelectorAll('a,button').forEach(x => x.addEventListener('click', seen));
+  o.addEventListener('click', ev => { if (ev.target === o) seen(); });
+}
 
 boot();
 
