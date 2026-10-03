@@ -657,7 +657,7 @@ input.missing,select.missing,textarea.missing{border-color:#E4A94A!important;bac
 /* Your Firebase keys and logo live in config.js, so this file can be replaced freely. */
 const FIREBASE_CONFIG = window.FIREBASE_CONFIG || { apiKey: 'PASTE_API_KEY' }; // set in config.js
 const LOGO_URL = window.LOGO_URL || '';                                          // set in config.js
-const APP_VERSION = '3.31-2026';
+const APP_VERSION = '3.32-2026';
 const APP_CREDIT = 'Designed and developed by Sajid';
 /* branding comes from config.js, so the same app works for any company */
 const BR = Object.assign({ company: 'Thomson Rent A Car LLC', name: 'Thomson Rent A Car', short: 'Thomson', tagline: 'Rent A Car', service: 'Car Rental Booking Service' }, window.BRAND || {});
@@ -2027,11 +2027,19 @@ function fillFromMessage(upd) {
 
 /* client list: kept up to date from every booking, used to fill the booking form */
 const clientKey = (name, phone) => { const pk = phoneKey(phone); if (pk && pk.length >= 7) return 'p' + pk; const n = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); return n ? 'n-' + n.slice(0, 80) : ''; };
+/* updating the client list never blocks a booking: errors are ignored */
+function saveClient(x, ref, isNew) {
+  const ck = clientKey(x.name, x.phone); if (!ck) return;
+  const d = { name: x.name, phone: x.phone, phoneKey: phoneKey(x.phone), location: x.loc, lastBooking: ref, lastAt: nowLocal() };
+  if (isNew) d.count = FV.increment(1);
+  db.doc('clients/' + ck).set(d, { merge: true }).then(() => { if (S.clients) { const c = S.clients.find(c => c.id === ck); if (c) Object.assign(c, d, { count: (c.count || 0) + (isNew ? 1 : 0) }); else S.clients.push({ id: ck, ...d, count: 1 }); } }).catch(() => { });
+}
 async function loadClients() {
   if (S.clients) return S.clients;
-  const s = await db.collection('clients').get();
+  let s;
+  try { s = await db.collection('clients').get(); } catch (e) { S.clients = []; S.clientsBlocked = true; return S.clients; }
   S.clients = s.docs.map(d => ({ id: d.id, ...d.data() }));
-  if (!S.clients.length && isStaff()) await buildClients();
+  if (!S.clients.length && isStaff()) { try { await buildClients(); } catch (e) { S.clientsBlocked = true; } }
   return S.clients;
 }
 async function buildClients() {
@@ -2153,7 +2161,7 @@ function viewForm(id) {
       loadClients().then(() => { if (fi.value) fi.dispatchEvent(new Event('input')); }).catch(() => { });
       fi.addEventListener('input', () => {
         const list = findClients(fi.value), box = $('#b-found');
-        box.innerHTML = !fi.value.trim() ? '' : !S.clients ? '<p class="small muted">Loading clients…</p>' : list.length ? list.map((c, i) => `<button type="button" class="found-row" data-i="${i}"><strong>${esc(c.name)}</strong><span>${esc(c.phone || 'no phone')}${c.location ? ' · ' + esc(c.location) : ''}${c.count ? ` · ${c.count} booking${c.count === 1 ? '' : 's'}` : ''}</span></button>`).join('') : '<p class="small muted">No previous client matches. Fill in the details below.</p>';
+        box.innerHTML = !fi.value.trim() ? '' : S.clientsBlocked ? '<p class="small muted">Client search isn\'t available yet. The admin needs to publish the latest database rules.</p>' : !S.clients ? '<p class="small muted">Loading clients…</p>' : list.length ? list.map((c, i) => `<button type="button" class="found-row" data-i="${i}"><strong>${esc(c.name)}</strong><span>${esc(c.phone || 'no phone')}${c.location ? ' · ' + esc(c.location) : ''}${c.count ? ` · ${c.count} booking${c.count === 1 ? '' : 's'}` : ''}</span></button>`).join('') : '<p class="small muted">No previous client matches. Fill in the details below.</p>';
         box.querySelectorAll('.found-row').forEach(bt => bt.onclick = () => {
           const c = list[+bt.dataset.i];
           $('#b-name').value = c.name || ''; $('#b-phone').value = c.phone || ''; if (c.location && !$('#b-loc').value) $('#b-loc').value = c.location;
@@ -2222,14 +2230,12 @@ function viewForm(id) {
           const docRef = db.collection('bookings').doc();
           batch.set(docRef, { ...data, ref, status: 'booked', pickupDriverId: '', pickupDriverName: '', createdAt: FV.serverTimestamp(), createdBy: S.me.name, log: [{ at: nowLocal(), by: S.me.name, text: 'Booking created' }] });
           batch.set(db.doc('finance/' + docRef.id), { ...fin, ref });
-          const ck = clientKey(x.name, x.phone); if (ck) batch.set(db.doc('clients/' + ck), { name: x.name, phone: x.phone, phoneKey: phoneKey(x.phone), location: x.loc, lastBooking: ref, lastAt: nowLocal(), count: FV.increment(1) }, { merge: true });
-          await batch.commit(); S.formOpen = false; toast(`Booking ${ref} created for ${fmtDT(data.deliveryAt)}.`); goHomeOn(x.date);
+          await batch.commit(); saveClient(x, ref, true); S.formOpen = false; toast(`Booking ${ref} created for ${fmtDT(data.deliveryAt)}.`); goHomeOn(x.date);
           setTimeout(() => openBookedMsg({ ...data, ref, id: docRef.id }, fin, true), 120);
         } else {
           batch.update(db.doc('bookings/' + id), { ...data, log: FV.arrayUnion({ at: nowLocal(), by: S.me.name, text: 'Booking edited' }) });
           batch.set(db.doc('finance/' + id), fin, { merge: true });
-          const ck = clientKey(x.name, x.phone); if (ck) batch.set(db.doc('clients/' + ck), { name: x.name, phone: x.phone, phoneKey: phoneKey(x.phone), location: x.loc, lastAt: nowLocal() }, { merge: true });
-          await batch.commit(); S.formOpen = false; toast('Changes saved.'); goHomeOn(x.date);
+          await batch.commit(); saveClient(x, b.ref, false); S.formOpen = false; toast('Changes saved.'); goHomeOn(x.date);
           setTimeout(() => openBookedMsg({ ...b, ...data, id }, { ...f, ...fin }, true, true), 120);
         }
       } catch (e) { ev.target.disabled = false; $('#b-err').textContent = friendlyError(e); }
